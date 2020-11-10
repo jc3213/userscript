@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name         縦書きPDF書庫
+// @namespace    https://github.com/jc3213/userscript
 // @version      100.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213

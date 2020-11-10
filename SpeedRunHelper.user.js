@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
+// @namespace    https://github.com/jc3213/userscript
 // @version      10.0
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213

@@ -1,5 +1,6 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
+// @namespace    https://github.com/jc3213/userscript
 // @version      50.0
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
