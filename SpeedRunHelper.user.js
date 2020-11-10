@@ -22,9 +22,9 @@ var logger = {};
 var drag = {};
 
 var css = document.createElement('style');
-css.innerHTML = '.speedrun-menu {background-color: #FFF; cursor: pointer; border: 1px outset #F00; padding: 1px; font-size: 12px;}\
-.speedrun-menu:hover {filter: contrast(60%)}\
-.speedrun-menu:active {border: 2px inset #00F; padding: 0px; filter: contrast(30%)}';
+css.innerHTML = '.speedrun-menu {background-color: #FFF; cursor: pointer; border: 1px outset #F00; padding: 1px; font-size: 14px;}\
+.speedrun-menu:hover {filter: opacity(60%);}\
+.speedrun-menu:active {border: 2px inset #00F; padding: 0px; filter: opacity(30%);}';
 document.head.appendChild(css);
 
 document.querySelectorAll('div[data-ad]').forEach(item => item.remove());
@@ -55,6 +55,9 @@ function viewSpeedrunRecord(id, src, top, left) {
                 var xml = document.createElement('div');
                 xml.innerHTML = response.responseText;
                 logger[id] = xml.querySelector('#centerbar').querySelector('iframe');
+                if (!logger[id]) {
+                    logger[id] = xml.querySelector('#centerbar > div > div > center > a').href;
+                }
                 createRecordWindow(id, logger[id], top, left);
             }
         });
@@ -62,13 +65,17 @@ function viewSpeedrunRecord(id, src, top, left) {
 }
 
 function createRecordWindow(id, content, top, left) {
+    if (typeof content === 'string') {
+        return open(content, '_blank');
+    }
+
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.style.cssText = 'position: fixed; top: ' + top / 2 + 'px; left: ' + left / 2 + 'px; z-index: 3213; width: 850px; height: 500px;';
     document.body.appendChild(container);
 
     var box = document.createElement('div');
-    box.style.cssText = 'background-color: #000; height: 22px; width: 100%; text-align: right; user-select: none;';
+    box.style.cssText = 'background-color: #000; height: 25px; width: 100%; text-align: right; user-select: none;';
     container.appendChild(box);
 
     var close = document.createElement('span');
