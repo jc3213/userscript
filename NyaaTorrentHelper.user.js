@@ -137,7 +137,7 @@ function getPreviewHandler(data, mouse) {
     if (data.image) {
         createPreview(data, mouse);
     }
-    if (data.new) {
+    else if (data.new) {
         openWebPreview(data);
     }
     else if (data.sel) {
