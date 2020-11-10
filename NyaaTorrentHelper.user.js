@@ -12,7 +12,8 @@
 
 'use strict';
 // Variables
-var storage = {filter: false, keyword: []};
+var filter = false;
+var keyword = [];
 var queue = [];
 var action = {};
 var hosts = {
@@ -54,9 +55,9 @@ button.className = 'filterButton';
 button.innerHTML = 'Filter';
 button.addEventListener('click', (event) => {
     var keyword = input.value.split(/[\|\/\\\+\,\:\; ]+/);
-    if (storage.filter && keyword.join() === storage.keyword.join()) {
+    if (filter && keyword.join() === keyword.join()) {
         popup.style.display = 'none';
-        storage.filter = false;
+        filter = false;
     }
     else {
         popup.innerHTML = '';
@@ -67,8 +68,8 @@ button.addEventListener('click', (event) => {
             }
         });
         popup.querySelectorAll('div').forEach((element, index) => { element.style.top = index * 40 + 'px'; });
-        storage.keyword = keyword;
-        storage.filter = true;
+        keyword = keyword;
+        filter = true;
     }
 });
 container.appendChild(button);
@@ -103,12 +104,7 @@ container.appendChild(popup);
 document.querySelectorAll('table > tbody > tr').forEach((element) => {
     var data = {};
     var a = element.querySelectorAll('td:nth-child(2) > a');
-    if (a.length === 2) {
-        a = a[1];
-    }
-    else {
-        a = a[0];
-    }
+    a = a.length === 2 ? a[1] : a[0];
     data.id = a.href.split('/').pop();
     data.name = a.innerHTML;
     data.src = a.href;
