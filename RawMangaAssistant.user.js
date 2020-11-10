@@ -63,14 +63,19 @@
 
 'use strict';
 // Initial variables
-var storage = {
-    urls: [],
-    save: [],
-    aria2: [],
-    moving: false,
-    value: {},
-    position: GM_getValue('position', {top: screen.availHeight * 0.3, left: screen.availWidth * 0.15})
-};
+var urls = [];
+var save = [];
+var aria2 = [];
+var fail = [];
+var observer;
+var value = {};
+var images;
+var watching;
+var mousedown;
+var moving = false;
+var position = GM_getValue('position', {top: screen.availHeight * 0.3, left: screen.availWidth * 0.15});
+var lazyload;
+var warning
 
 // i18n strings and labels
 var messages = {
@@ -144,14 +149,14 @@ var messages = {
         }
     }
 };
-var assistant_i18n = messages[navigator.language] || messages['en-US'];
+var i18n = messages[navigator.language] || messages['en-US'];
 
 // Supported sites
-var webhosts = {
+var mangas = {
     'loveheaven.net': {
         chapter: 'chapter-',
-        selector: 'img[class="chapter-img"]',
-        adtag: ['center', 'h3'],
+        selector: 'img.chapter-img',
+        ads: ['div.float-ck', 'center', 'h3'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
     },
     'mangasum.com': {
@@ -175,11 +180,11 @@ var webhosts = {
         shortcut: {prev: 'a[id="prev_chap"]', next: 'a[id="next_chap"]'}
     }
 };
-webhosts['loveha.net'] = webhosts['loveheaven.net'];
-webhosts['mangant.com'] = webhosts['mangasum.com'];
-webhosts['manga1001.com'] = webhosts['manga1000.com'];
-webhosts['komiraw.com'] = webhosts['manga11.com'];
-storage.watch = webhosts[location.host];
+mangas['loveha.net'] = mangas['loveheaven.net'];
+mangas['mangant.com'] = mangas['mangasum.com'];
+mangas['manga1001.com'] = mangas['manga1000.com'];
+mangas['komiraw.com'] = mangas['manga11.com'];
+watching = mangas[location.host];
 
 var css = document.createElement('style');
 css.innerHTML = '.menuOverlay {position: fixed; z-index: 999999999;}\
@@ -195,41 +200,41 @@ var button = document.createElement('button');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay menuContainer';
-button.style.cssText = 'top: ' + storage.position.top + 'px; left: ' + storage.position.left + 'px; width: 42px; height: 42px;';
+button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; width: 42px; height: 42px;';
 document.body.appendChild(button);
 
 var container = document.createElement('div');
 container.id = 'assistant_container';
 container.className = 'menuOverlay';
-container.style.cssText = 'top: ' + storage.position.top + 'px; left: ' + (storage.position.left + button.offsetWidth) + 'px; display: none';
+container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left + button.offsetWidth) + 'px; display: none';
 document.body.appendChild(container);
 
 // Draggable button and menu
 document.addEventListener('mousedown', (event) => {
     if (event.target.id === 'assistant_button') {
-        storage.position.top = event.clientY;
-        storage.position.left = event.clientX;
-        storage.mousedown = setTimeout(() => {
-            storage.moving = true;
-            delete storage.mousedown;
+        position.top = event.clientY;
+        position.left = event.clientX;
+        mousedown = setTimeout(() => {
+            moving = true;
+            mousedown = null;
         }, 300);
     }
 });
 document.addEventListener('mousemove', (event) => {
-    if (storage.moving) {
-        storage.position.top = document.getElementById('assistant_button').offsetTop - storage.position.top + event.clientY;
-        storage.position.left = document.getElementById('assistant_button').offsetLeft - storage.position.left + event.clientX;
-        movingIconAndContainer(storage.position);
+    if (moving) {
+        position.top = document.getElementById('assistant_button').offsetTop - position.top + event.clientY;
+        position.left = document.getElementById('assistant_button').offsetLeft - position.left + event.clientX;
+        movingIconAndContainer(position);
     }
 })
 document.addEventListener('mouseup', (event) => {
-    if (storage.mousedown) {
-        clearTimeout(storage.mousedown);
-        delete storage.mousedown;
+    if (mousedown) {
+        clearTimeout(mousedown);
+        mousedown = null;
     }
-    else if (storage.moving) {
-        GM_setValue('position', storage.position);
-        storage.moving = false;
+    else if (moving) {
+        GM_setValue('position', position);
+        moving = false;
     }
 });
 document.addEventListener('click', (event) => {
@@ -267,7 +272,7 @@ var downMenu = {
     save: {
         icon: '💾',
         click: () => {
-            storage.save.forEach((item, index) => {
+            save.forEach((item, index) => {
                 var url = item[0];
                 var name = item[1];
                 downMenu.save.handler(url, name, index);
@@ -279,12 +284,12 @@ var downMenu = {
                     url: url,
                     name: name,
                     onload: () => {
-                        if (index === storage.images.length - 1) {
-                            warning('save', 'done');
+                        if (index === images.length - 1) {
+                            notification('save', 'done');
                         }
                     },
                     onerror: (error) => {
-                        warning('save', 'error', url);
+                        notification('save', 'error', url);
                     }
                 });
             }, index * 200);
@@ -293,8 +298,8 @@ var downMenu = {
     copy: {
         icon: '📄',
         click: () => {
-            navigator.clipboard.writeText(storage.urls.join('\n'));
-            warning('copy', 'done');
+            navigator.clipboard.writeText(urls.join('\n'));
+            notification('copy', 'done');
         }
     },
     aria2: {
@@ -303,18 +308,18 @@ var downMenu = {
             GM_xmlhttpRequest({
                 url: document.getElementById('assistant_aria2_server').value,
                 method: 'POST',
-                data: JSON.stringify(storage.aria2),
+                data: JSON.stringify(aria2),
                 onload: (details) => {
                     if (details.status === 200) {
                         if (details.response.includes('Unauthorized')) {
-                            warning('aria2', 'nokey');
+                            notification('aria2', 'nokey');
                         }
                         else {
-                            warning('aria2', 'done');
+                            notification('aria2', 'done');
                         }
                     }
                     if (details.status === 404) {
-                        warning('aria2', 'norpc');
+                        notification('aria2', 'norpc');
                     }
                 }
             });
@@ -358,18 +363,18 @@ var switchMenu = {
     lazy: {
         value: GM_getValue('lazy', false),
         on: () => {
-            if (!storage.images || !storage.watch.lazyload) {
+            if (!images || !watching.lazyload) {
                 return;
             }
-            storage.lazyload = setInterval(() => {
-                if (storage.images.length === storage.urls.length) {
-                    storage.images.forEach((element) => element.setAttribute('src', element.getAttribute(storage.watch.lazyload)));
-                    clearInterval(storage.lazyload);
+            lazyload = setInterval(() => {
+                if (images.length === urls.length) {
+                    images.forEach((element) => element.setAttribute('src', element.getAttribute(watching.lazyload)));
+                    clearInterval(lazyload);
                 }
             }, 100);
         },
         off: () => {
-            clearInterval(storage.lazyload);
+            clearInterval(lazyload);
         }
     },
     menu: {
@@ -426,7 +431,7 @@ function iconic_menu_item(name, props) {
     var icon = document.createElement('span');
     icon.className = 'assistantIcon';
     icon.innerHTML = props.icon || '';
-    var label = document.createTextNode(assistant_i18n[name].label || name);
+    var label = document.createTextNode(i18n[name].label || name);
     menu.appendChild(icon);
     menu.appendChild(label);
     return menu;
@@ -469,7 +474,7 @@ function input_menu_item(name, props) {
     GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
         menu.value = new_value;
         if (props.type === 'password') {
-            warning(name);
+            notification(name);
             setTimeout(() => {
                 location.reload();
             }, 5000);
@@ -482,40 +487,52 @@ function input_menu_item(name, props) {
 }
 
 // Extract images data
-if (storage.watch) {
-    if (typeof storage.watch.chapter === 'string' && location.pathname.includes(storage.watch.chapter) ||
-        typeof storage.watch.chapter === 'object' && storage.watch.chapter.test(location.pathname)) {
-        if (storage.watch.adtag) {
-            storage.watch.adtag.forEach(item => document.querySelectorAll(item).forEach(item => item.remove()));
+if (watching) {
+    if (typeof watching.chapter === 'string' && location.pathname.includes(watching.chapter) || typeof watching.chapter === 'object' && watching.chapter.test(location.pathname)) {
+        images = document.querySelectorAll(watching.selector);
+        removeMultipleElement(watching.ads);
+        extractImage(watching.lazyload);
+        shortcuts(watching.shortcut);
+    }
+}
+
+function removeMultipleElement(selector, node) {
+    if (selector) {
+        node = node || document;
+        if (Array.isArray(selector)) {
+            selector.forEach(item => removeElement(node.querySelectorAll(item)));
         }
-        storage.images = document.querySelectorAll(storage.watch.selector);
-        extractImage(storage.watch.lazyload);
-        shortcuts(storage.watch.shortcut);
+        else {
+            removeElement(node.querySelectorAll(selector));
+        }
+    }
+
+    function removeElement(elements) {
+        elements.forEach(item => item.remove());
     }
 }
 
 function extractImage(lazyload) {
-    if (storage.images.length === 0) {
-        return warning('extract', 'fatal');
+    if (images.length === 0) {
+        return notification('extract', 'fatal');
     }
-    storage.warning = warning('extract', 'start');
-    storage.extract = [];
-    storage.images.forEach((element, index) => {
+    warning = notification('extract', 'start');
+    images.forEach((element, index) => {
         var source = element.getAttribute(lazyload || 'src');
         var url = source.trim().replace(/^\/\//, 'http://');
         var name = ('000' + index).substr(index.toString().length);
         getExtension(index, url, name);
     });
-    storage.extractor = setInterval(() => {
-        if (storage.images.length === storage.urls.length + storage.extract.length) {
-            storage.warning.remove();
-            clearInterval(storage.extractor);
-            if (storage.extract.length === 0) {
+    observer = setInterval(() => {
+        if (images.length === urls.length + fail.length) {
+            warning.remove();
+            clearInterval(observer);
+            if (fail.length === 0) {
                 document.getElementById('assistant_down').style.display = 'block';
-                warning('extract', 'done');
+                notification('extract', 'done');
             }
             else {
-                warning('extract', 'fail', JSON.stringify(storage.extract));
+                notification('extract', 'fail', '\n' + fail.join('\n'));
             }
         }
     }, 100);
@@ -534,7 +551,7 @@ function getExtension(index, url, name) {
                 storeImageInfo(index, url, name, ext);
             },
             onerror: () => {
-                storage.extract.push(url);
+                fail.push(url);
             }
         });
     }
@@ -543,9 +560,9 @@ function storeImageInfo(index, url, name, ext) {
     if (ext) {
         name += '.' + ext[0];
     }
-    storage.urls.push(url);
-    storage.save.push([url, name]);
-    storage.aria2.push({
+    urls.push(url);
+    save.push([url, name]);
+    aria2.push({
         id: '',
         jsonrpc: '2.0',
         method: 'aria2.addUri',
@@ -587,9 +604,9 @@ function shortcut_event_handler(event, key, element) {
 }
 
 // Notifications
-function warning(action, status, url) {
-    var warn = assistant_i18n[action][status] || assistant_i18n[action];
-    var html = '⚠️' + warn.replace('%n%', '<i><u>' + storage.images.length + '</u></i>');
+function notification(action, status, url) {
+    var warn = i18n[action][status] || i18n[action];
+    var html = '⚠️' + warn.replace('%n%', '<i><u>' + images.length + '</u></i>');
     if (url) {
         html += '<p>' + url + '</p>';
     }
@@ -599,16 +616,16 @@ function warning(action, status, url) {
     caution.style.cssText = 'width: fit-content; height: 50px; text-align: center; font-size: 16px; padding: 12px; border: 1px ridge darkviolet; border-radius: 10px;';
     caution.innerHTML = html;
     document.body.appendChild(caution);
-    align_warning();
+    align_notification();
     if (action === 'extract' && ['start', 'fail'].includes(status)) {
         return caution;
     }
     setTimeout(() => {
         caution.remove();
-        align_warning();
+        align_notification();
     }, 3000);
 }
-function align_warning() {
+function align_notification() {
     document.querySelectorAll('#assistant_caution').forEach((element, index) => {
         element.style.top = index * (element.offsetHeight + 5) + 10 + 'px';
         element.style.left = (screen.availWidth - element.offsetWidth) / 2 + 'px';
