@@ -59,13 +59,13 @@ container.appendChild(box);
 var sign = document.createElement('div');
 sign.innerHTML = '签到';
 sign.className = 'my-button';
-sign.addEventListener('click', (event) => { autoHandler('/plugin.php?id=dsu_paulsign:sign', 'auto-sign', signHandler); });
+sign.addEventListener('click', (event) => { autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler); });
 box.appendChild(sign);
 
 var work = document.createElement('div');
 work.innerHTML = '打工';
 work.className = 'my-button';
-work.addEventListener('click', (event) => { autoHandler('/plugin.php?id=np_cliworkdz:work', 'auto-work', workHandler); });
+work.addEventListener('click', (event) => { autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler); });
 box.appendChild(work);
 
 var auto = document.createElement('div');
@@ -82,7 +82,8 @@ var autoText = document.createTextNode('自动');
 auto.appendChild(autoIcon);
 auto.appendChild(autoText);
 
-function autoHandler(url, id, load) {
+function autoHandler(url, load) {
+    var id = 'auto-' + url.match(/\w{4}$/)[0];
     if (document.getElementById(id)) {
         return;
     }
