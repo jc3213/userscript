@@ -18,10 +18,10 @@ var today = [new Date().getYear(), new Date().getMonth(), new Date().getDate()].
 
 if (autoed) {
     if (today > signed) {
-        autoHandler('/plugin.php?id=dsu_paulsign:sign', 'auto-sign', signHandler);
+        autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
     }
     if (Date.now() > worked) {
-        autoHandler('/plugin.php?id=np_cliworkdz:work', 'auto-work', workHandler);
+        autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
     }
 }
 
@@ -59,13 +59,13 @@ container.appendChild(box);
 var sign = document.createElement('div');
 sign.innerHTML = '签到';
 sign.className = 'my-button';
-sign.addEventListener('click', (event) => { autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler); });
+sign.addEventListener('click', (event) => autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler));
 box.appendChild(sign);
 
 var work = document.createElement('div');
 work.innerHTML = '打工';
 work.className = 'my-button';
-work.addEventListener('click', (event) => { autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler); });
+work.addEventListener('click', (event) => autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler));
 box.appendChild(work);
 
 var auto = document.createElement('div');
@@ -87,28 +87,29 @@ function autoHandler(url, load) {
     if (document.getElementById(id)) {
         return;
     }
-    warnHandler(id);
+    var warn = warnStart(id);
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onload = () => {
         var node = document.createElement('div');
         node.innerHTML = xhr.response;
-        load(node, url, id);
+        load(node, url, id, warn);
     };
     xhr.send()
 }
 
-function signHandler(node, url, id) {
+function signHandler(node, url, id, warn) {
     if (node.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)')) {
         GM_setValue('signed', today);
         warnOver(id, node.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)').innerHTML);
     }
     else {
+        warn.innerHTML = '开始签到...';
         makeFrame(url, id, autoSign);
     }
 }
 
-function workHandler(node, url, id) {
+function workHandler(node, url, id, warn) {
     if (node.querySelector('#messagetext')) {
         var text = node.querySelector('#messagetext > p:nth-child(1)').innerHTML.split(/<br>|<script/)[1];
         var clock = text.match(/\d+/g);
@@ -117,6 +118,7 @@ function workHandler(node, url, id) {
         warnOver(id, text);
     }
     else {
+        warn.innerHTML = '开始打工...';
         makeFrame(url, id, autoWork);
     }
 }
@@ -157,13 +159,14 @@ function autoWork(window, document) {
     }, 3000);
 }
 
-function warnHandler(id) {
-    var data = id === 'auto-sign' ? {top: '125px', text: '正在自动签到...'} : {top: '165px', text: '正在自动打工...'};
+function warnStart(id) {
+    var data = id === 'auto-sign' ? {top: '125px', text: '查询签到状态...'} : {top: '165px', text: '查询打工状态...'};
     var warn = document.createElement('div');
     warn.id = id;
     warn.style.cssText = 'border-radius: 5px; background-color: #FFF; padding: 5px; position: fixed; width: 380px; text-align: center; left: calc((100% - 380px) / 2); font-size: 16px; top: ' + data.top;
     warn.innerHTML = data.text;
     document.body.appendChild(warn);
+    return warn;
 }
 
 function warnOver(id, text) {
@@ -172,4 +175,4 @@ function warnOver(id, text) {
     setTimeout(() => warn.remove(), 3000);
 }
 
-window.addEventListener('message', (event) => setTimeout(() => document.getElementById(event.data).remove(), 3000));
+window.addEventListener('message', (event) => setTimeout(() => document.getElementById(event.data).remove(), 5000));
