@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         アンケートノベルプリント
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.0
+// @version      3
 // @description  マイクロマガジン社のアンケート協力者向けの書き下ろしノベルプリントヘルパーです
 // @author       jc3213
 // @match        *://micromagazine.net/me/qu/*_thanks.html
