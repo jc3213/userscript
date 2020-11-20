@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      50.0
+// @version      22
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -206,13 +206,9 @@ function noValidPreview(data) {
 
 // Create preview
 function createPreview(data, mouse) {
-    var preview = document.createElement('div');
-    preview.id = 'preview-' + data.id;
-    preview.className = 'previewItem';
-    preview.style.top = (mouse.top + 900 > screen.availHeight ? screen.availHeight - 900 : mouse.top) + 'px';
-    preview.style.left = (mouse.left + 600 > screen.availWidth ? screen.availWidth - 600 : mouse.left) + 'px';
-    preview.addEventListener('click', (event) => preview.remove());
-    document.body.appendChild(preview);
-    preview.appendChild(data.image);
+    data.image.className = 'previewItem';
+    data.image.style.cssText = 'max-height: 800px; top: ' + (mouse.top + 900 > screen.availHeight ? screen.availHeight - 900 : mouse.top) + 'px; left: ' + (mouse.left + 600 > screen.availWidth ? screen.availWidth - 600 : mouse.left) + 'px;';
+    data.image.addEventListener('click', (event) => data.image.remove());
+    document.body.appendChild(data.image);
     action[data.id] = false;
 }
