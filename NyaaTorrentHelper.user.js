@@ -207,7 +207,7 @@ function noValidPreview(data) {
 // Create preview
 function createPreview(data, mouse) {
     data.image.className = 'previewItem';
-    data.image.style.cssText = 'max-height: 800px; top: ' + (mouse.top + 900 > screen.availHeight ? screen.availHeight - 900 : mouse.top) + 'px; left: ' + (mouse.left + 600 > screen.availWidth ? screen.availWidth - 600 : mouse.left) + 'px;';
+    data.image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 900 > screen.availHeight ? screen.availHeight - 900 : mouse.top) + 'px; left: ' + (mouse.left + 600 > screen.availWidth ? screen.availWidth - 600 : mouse.left) + 'px;';
     data.image.addEventListener('click', (event) => data.image.remove());
     document.body.appendChild(data.image);
     action[data.id] = false;
