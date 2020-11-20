@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         200.0
+// @version         52
 // @description     Assistant for raw manga online (LoveHeaven, MangaSum, HanaScan, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, HanaScan, Komiraw等) 助手脚本
 // @author          jc3213
