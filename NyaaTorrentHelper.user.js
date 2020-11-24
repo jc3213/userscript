@@ -154,6 +154,9 @@ function xmlNodeHandler(data, mouse, handler) {
             var node = document.createElement('div');
             node.innerHTML = details.response;
             handler(node, data, mouse);
+        },
+        onerror: (details) => {
+            action[data.id] = false;
         }
     });
 }
