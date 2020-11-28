@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      22
+// @version      23
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -54,8 +54,8 @@ var button = document.createElement('span');
 button.className = 'filterButton';
 button.innerHTML = 'Filter';
 button.addEventListener('click', (event) => {
-    var keyword = input.value.split(/[\|\/\\\+\,\:\; ]+/);
-    if (filter && keyword.join() === keyword.join()) {
+    var keys = input.value.split(/[\|\/\\\+\,\:\; ]+/);
+    if (filter && keys.join() === keyword.join()) {
         popup.style.display = 'none';
         filter = false;
     }
@@ -63,12 +63,12 @@ button.addEventListener('click', (event) => {
         popup.innerHTML = '';
         popup.style.display = 'block';
         queue.forEach(data => {
-            if (keyword.filter(key => data.name.includes(key)).length === keyword.length) {
+            if (keys.filter(key => data.name.includes(key)).length === keys.length) {
                 getFilterResult(data);
             }
         });
         popup.querySelectorAll('div').forEach((element, index) => { element.style.top = index * 40 + 'px'; });
-        keyword = keyword;
+        keyword = keys;
         filter = true;
     }
 });
