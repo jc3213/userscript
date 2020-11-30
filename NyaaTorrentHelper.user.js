@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      23
+// @version      24
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -162,7 +162,7 @@ function xmlNodeHandler(data, mouse, handler) {
 }
 function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
-    var url = description.match(/(\*\*)?https?:\/\/[^(\*\*)]+(\*\*)?/g);
+    var url = description.match(/(\*\*)?https?:\/\/[^(\*\*)\r\n]+(\*\*)?/g);
     var img = description.match(/\(https?:\/\/[^\)]+\)/g);
     if (img) {
         data.image = document.createElement('img');
