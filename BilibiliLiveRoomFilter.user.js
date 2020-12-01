@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      2
+// @version      3
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -14,6 +14,7 @@
 'use strict';
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
+var button = 'background-color: #23ade5; color: #ffffff !important; padding: 5px 10px; border-radius: 3px; font-size: 14px;';
 GM_addValueChangeListener('ban', (name, old_value, new_value, remote) => {
     if (new_value === '') {
         return;
@@ -57,23 +58,34 @@ function blockLiveRoom(element) {
     var name = element.querySelector('span.room-title').innerHTML;
     var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https:\/\/[^\@]+/)[0];
 
-    var block = document.createElement('button');
+    var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
+    block.style.cssText = button;
     block.addEventListener('click', (event) => {
+        event.preventDefault();
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             element.style.display = 'none';
-            GM_setValue('ban', {id: id, liver: liver})
+            GM_setValue('ban', {id: id, liver: liver});
         }
     });
 
-    var download = document.createElement('button');
-    download.innerHTML = '下载封面图';
-    download.style.cssText = 'margin-left: 5px;';
+    var download = document.createElement('span');
+    download.innerHTML = '下载封面';
+    download.style.cssText = button + ' margin-left: 5px;';
     download.addEventListener('click', (event) => {
+        event.preventDefault();
         if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
             GM_download(preview, id + '_' + name);
         }
     });
-    element.prepend(block);
-    block.after(download);
+
+    element.addEventListener('DOMNodeInserted', (event) => {
+        if (event.target.tagName === 'DIV') {
+            var container = document.createElement('span');
+            container.style.cssText = 'display: block; margin-bottom: 10px;';
+            event.target.prepend(container);
+            container.appendChild(block);
+            container.appendChild(download);
+        }
+    });
 }
