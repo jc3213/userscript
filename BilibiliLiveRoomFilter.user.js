@@ -42,7 +42,7 @@ var list = document.querySelector('ul.list');
 if (list) {
     list.querySelectorAll('li').forEach(item => blockLiveRoom(item));
     list.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'LI') {
+        if (event.target.tagName === 'LI' && event.target.className === '') {
             blockLiveRoom(event.target);
         }
     });
@@ -80,7 +80,7 @@ function blockLiveRoom(element) {
     });
 
     element.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'DIV') {
+        if (event.target.tagName === 'DIV' && event.target.classList.contains('hover-panel-wrapper')) {
             var container = document.createElement('span');
             container.style.cssText = 'display: block; margin-bottom: 10px;';
             event.target.prepend(container);
