@@ -9,6 +9,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addValueChangeListener
+// @noframes
 // ==/UserScript==
 
 'use strict';
@@ -62,11 +63,11 @@ if (player) {
     var id = location.pathname.match(/\d+/)[0];
     if (ban_id.includes(id)) {
         var liver = player.querySelector('a.room-owner-username').innerHTML;
-        if (confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
-            return;
+        if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
+            open('https://live.bilibili.com', '_self');
         }
-        open('https://live.bilibili.com', '_self');
     }
+    return;
 }
 
 var list = document.querySelector('ul.list');
