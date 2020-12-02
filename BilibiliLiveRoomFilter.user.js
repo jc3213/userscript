@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      4
+// @version      5
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -46,12 +46,12 @@ GM_addValueChangeListener('unban', (name, old_value, new_value, remove) => {
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; user-select: none; cursor: pointer;}\
-.fancylist {position: absolute; top: 0px; left: 200px; font-size: 14px; min-width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; background-color: #fff}\
-.fancylist div:nth-child(n+2) {margin-top: 3px;}\
-.fancylist div:nth-child(2n) span:nth-child(2) {background-color: #ddd}\
-.fancylist span:nth-child(1) {width: 80px; border-radius: 0px;}\
+.fancylist {background-color: #fff; font-size: 14px; min-width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute; top: -3px; left: 195px;}\
+.fancylist div:nth-child(n+2) span:nth-child(2) {background-color: #ddd;}\
+.fancylist span:nth-child(1) {width: 80px;}\
 .fancylist span:nth-child(2) {width: 120px;}\
-.fancyitem {display: inline-block; padding: 5px; text-align: center;}\
+.fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
+.fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
 .fancybutton:active {filter: opacity(30%);}';
 document.head.appendChild(css);
@@ -82,7 +82,6 @@ function blockLiveRoom(element) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
     if (ban_id.includes(id)) {
         element.style.display = 'none';
-        return;
     }
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
@@ -135,6 +134,7 @@ manager.addEventListener('click', (event) => {
 document.querySelector('div.sort-box').appendChild(manager);
 
 var ban_list = document.createElement('div');
+ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
 ban_list.className = 'fancylist';
 ban_list.style.display = 'none';
 manager.after(ban_list);
