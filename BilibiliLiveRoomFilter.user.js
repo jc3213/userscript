@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      5
+// @version      6
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -188,12 +188,15 @@ submit.innerHTML = '确认';
 submit.className = 'fancybutton';
 submit.style.cssText = 'position: absolute; bottom: 1px; left: 35px;';
 submit.addEventListener('click', (event) => {
-    var list = ban_box.value.split('\n');
-    list.forEach(item => {
-        if (item.match(/\d+[\s\/\.\@\#\$,]+[^\s\/\.\@\#\$,]+/)) {
-            var box = item.split(/[\s\/\.,]+/);
-            GM_setValue('ban', {id: box[0], liver: box[1]});
-        }
-    });
+    if (confirm('确定要屏蔽列表中的直播间吗？')) {
+        var list = ban_box.value.split('\n');
+        list.forEach(item => {
+            if (item.match(/\d+[\s\/\.\@\#\$,]+[^\s\/\.\@\#\$,]+/)) {
+                var box = item.split(/[\s\/\.,]+/);
+                GM_setValue('ban', {id: box[0], liver: box[1]});
+            }
+        });
+        ban_box.value = '';
+    }
 });
 batch_box.appendChild(submit);
