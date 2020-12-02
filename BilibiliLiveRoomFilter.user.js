@@ -45,15 +45,16 @@ GM_addValueChangeListener('unban', (name, old_value, new_value, remove) => {
 });
 
 var css = document.createElement('style');
-css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; user-select: none; cursor: pointer;}\
-.fancylist {background-color: #fff; font-size: 14px; min-width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute; top: -3px; left: 195px;}\
+css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
+.fancylist {background-color: #fff; font-size: 14px; min-width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
 .fancylist div:nth-child(n+2) span:nth-child(2) {background-color: #ddd;}\
 .fancylist span:nth-child(1) {width: 80px;}\
 .fancylist span:nth-child(2) {width: 120px;}\
 .fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
-.fancybutton:active {filter: opacity(30%);}';
+.fancybutton:active {filter: opacity(30%);}\
+div.sort-box > span:nth-child(n+2) {margin-left: 5px}';
 document.head.appendChild(css);
 
 var player = document.querySelector('section.player-and-aside-area');
@@ -136,7 +137,7 @@ document.querySelector('div.sort-box').appendChild(manager);
 var ban_list = document.createElement('div');
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
 ban_list.className = 'fancylist';
-ban_list.style.display = 'none';
+ban_list.style.cssText = 'display: none; left: 172px;'
 manager.after(ban_list);
 
 ban_id.forEach((item, index) => makeBanList(item, ban_liver[index]));
@@ -159,3 +160,40 @@ function makeBanList(id, liver) {
     box.appendChild(ban_id);
     box.appendChild(ban_liver);
 }
+
+var batch = document.createElement('span');
+batch.innerHTML = '批量屏蔽';
+batch.className = 'fancybutton';
+batch.addEventListener('click', (event) => {
+    if (batch_box.style.display === 'none') {
+        batch_box.style.display = 'block';
+    }
+    else {
+        batch_box.style.display = 'none';
+    }
+});
+manager.before(batch);
+
+var batch_box = document.createElement('div');
+batch_box.className = 'fancylist';
+batch_box.style.cssText = 'display: none; left: -40px;';
+batch.after(batch_box);
+
+var ban_box = document.createElement('textarea');
+ban_box.style.cssText = 'resize: none; height: 160px; width: 200px; font-size: 14px; padding: 3px;';
+batch_box.appendChild(ban_box);
+
+var submit = document.createElement('span');
+submit.innerHTML = '确认';
+submit.className = 'fancybutton';
+submit.style.cssText = 'position: absolute; bottom: 1px; left: 35px;';
+submit.addEventListener('click', (event) => {
+    var list = ban_box.value.split('\n');
+    list.forEach(item => {
+        if (item.match(/\d+[\s\/\.\@\#\$,]+[^\s\/\.\@\#\$,]+/)) {
+            var box = item.split(/[\s\/\.,]+/);
+            GM_setValue('ban', {id: box[0], liver: box[1]});
+        }
+    });
+});
+batch_box.appendChild(submit);
