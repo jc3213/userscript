@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Bilibili 直播间屏蔽工具
+// @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      6
+// @version      7
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -16,33 +16,31 @@
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
 GM_addValueChangeListener('ban', (name, old_value, new_value, remote) => {
-    if (new_value === '') {
-        return;
+    if (new_value !== '') {
+        ban_id.push(new_value.id);
+        ban_liver.push(new_value.liver);
+        GM_setValue('id', ban_id);
+        GM_setValue('liver', ban_liver);
+        makeBanList(new_value.id, new_value.liver);
+        GM_setValue('ban', '');
     }
-    ban_id.push(new_value.id);
-    ban_liver.push(new_value.liver);
-    GM_setValue('id', ban_id);
-    GM_setValue('liver', ban_liver);
-    makeBanList(new_value.id, new_value.liver);
-    GM_setValue('ban', '');
 });
 GM_addValueChangeListener('unban', (name, old_value, new_value, remove) => {
-    if (new_value === '') {
-        return;
+    if (new_value !== '') {
+        var index = ban_id.indexOf(new_value);
+        ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
+        ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
+        GM_setValue('id', ban_id);
+        GM_setValue('liver', ban_liver);
+        ban_list.querySelector('#banned_' + new_value).remove();
+        list.querySelectorAll('li').forEach(item => {
+            var id = item.querySelector('a').href.match(/\d+/)[0];
+            if (new_value === id) {
+                item.style.display = 'block';
+            }
+        });
+        GM_setValue('unban', '');
     }
-    var index = ban_id.indexOf(new_value);
-    ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
-    ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
-    GM_setValue('id', ban_id);
-    GM_setValue('liver', ban_liver);
-    ban_list.querySelector('#banned_' + new_value).remove();
-    list.querySelectorAll('li').forEach(item => {
-        var id = item.querySelector('a').href.match(/\d+/)[0];
-        if (new_value === id) {
-            item.style.display = 'block';
-        }
-    });
-    GM_setValue('unban', '');
 });
 
 var css = document.createElement('style');
@@ -61,8 +59,18 @@ document.head.appendChild(css);
 var player = document.querySelector('section.player-and-aside-area');
 if (player) {
     var id = location.pathname.match(/\d+/)[0];
+    var liver = player.querySelector('a.room-owner-username').innerHTML;
+    var block = document.createElement('span');
+    block.innerHTML = '屏蔽直播间';
+    block.className = 'fancybutton';
+    block.addEventListener('click', (event) => {
+        if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+            GM_setValue('ban', {id: id, liver: liver});
+            open('https://live.bilibili.com/', '_self');
+        }
+    });
+    document.querySelector('a.room-owner-username').after(block);
     if (ban_id.includes(id)) {
-        var liver = player.querySelector('a.room-owner-username').innerHTML;
         if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
             open('https://live.bilibili.com', '_self');
         }
