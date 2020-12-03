@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      7.1
+// @version      7.2
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -53,7 +53,7 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
 .fancybutton:active {filter: opacity(30%);}\
-div.sort-box > span:nth-child(n+2) {margin-left: 5px}';
+div.sort-box > span:nth-child(n+2), div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
 var player = document.querySelector('section.player-and-aside-area');
@@ -76,17 +76,19 @@ if (player) {
             open(url, '_self');
         }
     }
-    return;
 }
 
 var list = document.querySelector('ul.list');
 if (list) {
-    list.querySelectorAll('li').forEach(item => blockLiveRoom(item));
+    list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
     list.addEventListener('DOMNodeInserted', (event) => {
         if (event.target.tagName === 'LI' && event.target.className === '') {
-            blockLiveRoom(event.target);
+            addMenuToLiveRoom(event.target);
         }
     });
+}
+else {
+    return;
 }
 
 function blockLiveRoom(element) {
@@ -94,6 +96,11 @@ function blockLiveRoom(element) {
     if (ban_id.includes(id)) {
         element.style.display = 'none';
     }
+    return id;
+}
+
+function addMenuToLiveRoom(element) {
+    var id = blockLiveRoom(element);
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
     var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https:\/\/[^\@]+/)[0];
@@ -199,8 +206,8 @@ submit.className = 'fancybutton';
 submit.style.cssText = 'position: absolute; bottom: 1px; left: 35px;';
 submit.addEventListener('click', (event) => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
-        var list = ban_box.value.split('\n');
-        list.forEach(item => {
+        var pattern = ban_box.value.split('\n');
+        pattern.forEach(item => {
             var rule = item.match(/(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/);
             if (rule) {
                 if (!ban_id.includes(rule[1])) {
@@ -208,6 +215,7 @@ submit.addEventListener('click', (event) => {
                 }
             }
         });
+        list.querySelectorAll('li').forEach(item => blockLiveRoom(item));
         ban_box.value = '';
     }
 });
