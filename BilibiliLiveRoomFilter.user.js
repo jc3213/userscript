@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      7.2
+// @version      8
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -154,7 +154,7 @@ document.querySelector('div.sort-box').appendChild(manager);
 var ban_list = document.createElement('div');
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
 ban_list.className = 'fancylist';
-ban_list.style.cssText = 'display: none; left: 172px;'
+ban_list.style.cssText = 'display: none; left: -28px;'
 manager.after(ban_list);
 
 ban_id.forEach((item, index) => makeBanList(item, ban_liver[index]));
@@ -189,11 +189,11 @@ batch.addEventListener('click', (event) => {
         batch_box.style.display = 'none';
     }
 });
-manager.before(batch);
+manager.after(batch);
 
 var batch_box = document.createElement('div');
 batch_box.className = 'fancylist';
-batch_box.style.cssText = 'display: none; left: -40px;';
+batch_box.style.cssText = 'display: none; left: 202px;';
 batch.after(batch_box);
 
 var ban_box = document.createElement('textarea');
@@ -220,3 +220,15 @@ submit.addEventListener('click', (event) => {
     }
 });
 batch_box.appendChild(submit);
+
+var save = document.createElement('span');
+save.innerHTML = '导出列表';
+save.className = 'fancybutton';
+save.addEventListener('click', (event) => {
+    var list = ban_id.map((item, index) => item + ', ' + ban_liver[index]).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([list], {type: 'text/plain'}));
+    a.download = 'bilibili直播间屏蔽列表'
+    a.click();
+});
+batch.after(save);
