@@ -192,9 +192,11 @@ submit.addEventListener('click', (event) => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
         var list = ban_box.value.split('\n');
         list.forEach(item => {
-            if (item.match(/\d+[\s\/\.\@\#\$,]+[^\s\/\.\@\#\$,]+/)) {
+            if (item.match(/\d+[\s\/\.\@\#\$\,\/\\]+[^\s\/\.\@\#\$\,\/\\]+/)) {
                 var box = item.split(/[\s\/\.,]+/);
-                GM_setValue('ban', {id: box[0], liver: box[1]});
+                if (!ban_id.includes(item[0])) {
+                    GM_setValue('ban', {id: box[0], liver: box[1]});
+                }
             }
         });
         ban_box.value = '';
