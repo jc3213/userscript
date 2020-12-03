@@ -60,19 +60,20 @@ var player = document.querySelector('section.player-and-aside-area');
 if (player) {
     var id = location.pathname.match(/\d+/)[0];
     var liver = player.querySelector('a.room-owner-username').innerHTML;
+    var url = player.querySelector('a.area-link').href;
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
     block.className = 'fancybutton';
     block.addEventListener('click', (event) => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             GM_setValue('ban', {id: id, liver: liver});
-            open('https://live.bilibili.com/', '_self');
+            open(url, '_self');
         }
     });
-    document.querySelector('a.room-owner-username').after(block);
+    player.querySelector('a.room-owner-username').after(block);
     if (ban_id.includes(id)) {
         if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
-            open('https://live.bilibili.com', '_self');
+            open(url, '_self');
         }
     }
     return;
