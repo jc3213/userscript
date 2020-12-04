@@ -160,7 +160,7 @@ var mangas = {
     'loveheaven.net': {
         chapter: /chapter-(\d+)/,
         selector: 'img.chapter-img',
-        ads: ['div.float-ck', 'center', 'h3'],
+        ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
     },
     'mangasum.com': {
