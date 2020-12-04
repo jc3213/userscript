@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         52
+// @version         53
 // @description     Assistant for raw manga online (LoveHeaven, MangaSum, HanaScan, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, HanaScan, Komiraw等) 助手脚本
 // @author          jc3213
@@ -19,7 +19,6 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_addValueChangeListener
-// @grant           GM_download
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.adtrue.com/*", "action": "cancel"}
@@ -34,6 +33,7 @@
 // @webRequest      {"selector": "*simrubwan.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*dyecowwhy.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*mehebborc.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*alignclamstram.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*wowjogsot.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.optad360.io/*", "action": "cancel"}
 // @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
@@ -67,6 +67,7 @@ var urls = [];
 var save = [];
 var aria2 = [];
 var fail = [];
+var download;
 var observer;
 var value = {};
 var images;
@@ -272,27 +273,26 @@ var downMenu = {
     save: {
         icon: '💾',
         click: () => {
+            download = [];
             save.forEach((item, index) => {
-                var url = item[0];
-                var name = item[1];
-                downMenu.save.handler(url, name, index);
-            });
-        },
-        handler: (url, name, index) => {
-            setTimeout(() => {
-                GM_download({
-                    url: url,
-                    name: name,
-                    onload: () => {
-                        if (index === images.length - 1) {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: item[0],
+                    responseType: 'blob',
+                    onload: (details) => {
+                        var a = document.createElement('a');
+                        a.href = URL.createObjectURL(details.response);
+                        a.download = item[1];
+                        a.click();
+                        download.push(index);
+                        if (download.length === images.length) {
                             notification('save', 'done');
+                            download = [];
                         }
                     },
-                    onerror: (error) => {
-                        notification('save', 'error', url);
-                    }
+                    onerror: () => notification('save', 'error', item[0])
                 });
-            }, index * 200);
+            });
         }
     },
     copy: {
