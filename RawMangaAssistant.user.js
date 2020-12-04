@@ -2,9 +2,9 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         53
-// @description     Assistant for raw manga online (LoveHeaven, MangaSum, HanaScan, Komiraw and etc.)
-// @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, HanaScan, Komiraw等) 助手脚本
+// @version         54
+// @description     Assistant for raw manga online (LoveHeaven, MangaSum, BatoScan, Komiraw and etc.)
+// @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, BatoScan, Komiraw等) 助手脚本
 // @author          jc3213
 // @match           *://loveheaven.net/*
 // @match           *://loveha.net/*
@@ -12,7 +12,7 @@
 // @match           *://mangant.com/*
 // @match           *://manga1000.com/*
 // @match           *://manga1001.com/*
-// @match           *://hanascan.com/*
+// @match           *://batoscan.net/*
 // @match           *://manga11.com/*
 // @match           *://komiraw.com/*
 // @connect         *
@@ -25,7 +25,7 @@
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.googletagservices.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*d3m4hp4bp4w996.cloudfront.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.cloudfront.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidadx.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.adxpub.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
@@ -44,6 +44,7 @@
 // @webRequest      {"selector": "*.mgid.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.adsco.re/*", "action": "cancel"}
 // @webRequest      {"selector": "*engine.4dsply.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.spolecznosci.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*prosumsit.com/*", "action": "cancel"}
@@ -51,6 +52,7 @@
 // @webRequest      {"selector": "*jiltlargosirk.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.popcash.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.betteradsystem.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.popads.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.leadzutw.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.cacafly.net/*", "action": "cancel"}
@@ -58,6 +60,7 @@
 // @webRequest      {"selector": "*.clfvfumqqok.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.akhlkkdrxwav.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.pgqpibyycasfvl.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.ntkjbweenycfq.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*badskates.com/*", "action": "cancel"}
 // ==/UserScript==
 
@@ -69,14 +72,14 @@ var aria2 = [];
 var fail = [];
 var download;
 var observer;
-var value = {};
 var images;
 var watching;
 var mousedown;
 var moving = false;
 var position = GM_getValue('position', {top: screen.availHeight * 0.3, left: screen.availWidth * 0.15});
 var lazyload;
-var warning
+var warning;
+var header = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
 
 // i18n strings and labels
 var messages = {
@@ -155,28 +158,28 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'loveheaven.net': {
-        chapter: 'chapter-',
+        chapter: /chapter-(\d+)/,
         selector: 'img.chapter-img',
         ads: ['div.float-ck', 'center', 'h3'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
     },
     'mangasum.com': {
-        chapter: 'chapter-',
+        chapter: /chapter-(\d+)/,
         selector: 'div[id^="page_"] > img',
         lazyload: 'data-original'
     },
-    'hanascan.com': {
-        chapter: 'chapter-',
+    'batoscan.net': {
+        chapter: /chapter-(\d+)/,
         selector: 'img[class="chapter-img"]',
         lazyload: 'data-original',
     },
     'manga1000.com': {
-        chapter: '%e3%80%90%e7%ac%ac',
+        chapter: /%e3%80%90%e7%ac%ac(\d+)/,
         selector: 'figure[class="wp-block-image"] > img',
         shortcut: 'div[class="linkchap"] > a'
     },
     'manga11.com': {
-        chapter: 'chap-',
+        chapter: /chap-(\d+)/,
         selector: 'img[class^="chapter-img"]',
         shortcut: {prev: 'a[id="prev_chap"]', next: 'a[id="next_chap"]'}
     }
@@ -305,23 +308,44 @@ var downMenu = {
     aria2: {
         icon: '🖅',
         click: () => {
+            downMenu.aria2.handler({
+                method: 'aria2.getGlobalOption'
+            }, (details) => {
+                if (details.status === 200) {
+                    if (details.response.includes('Unauthorized')) {
+                        notification('aria2', 'nokey');
+                    }
+                    else {
+                        var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + chapter[1];
+                        var aria2 = save.map((item, index) => downMenu.aria2.handler({
+                            method: 'aria2.addUri',
+                            options: [[item[0]], {out: item[1], dir: dir, header: header}]
+                        }, () => {
+                            if (index === images.length - 1) {
+                                notification('aria2', 'done');
+                            }
+                        }));
+                    }
+                }
+                else {
+                    notification('aria2', 'norpc');
+                }
+            }, (error) => {
+                notification('aria2', 'norpc');
+            });
+        },
+        handler: (property, onload, onerror) => {
             GM_xmlhttpRequest({
                 url: document.getElementById('assistant_aria2_server').value,
                 method: 'POST',
-                data: JSON.stringify(aria2),
-                onload: (details) => {
-                    if (details.status === 200) {
-                        if (details.response.includes('Unauthorized')) {
-                            notification('aria2', 'nokey');
-                        }
-                        else {
-                            notification('aria2', 'done');
-                        }
-                    }
-                    if (details.status === 404) {
-                        notification('aria2', 'norpc');
-                    }
-                }
+                data: JSON.stringify({
+                    id: '',
+                    jsonrpc: '2.0',
+                    method: property.method,
+                    params: ['token:' + document.getElementById('assistant_aria2_secret').value].concat(property.options)
+                }),
+                onload: onload,
+                onerror: onerror
             });
         },
         event: {
@@ -488,7 +512,8 @@ function input_menu_item(name, props) {
 
 // Extract images data
 if (watching) {
-    if (typeof watching.chapter === 'string' && location.pathname.includes(watching.chapter) || typeof watching.chapter === 'object' && watching.chapter.test(location.pathname)) {
+    var chapter = location.pathname.match(watching.chapter);
+    if (chapter) {
         images = document.querySelectorAll(watching.selector);
         removeMultipleElement(watching.ads);
         extractImage(watching.lazyload);
@@ -562,16 +587,6 @@ function storeImageInfo(index, url, name, ext) {
     }
     urls.push(url);
     save.push([url, name]);
-    aria2.push({
-        id: '',
-        jsonrpc: '2.0',
-        method: 'aria2.addUri',
-        params: [
-            'token:' + document.getElementById('assistant_aria2_secret').value,
-            [url],
-            {out: name, header: ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent]}
-        ]
-    });
 }
 
 // Append shortcut event
