@@ -51,10 +51,11 @@ function blobToFile(blob, name) {
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
-.fancylist {background-color: #fff; font-size: 14px; min-width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
+.fancylist {background-color: #fff; font-size: 14px; width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
 .fancylist div:nth-child(n+2) span:nth-child(2) {background-color: #ddd;}\
 .fancylist span:nth-child(1) {width: 80px;}\
-.fancylist span:nth-child(2) {width: 120px;}\
+.fancylist span:nth-child(2) {width: 95px;}\
+.fancylist .fancybutton {margin: 0px 12px;}\
 .fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
@@ -154,9 +155,11 @@ manager.className = 'fancybutton';
 manager.addEventListener('click', (event) => {
     if (ban_list.style.display === 'none') {
         ban_list.style.display = 'block';
+        batch_box.style.display = 'block';
     }
     else {
         ban_list.style.display = 'none';
+        batch_box.style.display = 'none';
     }
 });
 document.querySelector('div.sort-box').appendChild(manager);
@@ -164,7 +167,7 @@ document.querySelector('div.sort-box').appendChild(manager);
 var ban_list = document.createElement('div');
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
 ban_list.className = 'fancylist';
-ban_list.style.cssText = 'display: none; left: -28px;'
+ban_list.style.cssText = 'display: none; left: 202px;'
 manager.after(ban_list);
 
 ban_id.forEach((item, index) => makeBanList(item, ban_liver[index]));
@@ -188,32 +191,19 @@ function makeBanList(id, liver) {
     box.appendChild(ban_liver);
 }
 
-var batch = document.createElement('span');
-batch.innerHTML = '批量屏蔽';
-batch.className = 'fancybutton';
-batch.addEventListener('click', (event) => {
-    if (batch_box.style.display === 'none') {
-        batch_box.style.display = 'block';
-    }
-    else {
-        batch_box.style.display = 'none';
-    }
-});
-manager.after(batch);
-
 var batch_box = document.createElement('div');
 batch_box.className = 'fancylist';
-batch_box.style.cssText = 'display: none; left: 202px;';
-batch.after(batch_box);
+batch_box.style.cssText = 'display: none;';
+manager.after(batch_box);
 
 var ban_box = document.createElement('textarea');
-ban_box.style.cssText = 'resize: none; height: 160px; width: 200px; font-size: 14px; padding: 3px;';
+ban_box.style.cssText = 'resize: none; height: 160px; width: calc(100% - 8px); font-size: 14px; padding: 3px;';
 batch_box.appendChild(ban_box);
 
 var submit = document.createElement('span');
-submit.innerHTML = '确认';
+submit.innerHTML = '批量屏蔽';
 submit.className = 'fancybutton';
-submit.style.cssText = 'position: absolute; bottom: 1px; left: 35px;';
+
 submit.addEventListener('click', (event) => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
         var pattern = ban_box.value.split('\n');
@@ -240,4 +230,4 @@ save.addEventListener('click', (event) => {
         blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
     }
 });
-batch.after(save);
+batch_box.appendChild(save);
