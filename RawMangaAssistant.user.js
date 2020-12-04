@@ -522,18 +522,11 @@ if (watching) {
 }
 
 function removeMultipleElement(selector, node) {
-    if (selector) {
-        node = node || document;
-        if (Array.isArray(selector)) {
-            selector.forEach(item => removeElement(node.querySelectorAll(item)));
-        }
-        else {
-            removeElement(node.querySelectorAll(selector));
-        }
-    }
+    node = node || document;
+    Array.isArray(selector) ? selector.forEach(item => removeElement(item)) : removeElement(selector);
 
-    function removeElement(elements) {
-        elements.forEach(item => item.remove());
+    function removeElement(sel) {
+        node.querySelectorAll(sel).forEach(item => item.remove());
     }
 }
 
