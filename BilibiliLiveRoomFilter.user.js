@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      8
+// @version      9
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
-// @grant        GM_download
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_addValueChangeListener
@@ -42,6 +41,13 @@ GM_addValueChangeListener('unban', (name, old_value, new_value, remove) => {
         GM_setValue('unban', '');
     }
 });
+
+function blobToFile(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+}
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -123,7 +129,11 @@ function addMenuToLiveRoom(element) {
     download.addEventListener('click', (event) => {
         event.preventDefault();
         if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
-            GM_download(preview, id + '_' + name);
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', preview, true);
+            xhr.responseType = 'blob';
+            xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
+            xhr.send();
         }
     });
 
@@ -208,7 +218,7 @@ submit.addEventListener('click', (event) => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
         var pattern = ban_box.value.split('\n');
         pattern.forEach(item => {
-            var rule = item.match(/(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/);
+            var rule = item.match(/^(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/);
             if (rule) {
                 if (!ban_id.includes(rule[1])) {
                     GM_setValue('ban', {id: rule[1], liver: rule[2]});
@@ -225,10 +235,9 @@ var save = document.createElement('span');
 save.innerHTML = '导出列表';
 save.className = 'fancybutton';
 save.addEventListener('click', (event) => {
-    var list = ban_id.map((item, index) => item + ', ' + ban_liver[index]).join('\n');
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([list], {type: 'text/plain'}));
-    a.download = 'bilibili直播间屏蔽列表'
-    a.click();
+    if (confirm('确定要导出当前的屏蔽列表吗？')) {
+        var list = ban_id.map((item, index) => item + ', ' + ban_liver[index]).join('\n');
+        blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
+    }
 });
 batch.after(save);
