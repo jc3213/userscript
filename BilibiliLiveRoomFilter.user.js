@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      9
+// @version      10
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -51,11 +51,11 @@ function blobToFile(blob, name) {
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
-.fancylist {background-color: #fff; font-size: 14px; width: 200px; height: 200px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
+.fancylist {background-color: #fff; font-size: 14px; width: 240px; height: 320px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
 .fancylist div:nth-child(n+2) span:nth-child(2) {background-color: #ddd;}\
-.fancylist span:nth-child(1) {width: 80px;}\
-.fancylist span:nth-child(2) {width: 95px;}\
-.fancylist .fancybutton {margin: 0px 12px;}\
+.fancylist span:nth-child(1) {width: calc(50% - 30px);}\
+.fancylist span:nth-child(2) {width: calc(50% + 5px);}\
+.fancylist > .fancybutton {margin: 0px 5% 0px 10%;}\
 .fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
@@ -167,7 +167,7 @@ document.querySelector('div.sort-box').appendChild(manager);
 var ban_list = document.createElement('div');
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
 ban_list.className = 'fancylist';
-ban_list.style.cssText = 'display: none; left: 202px;'
+ban_list.style.cssText = 'display: none; left: 242px;'
 manager.after(ban_list);
 
 ban_id.forEach((item, index) => makeBanList(item, ban_liver[index]));
@@ -197,7 +197,7 @@ batch_box.style.cssText = 'display: none;';
 manager.after(batch_box);
 
 var ban_box = document.createElement('textarea');
-ban_box.style.cssText = 'resize: none; height: 160px; width: calc(100% - 8px); font-size: 14px; padding: 3px;';
+ban_box.style.cssText = 'resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px;';
 batch_box.appendChild(ban_box);
 
 var submit = document.createElement('span');
