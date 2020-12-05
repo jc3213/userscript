@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         54
+// @version         55
 // @description     Assistant for raw manga online (LoveHeaven, MangaSum, BatoScan, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, BatoScan, Komiraw等) 助手脚本
 // @author          jc3213
@@ -18,7 +18,6 @@
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
-// @grant           GM_addValueChangeListener
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.adtrue.com/*", "action": "cancel"}
@@ -204,6 +203,7 @@ var button = document.createElement('button');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay menuContainer';
+button.draggable = true;
 button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; width: 42px; height: 42px;';
 document.body.appendChild(button);
 
@@ -214,32 +214,14 @@ container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left
 document.body.appendChild(container);
 
 // Draggable button and menu
-document.addEventListener('mousedown', (event) => {
-    if (event.target.id === 'assistant_button') {
-        position.top = event.clientY;
-        position.left = event.clientX;
-        mousedown = setTimeout(() => {
-            moving = true;
-            mousedown = null;
-        }, 300);
-    }
-});
-document.addEventListener('mousemove', (event) => {
-    if (moving) {
-        position.top = document.getElementById('assistant_button').offsetTop - position.top + event.clientY;
-        position.left = document.getElementById('assistant_button').offsetLeft - position.left + event.clientX;
-        movingIconAndContainer(position);
-    }
-})
-document.addEventListener('mouseup', (event) => {
-    if (mousedown) {
-        clearTimeout(mousedown);
-        mousedown = null;
-    }
-    else if (moving) {
-        GM_setValue('position', position);
-        moving = false;
-    }
+document.addEventListener('dragend', (event) => {
+    position.top = event.clientY;
+    position.left = event.clientX;
+    button.style.top = position.top + 'px';
+    button.style.left = position.left + 'px';
+    container.style.top = button.offsetTop + 'px';
+    container.style.left = button.offsetLeft + button.offsetWidth + 'px';
+    GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
     if (event.target.id === 'assistant_aria2_server' || event.target.id === 'assistant_aria2_secret') {
@@ -257,13 +239,6 @@ document.addEventListener('click', (event) => {
         container.style.display = 'none';
     }
 });
-GM_addValueChangeListener('position', (name, old_value, new_value, remote) => movingIconAndContainer(new_value));
-function movingIconAndContainer(position) {
-    button.style.top = position.top + 'px';
-    button.style.left = position.left + 'px';
-    container.style.top = button.offsetTop + 'px';
-    container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-}
 
 // Create menuitems
 var downBox = document.createElement('div');
@@ -471,10 +446,6 @@ function click_menu_item(name, props) {
 function switch_menu_item(name, props) {
     var menu = iconic_menu_item(name, props);
     menu.value = props.value;
-    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
-        menu.value = new_value;
-        switch_item_handler(menu, props);
-    });
     menu.addEventListener('click', () => GM_setValue(name, !menu.value));
     switch_item_handler(menu, props);
     return menu;
@@ -495,15 +466,6 @@ function input_menu_item(name, props) {
     menu.className = 'assistantMenu menuAria2Item';
     menu.value = props.value;
     menu.setAttribute('type', props.type);
-    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
-        menu.value = new_value;
-        if (props.type === 'password') {
-            notification(name);
-            setTimeout(() => {
-                location.reload();
-            }, 5000);
-        }
-    });
     menu.addEventListener('change', (event) => GM_setValue(name, event.target.value));
     menu.addEventListener('focus', (event) => event.target.setAttribute('type', 'text'));
     menu.addEventListener('blur', (event) => event.target.setAttribute('type', props.type));
