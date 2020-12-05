@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      11
+// @version      11.1
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -239,8 +239,10 @@ clear.className = 'fancybutton';
 clear.addEventListener('click', (event) => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
         list.querySelectorAll('li').forEach(item => blockLiveRoom(item, true));
-        GM_setValue('id', []);
-        GM_setValue('liver', []);
+        ban_id = [];
+        ban_liver = [];
+        GM_setValue('id', ban_id);
+        GM_setValue('liver', ban_liver);
         ban_list.innerHTML = ban_head;
     }
 });
