@@ -7,7 +7,6 @@
 // @match        *://live.bilibili.com/*
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @grant        GM_addValueChangeListener
 // @noframes
 // ==/UserScript==
 
