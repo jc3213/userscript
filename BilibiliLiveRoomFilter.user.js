@@ -7,20 +7,12 @@
 // @match        *://live.bilibili.com/*
 // @grant        GM_getValue
 // @grant        GM_setValue
-// @grant        GM_addValueChangeListener
 // @noframes
 // ==/UserScript==
 
 'use strict';
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
-GM_addValueChangeListener('id', (name, old_value, new_value, remote) => {
-    ban_id = new_value;
-    list.querySelectorAll('li').forEach(item => banLiveRoom(item));
-});
-GM_addValueChangeListener('liver', (name, old_value, new_value, remote) => {
-    ban_liver = new_value;
-});
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -86,8 +78,9 @@ function removeBanlist(id) {
 }
 
 function saveBanlist() {
-    GM_setValue('liver', ban_liver);
     GM_setValue('id', ban_id);
+    GM_setValue('liver', ban_liver);
+    list.querySelectorAll('li').forEach(item => banLiveRoom(item));
 }
 
 function banLiveRoom(element) {
