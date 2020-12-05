@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      11.1
+// @version      11.2
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -86,17 +86,15 @@ if (player) {
 }
 
 var list = document.querySelector('ul.list');
-if (list) {
-    list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
-    list.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'LI' && event.target.className === '') {
-            addMenuToLiveRoom(event.target);
-        }
-    });
-}
-else {
+if (!list) {
     return;
 }
+list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
+list.addEventListener('DOMNodeInserted', (event) => {
+    if (event.target.tagName === 'LI' && event.target.className === '') {
+        addMenuToLiveRoom(event.target);
+    }
+});
 
 function blockLiveRoom(element, inverse) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
