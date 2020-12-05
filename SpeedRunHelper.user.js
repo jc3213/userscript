@@ -19,7 +19,7 @@
 
 'use strict';
 var logger = {};
-var drag = {};
+var offset = {};
 
 var css = document.createElement('style');
 css.innerHTML = '.speedrun-menu {background-color: #FFF; cursor: pointer; border: 1px outset #F00; padding: 1px; font-size: 14px;}\
@@ -28,6 +28,7 @@ css.innerHTML = '.speedrun-menu {background-color: #FFF; cursor: pointer; border
 document.head.appendChild(css);
 
 document.querySelectorAll('div[data-ad]').forEach(item => item.remove());
+document.querySelector('body > main > div > div:nth-child(5)').remove();
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
@@ -71,6 +72,7 @@ function createRecordWindow(id, content, top, left) {
 
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
+    container.draggable = 'true';
     container.style.cssText = 'position: fixed; top: ' + top / 2 + 'px; left: ' + left / 2 + 'px; z-index: 3213; width: 850px; height: 500px;';
     document.body.appendChild(container);
 
@@ -87,20 +89,11 @@ function createRecordWindow(id, content, top, left) {
     container.appendChild(content);
 }
 
-document.addEventListener('mousedown', (event) => {
-    document.querySelectorAll('div[id^="speedrun-"]').forEach(item => { if (item.contains(event.target)) drag.element = item; });
-    if (drag.element) {
-        drag.is = true;
-        drag.top = event.clientY;
-        drag.left = event.clientX;
-    }
+document.addEventListener('dragstart', (event) => {
+    offset.top = event.clientY;
+    offset.left = event.clientX
 });
-document.addEventListener('mousemove', (event) => {
-    if (drag.is) {
-        drag.top = drag.element.offsetTop - drag.top + event.clientY;
-        drag.left = drag.element.offsetLeft - drag.left + event.clientX;
-        drag.element.style.top = drag.top + 'px';
-        drag.element.style.left = drag.left + 'px';
-    }
-})
-document.addEventListener('mouseup', (event) => {drag.is = false});
+document.addEventListener('dragend', (event) => {
+    event.target.style.top = event.target.offsetTop + event.clientY - offset.top + 'px';
+    event.target.style.left = event.target.offsetLeft + event.clientX - offset.left + 'px';
+});
