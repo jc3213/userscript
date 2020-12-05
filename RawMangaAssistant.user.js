@@ -18,6 +18,7 @@
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @grant           GM_addValueChangeListener
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.adtrue.com/*", "action": "cancel"}
@@ -76,6 +77,7 @@ var watching;
 var mousedown;
 var moving = false;
 var position = GM_getValue('position', {top: screen.availHeight * 0.3, left: screen.availWidth * 0.15});
+var offset = {};
 var lazyload;
 var warning;
 var header = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
@@ -214,15 +216,22 @@ container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left
 document.body.appendChild(container);
 
 // Draggable button and menu
+document.addEventListener('dragstart', (event) => {
+    offset.top = event.clientY;
+    offset.left = event.clientX
+});
 document.addEventListener('dragend', (event) => {
-    position.top = event.clientY;
-    position.left = event.clientX;
+    position.top += event.clientY - offset.top;
+    position.left += event.clientX - offset.left;
+    GM_setValue('position', position);
+});
+GM_addValueChangeListener('position', (name, old_value, new_value, remote) => movingIconAndContainer(new_value));
+function movingIconAndContainer(position) {
     button.style.top = position.top + 'px';
     button.style.left = position.left + 'px';
     container.style.top = button.offsetTop + 'px';
     container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-    GM_setValue('position', position);
-});
+}
 document.addEventListener('click', (event) => {
     if (event.target.id === 'assistant_aria2_server' || event.target.id === 'assistant_aria2_secret') {
         return;
@@ -448,6 +457,10 @@ function switch_menu_item(name, props) {
     menu.value = props.value;
     menu.addEventListener('click', () => GM_setValue(name, !menu.value));
     switch_item_handler(menu, props);
+    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
+        menu.value = new_value;
+        switch_item_handler(menu, props);
+    });
     return menu;
 }
 function switch_item_handler(menu, props) {
@@ -469,6 +482,9 @@ function input_menu_item(name, props) {
     menu.addEventListener('change', (event) => GM_setValue(name, event.target.value));
     menu.addEventListener('focus', (event) => event.target.setAttribute('type', 'text'));
     menu.addEventListener('blur', (event) => event.target.setAttribute('type', props.type));
+    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
+        menu.value = new_value;
+    });
     return menu;
 }
 
