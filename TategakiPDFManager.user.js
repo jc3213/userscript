@@ -179,7 +179,7 @@ function fancyTableItem(ncode, book) {
     makeFancyItem(box, {'tag': 'span', 'title': '小説のウェブページを開きます', 'html': book.title, 'click': (event) => openNovelPage(ncode, book.title)});
     var item3 = makeFancyItem(box, {'tag': 'span', 'title': '更新間隔を' + book.next + '日に設定します'});
     makeFancyItem(item3, {'tag': 'input', 'change': (event) => updatePeriodHandler(event, item3, ncode, book.title), 'attr': {'id': ncode + '-next', 'value': book.next}});
-    var item5 = makeFancyItem(box, {'tag': 'span', 'title': '縦書きPDFの更新をチェックします', 'html': new Date(book.last), 'click': (event) => updateTategakiPDF(ncode, book.title), 'attr': {'id': ncode + '-update'}});
+    makeFancyItem(box, {'tag': 'span', 'title': '縦書きPDFの更新をチェックします', 'html': new Date(book.last), 'click': (event) => updateTategakiPDF(ncode, book.title), 'attr': {'id': ncode + '-update'}});
 }
 function makeFancyItem(box, props) {
     var tag = document.createElement(props.tag);
