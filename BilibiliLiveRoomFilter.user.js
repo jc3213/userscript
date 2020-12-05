@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      10
+// @version      11
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -51,11 +51,11 @@ function blobToFile(blob, name) {
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
-.fancylist {background-color: #fff; font-size: 14px; width: 240px; height: 320px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
+.fancylist {background-color: #fff; font-size: 14px; width: 270px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
 .fancylist div:nth-child(n+2) span:nth-child(2) {background-color: #ddd;}\
-.fancylist span:nth-child(1) {width: calc(50% - 30px);}\
-.fancylist span:nth-child(2) {width: calc(50% + 5px);}\
-.fancylist > .fancybutton {margin: 0px 5% 0px 10%;}\
+.fancylist span:nth-child(1) {width: calc(50% - 50px);}\
+.fancylist span:nth-child(2) {width: calc(50% + 25px);}\
+.fancylist > .fancybutton {margin: 0px 3px 0px 2px;}\
 .fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybutton:hover {filter: opacity(60%);}\
@@ -98,10 +98,10 @@ else {
     return;
 }
 
-function blockLiveRoom(element) {
+function blockLiveRoom(element, inverse) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
     if (ban_id.includes(id)) {
-        element.style.display = 'none';
+        element.style.display = inverse ? 'block' : 'none';
     }
     return id;
 }
@@ -165,7 +165,8 @@ manager.addEventListener('click', (event) => {
 document.querySelector('div.sort-box').appendChild(manager);
 
 var ban_list = document.createElement('div');
-ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
+var ban_head = '<div class="fancytitle"><span class="fancyitem">直播间</span><span class="fancyitem">主播</span></div>';
+ban_list.innerHTML = ban_head;
 ban_list.className = 'fancylist';
 ban_list.style.cssText = 'display: none; left: 242px;'
 manager.after(ban_list);
@@ -225,9 +226,22 @@ var save = document.createElement('span');
 save.innerHTML = '导出列表';
 save.className = 'fancybutton';
 save.addEventListener('click', (event) => {
-    if (confirm('确定要导出当前的屏蔽列表吗？')) {
+    if (confirm('确定要导出当前屏蔽列表吗？')) {
         var list = ban_id.map((item, index) => item + ', ' + ban_liver[index]).join('\n');
         blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
     }
 });
 batch_box.appendChild(save);
+
+var clear = document.createElement('span');
+clear.innerHTML = '清空列表';
+clear.className = 'fancybutton';
+clear.addEventListener('click', (event) => {
+    if (confirm('确定要清空当前屏蔽列表吗？')) {
+        list.querySelectorAll('li').forEach(item => blockLiveRoom(item, true));
+        GM_setValue('id', []);
+        GM_setValue('liver', []);
+        ban_list.innerHTML = ban_head;
+    }
+});
+batch_box.appendChild(clear);
