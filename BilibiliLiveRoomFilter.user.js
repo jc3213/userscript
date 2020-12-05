@@ -1,18 +1,26 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      12
+// @version      12.1
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_addValueChangeListener
 // @noframes
 // ==/UserScript==
 
 'use strict';
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
+GM_addValueChangeListener('id', (name, old_value, new_value, remote) => {
+    ban_id = new_value;
+    list.querySelectorAll('li').forEach(item => banLiveRoom(item));
+});
+GM_addValueChangeListener('liver', (name, old_value, new_value, remote) => {
+    ban_liver = new_value;
+});
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -74,7 +82,6 @@ function removeBanlist(id) {
     var index = ban_id.indexOf(id);
     ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
     ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
-    list.querySelectorAll('li').forEach(item => unbanLiveRoom(item, [id]));
     ban_list.querySelector('#banned_' + id).remove();
 }
 
@@ -83,19 +90,10 @@ function saveBanlist() {
     GM_setValue('id', ban_id);
 }
 
-function banLiveRoom(element, inverse) {
+function banLiveRoom(element) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
-    if (ban_id.includes(id)) {
-        element.style.display = inverse ? 'block' : 'none';
-    }
+    element.style.display = ban_id.includes(id) ? 'none' : 'block';
     return id;
-}
-
-function unbanLiveRoom(element, room) {
-    var id = element.querySelector('a').href.match(/\d+/)[0];
-    if (room.includes(id)) {
-        element.style.display = 'block';
-    }
 }
 
 function blobToFile(blob, name) {
@@ -118,7 +116,6 @@ function addMenuToLiveRoom(element) {
         event.preventDefault();
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
-            element.style.display = 'none';
             saveBanlist();
         }
     });
@@ -215,7 +212,6 @@ submit.addEventListener('click', (event) => {
                 addBanlist(rule[1], rule[2]);
             }
         });
-        list.querySelectorAll('li').forEach(item => banLiveRoom(item));
         saveBanlist();
         ban_box.value = '';
     }
@@ -238,7 +234,6 @@ clear.innerHTML = '清空列表';
 clear.className = 'fancybutton';
 clear.addEventListener('click', (event) => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
-        list.querySelectorAll('li').forEach(item => unbanLiveRoom(item, ban_id));
         ban_list.innerHTML = ban_head;
         ban_id = [];
         ban_liver = [];
