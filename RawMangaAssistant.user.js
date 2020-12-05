@@ -159,28 +159,33 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'loveheaven.net': {
-        chapter: /chapter-(\d+)/,
+        chapter: /\/read-(.+)-manga-raw-chapter-(.+)\.html/,
+        folder: () => {return chapter.slice(1).join('\\')},
         selector: 'img.chapter-img',
         ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
     },
     'mangasum.com': {
-        chapter: /chapter-(\d+)/,
+        chapter: /\/manga\/(.+)-raw\/chapter-(.+)\//,
+        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
         selector: 'div[id^="page_"] > img',
         lazyload: 'data-original'
     },
     'batoscan.net': {
-        chapter: /chapter-(\d+)/,
+        chapter: /\/read-(.+)-raw-chapter-(.+)\.html/,
+        folder: () => {return chapter.slice(1).join('\\')},
         selector: 'img[class="chapter-img"]',
         lazyload: 'data-original',
     },
     'manga1000.com': {
-        chapter: /%e3%80%90%e7%ac%ac(\d+)/,
+        chapter: /%E3%80%90%E7%AC%AC(.+)%E8%A9%B1%E3%80%91(.+)-raw/,
+        folder: () => {return decodeURI(chapter[2]) + '\\' + chapter[1]},
         selector: 'figure[class="wp-block-image"] > img',
         shortcut: 'div[class="linkchap"] > a'
     },
-    'manga11.com': {
-        chapter: /chap-(\d+)/,
+    'komiraw.com': {
+        chapter: /\/([^\/]+)-raw-chap-(.+)/,
+        folder: () => {return chapter.slice(1).join('\\')},
         selector: 'img[class^="chapter-img"]',
         shortcut: {prev: 'a[id="prev_chap"]', next: 'a[id="next_chap"]'}
     }
@@ -188,25 +193,25 @@ var mangas = {
 mangas['loveha.net'] = mangas['loveheaven.net'];
 mangas['mangant.com'] = mangas['mangasum.com'];
 mangas['manga1001.com'] = mangas['manga1000.com'];
-mangas['komiraw.com'] = mangas['manga11.com'];
+mangas['manga11.com'] = mangas['komiraw.com'];
 watching = mangas[location.host];
 
 var css = document.createElement('style');
-css.innerHTML = '.menuOverlay {position: fixed; z-index: 999999999;}\
-.menuContainer {min-width: fit-content; max-width: 330px; border: 1px ridge darkblue;}\
+css.innerHTML = '.menuOverlay {position: fixed; z-index: 999999999; background-color: white;}\
+.menuContainer {min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
 .assistantIcon {width: 30px; display: inline-block; text-align: center}\
-.assistantMenu {background-color: white; color: black; width: 190px; font-size: 14px; padding: 10px; height: 40px; display: block; user-select: none;}\
+.assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
 .assistantMenu:hover {background-color: darkviolet; color: white; cursor: default;}\
 .menuAria2Item {width: 300px; height: 42px; overflow: hidden;}\
 .menuAria2Item:focus {background-color: darkblue; color: white;}'
 document.head.appendChild(css);
 
-var button = document.createElement('button');
+var button = document.createElement('span');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay menuContainer';
 button.draggable = true;
-button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; width: 42px; height: 42px;';
+button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; padding-top: 10px; width: 42px; height: 42px;';
 document.body.appendChild(button);
 
 var container = document.createElement('div');
@@ -300,7 +305,7 @@ var downMenu = {
                         notification('aria2', 'nokey');
                     }
                     else {
-                        var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + chapter[1];
+                        var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
                         var aria2 = save.map((item, index) => downMenu.aria2.handler({
                             method: 'aria2.addUri',
                             options: [[item[0]], {out: item[1], dir: dir, header: header}]
