@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bilibili 直播间屏蔽工具
 // @namespace    https://github.com/jc3213/userscript
-// @version      11.2
+// @version      12
 // @description  try to take over the world!
 // @author       jc3213
 // @match        *://live.bilibili.com/*
@@ -14,40 +14,6 @@
 'use strict';
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
-GM_addValueChangeListener('ban', (name, old_value, new_value, remote) => {
-    if (new_value !== '') {
-        ban_id.push(new_value.id);
-        ban_liver.push(new_value.liver);
-        GM_setValue('id', ban_id);
-        GM_setValue('liver', ban_liver);
-        makeBanList(new_value.id, new_value.liver);
-        GM_setValue('ban', '');
-    }
-});
-GM_addValueChangeListener('unban', (name, old_value, new_value, remove) => {
-    if (new_value !== '') {
-        var index = ban_id.indexOf(new_value);
-        ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
-        ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
-        GM_setValue('id', ban_id);
-        GM_setValue('liver', ban_liver);
-        ban_list.querySelector('#banned_' + new_value).remove();
-        list.querySelectorAll('li').forEach(item => {
-            var id = item.querySelector('a').href.match(/\d+/)[0];
-            if (new_value === id) {
-                item.style.display = 'block';
-            }
-        });
-        GM_setValue('unban', '');
-    }
-});
-
-function blobToFile(blob, name) {
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
-}
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -67,20 +33,21 @@ var player = document.querySelector('section.player-and-aside-area');
 if (player) {
     var id = location.pathname.match(/\d+/)[0];
     var liver = player.querySelector('a.room-owner-username').innerHTML;
-    var url = player.querySelector('a.area-link').href;
+    var area = player.querySelector('a.area-link').href;
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
     block.className = 'fancybutton';
     block.addEventListener('click', (event) => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-            GM_setValue('ban', {id: id, liver: liver});
-            open(url, '_self');
+            addBanlist(id, liver);
+            saveBanlist();
+            open(area, '_self');
         }
     });
     player.querySelector('a.room-owner-username').after(block);
     if (ban_id.includes(id)) {
         if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
-            open(url, '_self');
+            open(area, '_self');
         }
     }
 }
@@ -96,7 +63,28 @@ list.addEventListener('DOMNodeInserted', (event) => {
     }
 });
 
-function blockLiveRoom(element, inverse) {
+function addBanlist(id, liver) {
+    if (!ban_id.includes(id)) {
+        ban_id.push(id);
+        ban_liver.push(liver);
+        makeBanlist(id, liver);
+    }
+}
+
+function removeBanlist(id) {
+    var index = ban_id.indexOf(id);
+    ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
+    ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
+    list.querySelectorAll('li').forEach(item => unbanLiveRoom(item, [id]));
+    ban_list.querySelector('#banned_' + id).remove();
+}
+
+function saveBanlist() {
+    GM_setValue('liver', ban_liver);
+    GM_setValue('id', ban_id);
+}
+
+function banLiveRoom(element, inverse) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
     if (ban_id.includes(id)) {
         element.style.display = inverse ? 'block' : 'none';
@@ -104,8 +92,22 @@ function blockLiveRoom(element, inverse) {
     return id;
 }
 
+function unbanLiveRoom(element, room) {
+    var id = element.querySelector('a').href.match(/\d+/)[0];
+    if (room.includes(id)) {
+        element.style.display = 'block';
+    }
+}
+
+function blobToFile(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+}
+
 function addMenuToLiveRoom(element) {
-    var id = blockLiveRoom(element);
+    var id = banLiveRoom(element);
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
     var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https:\/\/[^\@]+/)[0];
@@ -116,8 +118,9 @@ function addMenuToLiveRoom(element) {
     block.addEventListener('click', (event) => {
         event.preventDefault();
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+            addBanlist(id, liver);
             element.style.display = 'none';
-            GM_setValue('ban', {id: id, liver: liver});
+            saveBanlist();
         }
     });
 
@@ -169,9 +172,9 @@ ban_list.className = 'fancylist';
 ban_list.style.cssText = 'display: none; left: 242px;'
 manager.after(ban_list);
 
-ban_id.forEach((item, index) => makeBanList(item, ban_liver[index]));
+ban_id.forEach((item, index) => makeBanlist(item, ban_liver[index]));
 
-function makeBanList(id, liver) {
+function makeBanlist(id, liver) {
     var box = document.createElement('div');
     box.id = 'banned_' + id;
     var ban_id = document.createElement('span');
@@ -179,7 +182,8 @@ function makeBanList(id, liver) {
     ban_id.className = 'fancyitem fancybutton';
     ban_id.addEventListener('click', (event) => {
         if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
-            GM_setValue('unban', id);
+            removeBanlist(id);
+            saveBanlist();
         }
     });
     var ban_liver = document.createElement('span');
@@ -209,12 +213,11 @@ submit.addEventListener('click', (event) => {
         pattern.forEach(item => {
             var rule = item.match(/^(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/);
             if (rule) {
-                if (!ban_id.includes(rule[1])) {
-                    GM_setValue('ban', {id: rule[1], liver: rule[2]});
-                }
+                addBanlist(rule[1], rule[2]);
             }
         });
-        list.querySelectorAll('li').forEach(item => blockLiveRoom(item));
+        list.querySelectorAll('li').forEach(item => banLiveRoom(item));
+        saveBanlist();
         ban_box.value = '';
     }
 });
@@ -236,12 +239,11 @@ clear.innerHTML = '清空列表';
 clear.className = 'fancybutton';
 clear.addEventListener('click', (event) => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
-        list.querySelectorAll('li').forEach(item => blockLiveRoom(item, true));
+        list.querySelectorAll('li').forEach(item => unbanLiveRoom(item, ban_id));
+        ban_list.innerHTML = ban_head;
         ban_id = [];
         ban_liver = [];
-        GM_setValue('id', ban_id);
-        GM_setValue('liver', ban_liver);
-        ban_list.innerHTML = ban_head;
+        saveBanlist();
     }
 });
 batch_box.appendChild(clear);
