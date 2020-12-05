@@ -159,8 +159,8 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'loveheaven.net': {
-        chapter: /\/read-(.+)-manga-raw-chapter-(.+)\.html/,
-        folder: () => {return chapter.slice(1).join('\\')},
+        chapter: /\/read-(.+)-raw-chapter-(.+)\.html/,
+        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
         selector: 'img.chapter-img',
         ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
@@ -173,7 +173,7 @@ var mangas = {
     },
     'batoscan.net': {
         chapter: /\/read-(.+)-raw-chapter-(.+)\.html/,
-        folder: () => {return chapter.slice(1).join('\\')},
+        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
         selector: 'img[class="chapter-img"]',
         lazyload: 'data-original',
     },
