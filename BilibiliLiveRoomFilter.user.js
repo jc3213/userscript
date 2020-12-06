@@ -1,18 +1,29 @@
 // ==UserScript==
-// @name         bilibili 直播间屏蔽工具
-// @namespace    https://github.com/jc3213/userscript
-// @version      12.1
-// @description  try to take over the world!
-// @author       jc3213
-// @match        *://live.bilibili.com/*
-// @grant        GM_getValue
-// @grant        GM_setValue
+// @name              哔哩哔哩直播间屏蔽工具
+// @namespace         https://github.com/jc3213/userscript
+// @version           13
+// @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
+// @author            jc3213
+// @match             *://live.bilibili.com/*
+// @grant             GM_getValue
+// @grant             GM_setValue
+// @grant             GM_deleteValue
 // @noframes
 // ==/UserScript==
 
 'use strict';
 var ban_id = GM_getValue('id', []);
 var ban_liver = GM_getValue('liver', []);
+var banned = GM_getValue('banned', {});
+
+if (Object.keys(banned).length === 0 && ban_id.length !== 0) {
+    if (confirm('因版本变动，旧版本的列表将不再兼容，请点击确认进行导出，点击取消刷新后还会弹出本对话框。')) {
+        ban_id.forEach((item, index) => { banned[item] = ban_liver[index] });
+        GM_deleteValue('id');
+        GM_deleteValue('liver');
+        GM_setValue('banned', banned);
+    }
+}
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -44,7 +55,7 @@ if (player) {
         }
     });
     player.querySelector('a.room-owner-username').after(block);
-    if (ban_id.includes(id)) {
+    if (banned[id]) {
         if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
             open(area, '_self');
         }
@@ -63,29 +74,29 @@ list.addEventListener('DOMNodeInserted', (event) => {
 });
 
 function addBanlist(id, liver) {
-    if (!ban_id.includes(id)) {
-        ban_id.push(id);
-        ban_liver.push(liver);
+    if (!banned[id]) {
+        banned[id] = liver;
         makeBanlist(id, liver);
     }
 }
 
 function removeBanlist(id) {
-    var index = ban_id.indexOf(id);
-    ban_id = [...ban_id.slice(0, index), ...ban_id.slice(index + 1)];
-    ban_liver = [...ban_liver.slice(0, index), ...ban_liver.slice(index + 1)];
-    ban_list.querySelector('#banned_' + id).remove();
+    if (banned[id]) {
+        delete banned[id];
+        ban_list.querySelector('#banned_' + id).remove();
+    }
 }
 
 function saveBanlist() {
-    GM_setValue('id', ban_id);
-    GM_setValue('liver', ban_liver);
-    list.querySelectorAll('li').forEach(item => banLiveRoom(item));
+    GM_setValue('banned', banned);
+    if (list) {
+        list.querySelectorAll('li').forEach(item => banLiveRoom(item));
+    }
 }
 
 function banLiveRoom(element) {
     var id = element.querySelector('a').href.match(/\d+/)[0];
-    element.style.display = ban_id.includes(id) ? 'none' : 'block';
+    element.style.display = banned[id] ? 'none' : 'block';
     return id;
 }
 
@@ -161,7 +172,7 @@ ban_list.className = 'fancylist';
 ban_list.style.cssText = 'display: none; left: 242px;'
 manager.after(ban_list);
 
-ban_id.forEach((item, index) => makeBanlist(item, ban_liver[index]));
+Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
 
 function makeBanlist(id, liver) {
     var box = document.createElement('div');
@@ -216,7 +227,7 @@ save.innerHTML = '导出列表';
 save.className = 'fancybutton';
 save.addEventListener('click', (event) => {
     if (confirm('确定要导出当前屏蔽列表吗？')) {
-        var list = ban_id.map((item, index) => item + ', ' + ban_liver[index]).join('\n');
+        var list = Object.entries(banned).map(item => item[0] + ', ' + item[1]).join('\n');
         blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
     }
 });
@@ -228,8 +239,7 @@ clear.className = 'fancybutton';
 clear.addEventListener('click', (event) => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
         ban_list.innerHTML = ban_head;
-        ban_id = [];
-        ban_liver = [];
+        banned = {};
         saveBanlist();
     }
 });
