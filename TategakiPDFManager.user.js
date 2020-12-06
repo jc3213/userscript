@@ -99,10 +99,6 @@ function validateNcode(ncode) {
         onload: (details) => {
             validate[ncode] = details.responseXML.title;
             validNcodeResponse(ncode, validate[ncode]);
-        },
-        onerror: (error) => {
-            myFancyLog('', 'Nコード' + ncode, 'の検証は失敗しました！', true);
-            delete validate[ncode];
         }
     });
 }
@@ -301,11 +297,6 @@ function batchDownloadPreHandler(ncode) {
             else {
                 downloadPDFHandler(ncode);
             }
-        },
-        onerror: (error) => {
-            myFancyPopup(ncode, bookmark[ncode].title, 'のダウンロードは失敗しました！');
-            delete download[ncode];
-            session[ncode] = '失敗';
         }
     });
 }
