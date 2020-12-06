@@ -36,12 +36,12 @@ css.innerHTML = '.manager-button {background-color: #FFF; padding: 5px; border: 
 .manager-shelf, .manager-logs {overflow-y: scroll; height: 552px;}\
 .manager-shelf div:nth-child(2n+1) {background-color: #DDD;}\
 .manager-shelf span {height: 40px; text-align: center; vertical-align: middle; display: inline-block; padding: 5px;}\
-.manager-shelf input {width: 50px;}\
+.manager-shelf input {width: 70px;}\
 .manager-shelf span:nth-child(1) {width: 80px; margin-top: 15px; cursor: pointer;}\
-.manager-shelf span:nth-child(2) {width: 460px; overflow-y: hidden; text-align: left; cursor: pointer;}\
+.manager-shelf span:nth-child(2) {width: 525px; overflow-y: hidden; text-align: left; cursor: pointer;}\
 .manager-shelf span:nth-child(3) {width: 90px; margin-top: 15px;}\
-.manager-shelf span:nth-child(4) {width: 180px; overflow-y: hidden; cursor: pointer;}\
-.manager-shelf div:nth-child(1) span {height: 20px; overflow-y: hidden; text-align: center; margin: 0px; cursor: default;}\
+.manager-shelf span:nth-child(4) {width: 110px; overflow-y: hidden; cursor: pointer;}\
+.manager-shelf div:nth-child(1) span {height: 20px; overflow-y: hidden; text-align: center; margin: 0px; cursor: default; border: 1px solid #fff;}\
 .manager-shelf div:nth-child(n+2) span:hover {filter: opacity(60%);}\
 .manager-shelf div:nth-child(n+2) span:active {filter: opacity(30%);}\
 .fancylog {font-size: 16px;}\
@@ -179,7 +179,7 @@ function fancyTableItem(ncode, book) {
     makeFancyItem(box, {'tag': 'span', 'title': '小説のウェブページを開きます', 'html': book.title, 'click': (event) => openNovelPage(ncode, book.title)});
     var item3 = makeFancyItem(box, {'tag': 'span', 'title': '更新間隔を' + book.next + '日に設定します'});
     makeFancyItem(item3, {'tag': 'input', 'change': (event) => updatePeriodHandler(event, item3, ncode, book.title), 'attr': {'id': ncode + '-next', 'value': book.next}});
-    makeFancyItem(box, {'tag': 'span', 'title': '縦書きPDFの更新をチェックします', 'html': new Date(book.last), 'click': (event) => updateTategakiPDF(ncode, book.title), 'attr': {'id': ncode + '-update'}});
+    makeFancyItem(box, {'tag': 'span', 'title': '縦書きPDFの更新をチェックします', 'html': new Date(book.last).toLocaleString('ja'), 'click': (event) => updateTategakiPDF(ncode, book.title), 'attr': {'id': ncode + '-update'}});
 }
 function makeFancyItem(box, props) {
     var tag = document.createElement(props.tag);
