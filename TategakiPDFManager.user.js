@@ -30,16 +30,16 @@ css.innerHTML = '.manager-button {background-color: #FFF; padding: 5px; border: 
 .manager-button:hover {filter: opacity(60%);}\
 .manager-button:active {filter: opacity(30%);}\
 .manager-checked {padding: 4px; border: 2px inset #00F;}\
-.manager-container {position: fixed; top: 47px; left: calc((100% - 880px) / 2); background-color: #FFF; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px;}\
+.manager-container {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #FFF; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px;}\
 .manager-container > span, .manager-container > input {margin-left: 5px;}\
 .manager-container > div {padding: 5px; margin-top: 5px;}\
 .manager-shelf, .manager-logs {overflow-y: scroll; height: 552px;}\
 .manager-shelf div:nth-child(2n+1) {background-color: #DDD;}\
-.manager-shelf span {height: 40px; text-align: center; vertical-align: middle; display: inline-block; padding: 5px;}\
+.manager-shelf span {height: 100%; text-align: center; vertical-align: middle; display: inline-block; padding: 5px;}\
 .manager-shelf input {width: 70px;}\
-.manager-shelf span:nth-child(1) {width: 80px; margin-top: 15px; cursor: pointer;}\
+.manager-shelf span:nth-child(1) {width: 80px; cursor: pointer;}\
 .manager-shelf span:nth-child(2) {width: 525px; overflow-y: hidden; text-align: left; cursor: pointer;}\
-.manager-shelf span:nth-child(3) {width: 90px; margin-top: 15px;}\
+.manager-shelf span:nth-child(3) {width: 90px;}\
 .manager-shelf span:nth-child(4) {width: 110px; overflow-y: hidden; cursor: pointer;}\
 .manager-shelf div:nth-child(1) span {height: 20px; overflow-y: hidden; text-align: center; margin: 0px; cursor: default; border: 1px solid #fff;}\
 .manager-shelf div:nth-child(n+2) span:hover {filter: opacity(60%);}\
