@@ -289,7 +289,7 @@ function batchDownloadPreHandler(ncode) {
                 a.download = bookmark[ncode].title;
                 a.click();
                 bookmark[ncode].last = novelist.now;
-                document.getElementById(ncode + '-update').innerHTML = new Date(novelist.now);
+                document.getElementById(ncode + '-update').innerHTML = new Date(novelist.now).toLocaleString('ja');
                 myFancyLog(ncode, bookmark[ncode].title, 'のダウンロードは完了しました！', true);
                 delete download[ncode];
                 session[ncode] = '完了';
