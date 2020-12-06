@@ -92,13 +92,17 @@ function validateNcode(ncode) {
         return validNcodeResponse(ncode, validate[ncode]);
     }
     validate[ncode] = '検証中';
-    myFancyLog('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！', true)
+    myFancyLog('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！', true);
     GM_xmlhttpRequest({
         url: 'https://ncode.syosetu.com/' + ncode,
         method: 'GET',
         onload: (details) => {
             validate[ncode] = details.responseXML.title;
             validNcodeResponse(ncode, validate[ncode]);
+        },
+        onerror: (error) => {
+            myFancyLog('', 'Nコード' + ncode, 'の検証は失敗しました！', true);
+            delete validate[ncode];
         }
     });
 }
@@ -297,6 +301,11 @@ function batchDownloadPreHandler(ncode) {
             else {
                 downloadPDFHandler(ncode);
             }
+        },
+        onerror: (error) => {
+            myFancyPopup(ncode, bookmark[ncode].title, 'のダウンロードは失敗しました！');
+            delete download[ncode];
+            session[ncode] = '失敗';
         }
     });
 }
