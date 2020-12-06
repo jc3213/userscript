@@ -17,7 +17,7 @@ var ban_liver = GM_getValue('liver', []);
 var banned = GM_getValue('banned', {});
 
 if (Object.keys(banned).length === 0 && ban_id.length !== 0) {
-    if (confirm('因版本变动，旧版本的列表将不再兼容，请点击确认进行导出，点击取消刷新后还会弹出本对话框。')) {
+    if (confirm('因版本变动，旧版本的列表将不再兼容！\b点击确认后将自动转换！\n点击取消刷新后还会弹出本对话框！')) {
         ban_id.forEach((item, index) => { banned[item] = ban_liver[index] });
         GM_deleteValue('id');
         GM_deleteValue('liver');
