@@ -105,7 +105,7 @@ var messages = {
         lazy: {
             label: 'Preload All Images'
         },
-        context: {
+        menu: {
             label: 'Context Menu Mode'
         },
         extract: {
@@ -140,7 +140,7 @@ var messages = {
         lazy: {
             label: '预加载所有图像',
         },
-        context: {
+        menu: {
             label: '右键菜单模式',
         },
         extract: {
@@ -321,31 +321,23 @@ downMenu.addEventListener('contextmenu', (event) => {
 });
 container.appendChild(downMenu);
 
-var aria2RPC = {
-    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
-    secret: GM_getValue('secret', '')
-};
-var aria2Menu = document.createElement('div');
-aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" value="' + aria2RPC.server + '">\
-<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" value="' + aria2RPC.secret + '">';
+var aria2Menu = document.createElement('form');
+aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
+<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" name=secret" value="' + GM_getValue('secret', '') + '">';
 aria2Menu.className = 'menuContainer';
 aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
-aria2Menu.addEventListener('change', (event) => {
-    var id = event.target.id.replace('assistant_aria2_', '');
-    aria2RPC[id] = event.target.value;
-    GM_setValue(id, aria2RPC[id]);
-});
+aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
 container.appendChild(aria2Menu);
 
 function aria2RequestHandler(request, onload, onerror) {
     GM_xmlhttpRequest({
-        url: aria2RPC.server,
+        url: aria2Menu.querySelector('#assistant_aria2_server').value,
         method: 'POST',
         data: JSON.stringify({
             id: '',
             jsonrpc: '2.0',
             method: request.method,
-            params: ['token:' + aria2RPC.secret].concat(request.options)
+            params: ['token:' + aria2Menu.querySelector('#assistant_aria2_secret').value].concat(request.options)
         }),
         onload: onload,
         onerror: onerror
@@ -364,7 +356,6 @@ container.appendChild(clickMenu);
 
 var switchItem = {
     lazy: {
-        value: GM_getValue('lazy', false),
         on: () => {
             if (!images || !watching.lazyload) {
                 return;
@@ -380,14 +371,13 @@ var switchItem = {
             clearInterval(lazyload);
         }
     },
-    context: {
-        value: GM_getValue('context', true),
+    menu: {
         on: () => {
             button.style.display = 'none';
-            document.addEventListener('contextmenu', switchItem.context.handler);
+            document.addEventListener('contextmenu', switchItem.menu.handler);
         },
         off: () => {
-            document.removeEventListener('contextmenu', switchItem.context.handler);
+            document.removeEventListener('contextmenu', switchItem.menu.handler);
             button.style.display = 'block';
             container.style.top = button.offsetTop + 'px';
             container.style.left = button.offsetLeft + button.offsetWidth + 'px';
@@ -404,28 +394,23 @@ var switchItem = {
     }
 }
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '</div>\
-<div id="assistant_context" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.context.label + '</div>';
+switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'on') + '"></div>\
+<div id="assistant_menu" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'off') + '"></div>';
 switchMenu.addEventListener('click', (event) => {
-    var id = event.target.id.replace('assistant_', '');
-    var menu = switchMenu.querySelector('#' + event.target.id);
-    switchItem[id].value = !switchItem[id].value;
-    GM_setValue(id, switchItem[id].value);
-    switchHandler(menu, switchItem[id].value, switchItem[id].on, switchItem[id].off)
+    var input = event.target.querySelector('input');
+    input.value = input.value === 'on' ? 'off' : 'on';
+    GM_setValue(input.name, input.value);
+    switchHandler(event.target);
 });
 switchMenu.className = 'menuContainer';
 container.appendChild(switchMenu);
-Object.entries(switchItem).forEach(array => switchHandler(switchMenu.querySelector('#assistant_' + array[0]), array[1].value, array[1].on, array[1].off));
+switchMenu.childNodes.forEach(item => switchHandler(item));
 
-function switchHandler(menu, value, on, off) {
-    if (value) {
-        menu.firstElementChild.innerHTML = '✅';
-        if (typeof on === 'function') on();
-    }
-    else {
-        menu.firstElementChild.innerHTML = '';
-        if (typeof off === 'function') off();
-    }
+function switchHandler(menu) {
+    var input = menu.querySelector('input');
+    var worker = switchItem[input.name][input.value];
+    menu.firstElementChild.innerHTML = input.value === 'on' ? '✅' : '';
+    if (typeof worker === 'function') { worker(); }
 }
 
 // Extract images data
