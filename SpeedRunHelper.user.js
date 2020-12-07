@@ -76,15 +76,15 @@ function createRecordWindow(id, content, top, left) {
     container.style.cssText = 'position: fixed; top: ' + top / 2 + 'px; left: ' + left / 2 + 'px; z-index: 3213; width: 850px; height: 500px;';
     document.body.appendChild(container);
 
-    var box = document.createElement('div');
-    box.style.cssText = 'background-color: #000; height: 25px; width: 100%; text-align: right; user-select: none;';
-    container.appendChild(box);
+    var menu = document.createElement('div');
+    menu.style.cssText = 'background-color: #000; height: 25px; width: 100%; text-align: right; user-select: none;';
+    container.appendChild(menu);
 
     var close = document.createElement('span');
     close.className = 'speedrun-menu';
     close.addEventListener('click', (event) => container.remove())
     close.innerHTML = '✖';
-    box.appendChild(close);
+    menu.appendChild(close);
 
     container.appendChild(content);
 }
