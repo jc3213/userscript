@@ -394,8 +394,8 @@ var switchItem = {
     }
 }
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'on') + '"></div>\
-<div id="assistant_menu" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'off') + '"></div>';
+switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'off') + '"></div>\
+<div id="assistant_menu" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
 switchMenu.addEventListener('click', (event) => {
     var input = event.target.querySelector('input');
     input.value = input.value === 'on' ? 'off' : 'on';
