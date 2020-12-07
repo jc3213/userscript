@@ -209,7 +209,7 @@ button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay assistantMenu';
 button.draggable = true;
-button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; padding-top: 10px; width: 42px; height: 42px;';
+button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px;';
 document.body.appendChild(button);
 
 var container = document.createElement('div');
