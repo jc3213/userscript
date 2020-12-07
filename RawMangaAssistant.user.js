@@ -75,14 +75,6 @@ var watching;
 var mousedown;
 var moving = false;
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
-var values = {
-    lazy: GM_getValue('lazy', false),
-    context: GM_getValue('context', true)
-}
-var rpc = {
-    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
-    secret: GM_getValue('secret', '')
-};
 var offset = {};
 var lazyload;
 var warning;
@@ -329,27 +321,31 @@ downMenu.addEventListener('contextmenu', (event) => {
 });
 container.appendChild(downMenu);
 
+var aria2RPC = {
+    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
+    secret: GM_getValue('secret', '')
+};
 var aria2Menu = document.createElement('div');
-aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" value="' + rpc.server + '">\
-<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" value="' + rpc.secret + '">';
+aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" value="' + aria2RPC.server + '">\
+<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" value="' + aria2RPC.secret + '">';
 aria2Menu.className = 'menuContainer';
 aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
 aria2Menu.addEventListener('change', (event) => {
     var id = event.target.id.replace('assistant_aria2_', '');
-    rpc[id] = event.target.value;
-    GM_setValue(id, rpc[id]);
+    aria2RPC[id] = event.target.value;
+    GM_setValue(id, aria2RPC[id]);
 });
 container.appendChild(aria2Menu);
 
 function aria2RequestHandler(request, onload, onerror) {
     GM_xmlhttpRequest({
-        url: rpc.server,
+        url: aria2RPC.server,
         method: 'POST',
         data: JSON.stringify({
             id: '',
             jsonrpc: '2.0',
             method: request.method,
-            params: ['token:' + rpc.secret].concat(request.options)
+            params: ['token:' + aria2RPC.secret].concat(request.options)
         }),
         onload: onload,
         onerror: onerror
@@ -366,17 +362,10 @@ clickMenu.addEventListener('click', (event) => {
 });
 container.appendChild(clickMenu);
 
-var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon">' + switchIcon(values.lazy) + '</span>' + i18n.lazy.label + '</div>\
-<div id="assistant_context" class="assistantMenu"><span class="assistantIcon">' + switchIcon(values.context) + '</span>' + i18n.context.label + '</div>';
-switchMenu.addEventListener('click', (event) => {
-    var id = event.target.id.replace('assistant_', '');
-    var menu = switchMenu.querySelector('#' + event.target.id);
-    values[id] = !values[id];
-    menu.firstElementChild.innerHTML = switchIcon(values[id]);
-    GM_setValue(id, values[id]);
-    if (event.target.id === 'assistant_lazy') {
-        if (values[id]) {
+var switchItem = {
+    lazy: {
+        value: GM_getValue('lazy', false),
+        on: () => {
             if (!images || !watching.lazyload) {
                 return;
             }
@@ -386,48 +375,57 @@ switchMenu.addEventListener('click', (event) => {
                     clearInterval(lazyload);
                 }
             }, 100);
-        }
-        else {
+        },
+        off: () => {
             clearInterval(lazyload);
         }
-    }
-    else if (event.target.id === 'assistant_context') {
-        if (values[id]) {
+    },
+    context: {
+        value: GM_getValue('context', true),
+        on: () => {
             button.style.display = 'none';
-            document.addEventListener('contextmenu', contextHandler);
-        }
-        else {
-            document.removeEventListener('contextmenu', contextHandler);
+            document.addEventListener('contextmenu', switchItem.context.handler);
+        },
+        off: () => {
+            document.removeEventListener('contextmenu', switchItem.context.handler);
             button.style.display = 'block';
             container.style.top = button.offsetTop + 'px';
             container.style.left = button.offsetLeft + button.offsetWidth + 'px';
+        },
+        handler: (event) => {
+            if (event.target.id === 'assistant_aria2' || event.shiftKey) {
+                return;
+            }
+            event.preventDefault();
+            container.style.top = event.clientY + 'px';
+            container.style.left = event.clientX + 'px';
+            container.style.display = 'block';
         }
     }
+}
+var switchMenu = document.createElement('div');
+switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '</div>\
+<div id="assistant_context" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.context.label + '</div>';
+switchMenu.addEventListener('click', (event) => {
+    var id = event.target.id.replace('assistant_', '');
+    var menu = switchMenu.querySelector('#' + event.target.id);
+    switchItem[id].value = !switchItem[id].value;
+    GM_setValue(id, switchItem[id].value);
+    switchHandler(menu, switchItem[id].value, switchItem[id].on, switchItem[id].off)
 });
 switchMenu.className = 'menuContainer';
 container.appendChild(switchMenu);
-Object.keys(values).forEach(id => {
-    if (values[id]) {
-        values[id] = !values[id];
-        document.getElementById('assistant_' + id).click();
-    }
-});
+Object.entries(switchItem).forEach(array => switchHandler(switchMenu.querySelector('#assistant_' + array[0]), array[1].value, array[1].on, array[1].off));
 
-function contextHandler(event) {
-    if (event.target.id === 'assistant_aria2' || event.shiftKey) {
-        return;
-    }
-    event.preventDefault();
-    container.style.top = event.clientY + 'px';
-    container.style.left = event.clientX + 'px';
-    container.style.display = 'block';
-}
-
-function switchIcon(value) {
+function switchHandler(menu, value, on, off) {
     if (value) {
-        return '✅';
+        menu.firstElementChild.innerHTML = '✅';
+        if (typeof on === 'function') on();
     }
-    return '';
+    else {
+        menu.firstElementChild.innerHTML = '';
+        if (typeof off === 'function') off();
+    }
 }
 
 // Extract images data
