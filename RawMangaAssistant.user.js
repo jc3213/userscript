@@ -18,7 +18,6 @@
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
-// @grant           GM_addValueChangeListener
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.adtrue.com/*", "action": "cancel"}
@@ -70,13 +69,20 @@ var urls = [];
 var save = [];
 var aria2 = [];
 var fail = [];
-var download;
 var observer;
 var images;
 var watching;
 var mousedown;
 var moving = false;
-var position = GM_getValue('position', {top: screen.availHeight * 0.3, left: screen.availWidth * 0.15});
+var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
+var values = {
+    lazy: GM_getValue('lazy', false),
+    context: GM_getValue('context', true)
+}
+var rpc = {
+    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
+    secret: GM_getValue('secret', '')
+};
 var offset = {};
 var lazyload;
 var warning;
@@ -101,13 +107,13 @@ var messages = {
             nokey: 'Aria2 RPC secret <b>token is invalid</b>'
         },
         secret: 'Secret token updated, reloading page in 5 seconds',
-        btop: {
+        gotop: {
             label: 'Back to Top',
         },
         lazy: {
             label: 'Preload All Images'
         },
-        menu: {
+        context: {
             label: 'Context Menu Mode'
         },
         extract: {
@@ -136,13 +142,13 @@ var messages = {
             nokey: 'Aria2 RPC <b>密钥不正确</b>'
         },
         secret: '密钥已更新，５秒后自动刷新页面',
-        btop: {
+        gotop: {
             label: '回到顶部',
         },
         lazy: {
             label: '预加载所有图像',
         },
-        menu: {
+        context: {
             label: '右键菜单模式',
         },
         extract: {
@@ -159,8 +165,8 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'loveheaven.net': {
-        chapter: /\/read-(.+)-raw-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
+        chapter: /\/read-(.+)-chapter-(.+)\.html/,
+        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
         selector: 'img.chapter-img',
         ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
@@ -172,8 +178,8 @@ var mangas = {
         lazyload: 'data-original'
     },
     'batoscan.net': {
-        chapter: /\/read-(.+)-raw-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
+        chapter: /\/read-(.+)-chapter-(.+)\.html/,
+        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
         selector: 'img[class="chapter-img"]',
         lazyload: 'data-original',
     },
@@ -209,7 +215,7 @@ document.head.appendChild(css);
 var button = document.createElement('span');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
-button.className = 'menuOverlay menuContainer';
+button.className = 'menuOverlay assistantMenu';
 button.draggable = true;
 button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; padding-top: 10px; width: 42px; height: 42px;';
 document.body.appendChild(button);
@@ -228,15 +234,12 @@ document.addEventListener('dragstart', (event) => {
 document.addEventListener('dragend', (event) => {
     position.top += event.clientY - offset.top;
     position.left += event.clientX - offset.left;
-    GM_setValue('position', position);
-});
-GM_addValueChangeListener('position', (name, old_value, new_value, remote) => movingIconAndContainer(new_value));
-function movingIconAndContainer(position) {
     button.style.top = position.top + 'px';
     button.style.left = position.left + 'px';
     container.style.top = button.offsetTop + 'px';
     container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-}
+    GM_setValue('position', position);
+});
 document.addEventListener('click', (event) => {
     if (event.target.id === 'assistant_aria2_server' || event.target.id === 'assistant_aria2_secret') {
         return;
@@ -255,127 +258,125 @@ document.addEventListener('click', (event) => {
 });
 
 // Create menuitems
-var downBox = document.createElement('div');
-downBox.id = 'assistant_down';
-downBox.className = 'menuContainer';
-downBox.style.display = 'none';
-container.appendChild(downBox);
-
-var downMenu = {
-    save: {
-        icon: '💾',
-        click: () => {
-            download = [];
-            save.forEach((item, index) => {
-                GM_xmlhttpRequest({
-                    method: 'GET',
-                    url: item[0],
-                    responseType: 'blob',
-                    onload: (details) => {
-                        var a = document.createElement('a');
-                        a.href = URL.createObjectURL(details.response);
-                        a.download = item[1];
-                        a.click();
-                        download.push(index);
-                        if (download.length === images.length) {
-                            notification('save', 'done');
-                            download = [];
-                        }
-                    },
-                    onerror: () => notification('save', 'error', item[0])
-                });
-            });
-        }
-    },
-    copy: {
-        icon: '📄',
-        click: () => {
-            navigator.clipboard.writeText(urls.join('\n'));
-            notification('copy', 'done');
-        }
-    },
-    aria2: {
-        icon: '🖅',
-        click: () => {
-            downMenu.aria2.handler({
-                method: 'aria2.getGlobalOption'
-            }, (details) => {
-                if (details.status === 200) {
-                    if (details.response.includes('Unauthorized')) {
-                        notification('aria2', 'nokey');
-                    }
-                    else {
-                        var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
-                        var aria2 = save.map((item, index) => downMenu.aria2.handler({
-                            method: 'aria2.addUri',
-                            options: [[item[0]], {out: item[1], dir: dir, header: header}]
-                        }, () => {
-                            if (index === images.length - 1) {
-                                notification('aria2', 'done');
-                            }
-                        }));
-                    }
-                }
-                else {
-                    notification('aria2', 'norpc');
-                }
-            }, (error) => {
-                notification('aria2', 'norpc');
-            });
-        },
-        handler: (property, onload, onerror) => {
+var downMenu = document.createElement('div');
+downMenu.innerHTML = '<div id="assistant_save" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
+<div id="assistant_copy" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
+<div id="assistant_aria2" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
+downMenu.className = 'menuContainer';
+downMenu.style.display = 'none';
+downMenu.addEventListener('click', (event) => {
+    if (event.target.id === 'assistant_save') {
+        save.forEach((item, index) => {
             GM_xmlhttpRequest({
-                url: document.getElementById('assistant_aria2_server').value,
-                method: 'POST',
-                data: JSON.stringify({
-                    id: '',
-                    jsonrpc: '2.0',
-                    method: property.method,
-                    params: ['token:' + document.getElementById('assistant_aria2_secret').value].concat(property.options)
-                }),
-                onload: onload,
-                onerror: onerror
+                method: 'GET',
+                url: item[0],
+                responseType: 'blob',
+                onload: (details) => {
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(details.response);
+                    a.download = item[1];
+                    a.click();
+                    if (index === images.length - 1) {
+                        notification('save', 'done');
+                    }
+                },
+                onerror: () => notification('save', 'error', item[0])
             });
-        },
-        event: {
-            contextmenu: (event) => {
-                event.preventDefault();
-                if (aria2Box.style.display === 'block') {
-                    aria2Box.style.display = 'none';
+        });
+    }
+    else if (event.target.id === 'assistant_copy') {
+        navigator.clipboard.writeText(urls.join('\n'));
+        notification('copy', 'done');
+    }
+    else if (event.target.id === 'assistant_aria2') {
+        aria2RequestHandler({
+            method: 'aria2.getGlobalOption'
+        }, (details) => {
+            if (details.status === 200) {
+                if (details.response.includes('Unauthorized')) {
+                    notification('aria2', 'nokey');
                 }
                 else {
-                    aria2Box.style.display = 'block';
+                    var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
+                    var aria2 = save.map((item, index) => aria2RequestHandler({
+                        method: 'aria2.addUri',
+                        options: [[item[0]], {out: item[1], dir: dir, header: header}]
+                    }, () => {
+                        if (index === images.length - 1) {
+                            notification('aria2', 'done');
+                        }
+                    }));
                 }
             }
+            else {
+                notification('aria2', 'norpc');
+            }
+        }, (error) => {
+            notification('aria2', 'norpc');
+        });
+    }
+});
+downMenu.addEventListener('contextmenu', (event) => {
+    if (event.target.id === 'assistant_aria2') {
+        event.preventDefault();
+        if (aria2Menu.style.display === 'block') {
+            aria2Menu.style.display = 'none';
+        }
+        else {
+            aria2Menu.style.display = 'block';
         }
     }
-};
-Object.entries(downMenu).forEach((item) => downBox.appendChild(click_menu_item(...item)));
+});
+container.appendChild(downMenu);
 
-var clickBox = document.createElement('div');
-clickBox.id = 'assistant_click';
-clickBox.className = 'menuContainer';
-container.appendChild(clickBox);
+var aria2Menu = document.createElement('div');
+aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" value="' + rpc.server + '">\
+<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" value="' + rpc.secret + '">';
+aria2Menu.className = 'menuContainer';
+aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
+aria2Menu.addEventListener('change', (event) => {
+    var id = event.target.id.replace('assistant_aria2_', '');
+    rpc[id] = event.target.value;
+    GM_setValue(id, rpc[id]);
+});
+container.appendChild(aria2Menu);
 
-var clickMenu = {
-    btop: {
-        icon: '⬆️',
-        click: () => {
-            document.documentElement.scrollTop = 0;
-        }
+function aria2RequestHandler(request, onload, onerror) {
+    GM_xmlhttpRequest({
+        url: rpc.server,
+        method: 'POST',
+        data: JSON.stringify({
+            id: '',
+            jsonrpc: '2.0',
+            method: request.method,
+            params: ['token:' + rpc.secret].concat(request.options)
+        }),
+        onload: onload,
+        onerror: onerror
+    });
+}
+
+var clickMenu = document.createElement('div');
+clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
+clickMenu.className = 'menuContainer';
+clickMenu.addEventListener('click', (event) => {
+    if (event.target.id === 'assistant_gotop') {
+        document.documentElement.scrollTop = 0;
     }
-};
-Object.entries(clickMenu).forEach((item) => clickBox.appendChild(click_menu_item(...item)));
+});
+container.appendChild(clickMenu);
 
-var switchBox = document.createElement('div');
-switchBox.id = 'assistant_switch';
-switchBox.className = 'menuContainer';
-container.appendChild(switchBox);
-
-var switchMenu = {
-    lazy: {
-        value: GM_getValue('lazy', false),
-        on: () => {
+var switchMenu = document.createElement('div');
+switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon">' + switchIcon(values.lazy) + '</span>' + i18n.lazy.label + '</div>\
+<div id="assistant_context" class="assistantMenu"><span class="assistantIcon">' + switchIcon(values.context) + '</span>' + i18n.context.label + '</div>';
+switchMenu.addEventListener('click', (event) => {
+    var id = event.target.id.replace('assistant_', '');
+    var menu = switchMenu.querySelector('#' + event.target.id);
+    values[id] = !values[id];
+    menu.firstElementChild.innerHTML = switchIcon(values[id]);
+    GM_setValue(id, values[id]);
+    if (event.target.id === 'assistant_lazy') {
+        if (values[id]) {
             if (!images || !watching.lazyload) {
                 return;
             }
@@ -385,112 +386,48 @@ var switchMenu = {
                     clearInterval(lazyload);
                 }
             }, 100);
-        },
-        off: () => {
+        }
+        else {
             clearInterval(lazyload);
         }
-    },
-    menu: {
-        value: GM_getValue('menu', true),
-        on: () => {
+    }
+    else if (event.target.id === 'assistant_context') {
+        if (values[id]) {
             button.style.display = 'none';
-            document.addEventListener('contextmenu', switchMenu.menu.handler);
-        },
-        off: () => {
-            document.removeEventListener('contextmenu', switchMenu.menu.handler);
+            document.addEventListener('contextmenu', contextHandler);
+        }
+        else {
+            document.removeEventListener('contextmenu', contextHandler);
             button.style.display = 'block';
             container.style.top = button.offsetTop + 'px';
             container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-        },
-        handler: (event) => {
-            if (event.target.id === 'assistant_menu_aria2' || event.shiftKey) {
-                if (container.style.display = 'block') {
-                    container.style.display = 'none';
-                }
-                return;
-            }
-            event.preventDefault();
-            container.style.top = event.clientY + 'px';
-            container.style.left = event.clientX + 'px';
-            container.style.display = 'block';
         }
-    },
-}
-Object.entries(switchMenu).forEach((item) => switchBox.appendChild(switch_menu_item(...item)));
+    }
+});
+switchMenu.className = 'menuContainer';
+container.appendChild(switchMenu);
+Object.keys(values).forEach(id => {
+    if (values[id]) {
+        values[id] = !values[id];
+        document.getElementById('assistant_' + id).click();
+    }
+});
 
-var aria2Box = document.createElement('div');
-aria2Box.id = 'assistant_aria2';
-aria2Box.className = 'menuContainer';
-aria2Box.style.cssText = 'position: absolute; display: none; top: ' + Object.keys(downMenu).indexOf('aria2') * 40 + 'px; left: 190px;';
-container.appendChild(aria2Box);
+function contextHandler(event) {
+    if (event.target.id === 'assistant_aria2' || event.shiftKey) {
+        return;
+    }
+    event.preventDefault();
+    container.style.top = event.clientY + 'px';
+    container.style.left = event.clientX + 'px';
+    container.style.display = 'block';
+}
 
-var aria2Menu = {
-    // Aria2 menu items
-    server: {
-        value: GM_getValue('server', 'http://localhost:6800/jsonrpc')
-    },
-    secret: {
-        type: 'password',
-        value: GM_getValue('secret', '')
+function switchIcon(value) {
+    if (value) {
+        return '✅';
     }
-};
-Object.entries(aria2Menu).forEach((item) => aria2Box.appendChild(input_menu_item(...item)));
-
-// UI maker callback handler
-function iconic_menu_item(name, props) {
-    var menu = document.createElement('span');
-    menu.id = 'assistant_menu_' + name;
-    menu.className = 'assistantMenu';
-    var icon = document.createElement('span');
-    icon.className = 'assistantIcon';
-    icon.innerHTML = props.icon || '';
-    var label = document.createTextNode(i18n[name].label || name);
-    menu.appendChild(icon);
-    menu.appendChild(label);
-    return menu;
-}
-function click_menu_item(name, props) {
-    var menu = iconic_menu_item(name, props);
-    menu.addEventListener('click', props.click);
-    if (props.event) {
-        Object.entries(props.event).forEach((item) => menu.addEventListener(...item));
-    }
-    return menu;
-}
-function switch_menu_item(name, props) {
-    var menu = iconic_menu_item(name, props);
-    menu.value = props.value;
-    menu.addEventListener('click', () => GM_setValue(name, !menu.value));
-    switch_item_handler(menu, props);
-    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
-        menu.value = new_value;
-        switch_item_handler(menu, props);
-    });
-    return menu;
-}
-function switch_item_handler(menu, props) {
-    if (menu.value) {
-        menu.firstElementChild.innerHTML = '✅';
-        props.on();
-    }
-    else {
-        menu.firstElementChild.innerHTML = '';
-        props.off();
-    }
-}
-function input_menu_item(name, props) {
-    var menu = document.createElement('input');
-    menu.id = 'assistant_aria2_' + name;
-    menu.className = 'assistantMenu menuAria2Item';
-    menu.value = props.value;
-    menu.setAttribute('type', props.type);
-    menu.addEventListener('change', (event) => GM_setValue(name, event.target.value));
-    menu.addEventListener('focus', (event) => event.target.setAttribute('type', 'text'));
-    menu.addEventListener('blur', (event) => event.target.setAttribute('type', props.type));
-    GM_addValueChangeListener(name, (name, old_value, new_value, remote) => {
-        menu.value = new_value;
-    });
-    return menu;
+    return '';
 }
 
 // Extract images data
@@ -529,7 +466,7 @@ function extractImage(lazyload) {
             warning.remove();
             clearInterval(observer);
             if (fail.length === 0) {
-                document.getElementById('assistant_down').style.display = 'block';
+                downMenu.style.display = 'block';
                 notification('extract', 'done');
             }
             else {
@@ -619,6 +556,6 @@ function notification(action, status, url) {
 function align_notification() {
     document.querySelectorAll('#assistant_caution').forEach((element, index) => {
         element.style.top = index * (element.offsetHeight + 5) + 10 + 'px';
-        element.style.left = (screen.availWidth - element.offsetWidth) / 2 + 'px';
+        element.style.left = (innerWidth - element.offsetWidth) / 2 + 'px';
     });
 }
