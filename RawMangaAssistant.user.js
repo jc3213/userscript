@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         55
+// @version         56
 // @description     Assistant for raw manga online (LoveHeaven, MangaSum, BatoScan, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, BatoScan, Komiraw等) 助手脚本
 // @author          jc3213
@@ -15,52 +15,49 @@
 // @match           *://batoscan.net/*
 // @match           *://manga11.com/*
 // @match           *://komiraw.com/*
+// @match           *://kissaway.net/*
+// @match           *://rawdevart.com/*
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
-// @webRequest      {"selector": "*.adtrue.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.googletagservices.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.amazon-adsystem.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.cloudfront.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
+// loveheaven.net / loveha.net
 // @webRequest      {"selector": "*.bidadx.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.adxpub.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*simrubwan.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*dyecowwhy.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*mehebborc.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*alignclamstram.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*wowjogsot.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.optad360.io/*", "action": "cancel"}
-// @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vlitag.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*beiven.pw/*", "action": "cancel"}
-// @webRequest      {"selector": "*runative-syndicate.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.mgid.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.adsco.re/*", "action": "cancel"}
-// @webRequest      {"selector": "*engine.4dsply.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.spolecznosci.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*prosumsit.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.lzrikate.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*jiltlargosirk.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.popcash.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.betteradsystem.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.popads.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*alignclamstram.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
+// @webRequest      {"selector": "*mehebborc.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.vlitag.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*prosumsit.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.spolecznosci.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.leadzutw.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.cacafly.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.ycxtpbfcsl.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.clfvfumqqok.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.akhlkkdrxwav.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.pgqpibyycasfvl.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
+// batoscan.net
+// @webRequest      {"selector": "*.yjaobumyovp.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.ntkjbweenycfq.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*badskates.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.betteradsystem.com/*", "action": "cancel"}
+// komiraw.com / manga11.com
+// @webRequest      {"selector": "*fnrrm2fn1njl1.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*moncoerbb.com/*", "action": "cancel"}
+// manga1000.com / manga1001.com
+// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.adsco.re/*", "action": "cancel"}
+// rawdevart.com
+// @webRequest      {"selector": "*inpagepush.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -161,7 +158,7 @@ var mangas = {
         folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
         selector: 'img.chapter-img',
         ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
-        shortcut: {prev: 'a[class="btn btn-info prev"]', next: 'a[class="btn btn-info next"]'}
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangasum.com': {
         chapter: /\/manga\/(.+)-raw\/chapter-(.+)\//,
@@ -179,13 +176,27 @@ var mangas = {
         chapter: /%E3%80%90%E7%AC%AC(.+)%E8%A9%B1%E3%80%91(.+)-raw/,
         folder: () => {return decodeURI(chapter[2]) + '\\' + chapter[1]},
         selector: 'figure[class="wp-block-image"] > img',
-        shortcut: 'div[class="linkchap"] > a'
+        ads: ['iframe'],
+        shortcut: 'div.linkchap > a'
     },
     'komiraw.com': {
         chapter: /\/([^\/]+)-raw-chap-(.+)/,
         folder: () => {return chapter.slice(1).join('\\')},
         selector: 'img[class^="chapter-img"]',
-        shortcut: {prev: 'a[id="prev_chap"]', next: 'a[id="next_chap"]'}
+        shortcut: ['#prev_chap', '#next_chap']
+    },
+    'kissaway.net': {
+        chapter: /\/read-(.+)-chapter-(.+)\.html/,
+        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
+        selector: 'img.chapter-img',
+        ads: ['div.row.ads'],
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
+    },
+    'rawdevart.com': {
+        chapter: /\/([^\/]+)\/chapter-([^\/]+)\//,
+        folder: () => {return chapter[1] + '\\' + chapter[2]},
+        selector: 'div.mb-3 > img',
+        lazyload: 'data-src'
     }
 };
 mangas['loveha.net'] = mangas['loveheaven.net'];
@@ -296,13 +307,13 @@ var downWorker =[() => {
     });
     function aria2RequestHandler(request, onload, onerror) {
         GM_xmlhttpRequest({
-            url: aria2Menu.querySelector('#assistant_aria2_server').value,
+            url: aria2Menu.querySelector('input[name="server"]').value,
             method: 'POST',
             data: JSON.stringify({
                 id: '',
                 jsonrpc: '2.0',
                 method: request.method,
-                params: ['token:' + aria2Menu.querySelector('#assistant_aria2_secret').value].concat(request.options)
+                params: ['token:' + aria2Menu.querySelector('input[name="secret"]').value].concat(request.options)
             }),
             onload: onload,
             onerror: onerror
@@ -329,7 +340,7 @@ container.appendChild(downMenu);
 
 var aria2Menu = document.createElement('form');
 aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
-<input class="assistantMenu menuAria2Item" type="password" name=secret" value="' + GM_getValue('secret', '') + '">';
+<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
 aria2Menu.className = 'menuContainer';
 aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
 aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
@@ -410,7 +421,7 @@ if (watching) {
         images = document.querySelectorAll(watching.selector);
         removeMultipleElement(watching.ads);
         extractImage(watching.lazyload);
-        shortcuts(watching.shortcut);
+        appendShortcuts(watching.shortcut);
     }
 }
 
@@ -475,33 +486,20 @@ function storeImageInfo(index, url, name, ext) {
     save.push([url, name]);
 }
 
-// Append shortcut event
-function shortcuts(shortcut) {
-    if (typeof shortcut === 'string') {
-        var prev = document.querySelectorAll(shortcut)[0];
-        var next = document.querySelectorAll(shortcut)[1];
+// Add shortcut for chapter
+function appendShortcuts(shortcut) {
+    if (Array.isArray(shortcut)) {
+        var button = shortcut.map(item => document.querySelector(item));
     }
-    else if (Array.isArray(shortcut)) {
-        prev = document.querySelector(shortcut[0]);
-        next = document.querySelector(shortcut[1]);
-    }
-    else if (typeof shortcut === 'object') {
-        prev = document.querySelector(shortcut.prev);
-        next = document.querySelector(shortcut.next);
+    else {
+        button = document.querySelectorAll(shortcut);
     }
     document.addEventListener('keydown', (event) => {
-        shortcut_event_handler(event, 'ArrowLeft', prev);
-        shortcut_event_handler(event, 'ArrowRight', next);
+        var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
+        if (index !== -1) {
+            button[index].click();
+        }
     });
-}
-function shortcut_event_handler(event, key, element) {
-    if (!element || element.hasAttribute('disabled')) {
-        return;
-    }
-    if (typeof key === 'string' && event.key === key ||
-        typeof key === 'number' && event.keyCode === key) {
-        element.click();
-    }
 }
 
 // Notifications
