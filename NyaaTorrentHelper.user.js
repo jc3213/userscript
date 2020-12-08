@@ -24,20 +24,19 @@ var hosts = {
 
 // Create UI
 var css= document.createElement('style');
-css.innerHTML = '.filterButton {background-color: #056b00; border: 1px solid black; color: #FFF; padding: 10px; cursor: pointer; user-select: none;}\
-.filterButton:active {filter: opacity(30%);}\
-.filterItem {position: relative; padding: 3px;}\
-.filterItem span {color: #FFF; border: 1px transparent solid; padding: 10px 5px; width: fit-content; border-radius: 3px; position: absolute;}\
-.filterItem a {color: #FFF; text-decoration: none;}\
-.filterItem span:nth-child(n+2) {margin-left: 5px; user-select: none; cursor: pointer; width: 60px; text-align: center;}\
-.filterItem span:nth-child(n+2):hover, filterButton:hover {filter: opacity(60%);}\
-.filterItem span:nth-child(1) {background-color: #2bceec; overflow: hidden; z-index: 3213; width: 910px;}\
-.filterItem span:nth-child(1):hover {min-width: fit-content;}\
-.filterItem span:nth-child(2) {background-color: #ee1c1c; left: 915px;}\
-.filterItem span:nth-child(3) {background-color: #0056b0; left: 980px;}\
-.filterItem span:nth-child(4) {background-color: #056b00; left: 1045px;}\
-.filterItem span:nth-child(5) {background-color: #0005CC; left: 1110px;}\
-.previewItem {position: fixed; z-index: 3213;}';
+css.innerHTML = '.filter-button {background-color: #056b00; border: 1px solid black; color: #FFF; padding: 10px; cursor: pointer; user-select: none;}\
+.filter-buttonn:active {filter: opacity(30%);}\
+.filter-item {position: relative; padding: 2px;}\
+.filter-item > * {color: #fff; padding: 10px 5px; width: fit-content; border-radius: 3px; position: absolute; display: inline-block; text-decoration: none; vertical-align: middle;}\
+.filter-item > *:not(:first-child) {cursor: pointer; width: 60px; text-align: center; user-select: none;}\
+.filter-item > span:hover, filter-button:hover {filter: opacity(60%);}\
+.filter-item > *:nth-child(1) {background-color: #2bceec; overflow: hidden; z-index: 3213; width: 728px;}\
+.filter-item > *:nth-child(1):hover {min-width: fit-content;}\
+.filter-item > *:nth-child(2) {background-color: #ee1c1c; left: 733px;}\
+.filter-item > *:nth-child(3) {background-color: #0056b0; left: 797px;}\
+.filter-item > *:nth-child(4) {background-color: #056b00; left: 860px;}\
+.filter-item > *:nth-child(5) {background-color: #0005cc; left: 923px;}\
+.filter-preview {position: fixed; z-index: 3213;}';
 document.head.appendChild(css);
 
 var container = document.createElement('div');
@@ -51,7 +50,7 @@ input.addEventListener('keypress', (event) => { if (event.key === 'Enter') {butt
 container.appendChild(input);
 
 var button = document.createElement('span');
-button.className = 'filterButton';
+button.className = 'filter-button';
 button.innerHTML = 'Filter';
 button.addEventListener('click', (event) => {
     var keys = input.value.split(/[\|\/\\\+\,\:\; ]+/);
@@ -73,32 +72,29 @@ button.addEventListener('click', (event) => {
     }
 });
 container.appendChild(button);
-// Show filter result
-function getFilterResult(data) {
-    var box = document.createElement('div');
-    box.className = 'filterItem';
-    popup.appendChild(box);
-    getFilterItem(box, {html: data.name});
-    getFilterItem(box, {html: 'Preview', click: (event) => {event.target.style.cssText = 'background-color: #C3C;'; getPreviewHandler(data, {top: event.clientY, left: event.clientX});}});
-    getFilterItem(box, {html: '<a href="' + data.torrent + '" target="_blank">Torrent</a>', style: 'display: ' + (data.torrent ? 'block' : 'none')});
-    getFilterItem(box, {html: '<a href="' + data.magnet + '">Magnet</a>'});
-    getFilterItem(box, {html: 'Copy', click: (event) => navigator.clipboard.writeText(data.name + '\n' + (data.torrent ? data.torrent + '\n' : '') + data.magnet)});
-}
-function getFilterItem(box, props) {
-    var item = document.createElement('span');
-    item.innerHTML = props.html;
-    if (props.style) {
-        item.style.cssText = props.style;
-    }
-    if (props.click) {
-        item.addEventListener('click', props.click);
-    }
-    box.appendChild(item);
-}
 
 var popup = document.createElement('div');
-popup.style.cssText = 'position: fixed; left: calc(50% - 600px); background-color: #dff0d8; width: 1200px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none;';
+popup.style.cssText = 'position: fixed; left: calc(50% - 550px); background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none; overflow-x: hidden;';
 container.appendChild(popup);
+
+// Show filter result
+function getFilterResult(data) {
+    var click = [(event) => {
+        event.target.style.cssText = 'background-color: #C3C;';
+        getPreviewHandler(data, {top: event.clientY, left: event.clientX});
+    }, (event) => {
+        navigator.clipboard.writeText(data.name + '\n' + (data.torrent ? data.torrent + '\n' : '') + data.magnet);
+    }];
+    var menu = document.createElement('div');
+    menu.className = 'filter-item';
+    menu.innerHTML = '<span>' + data.name + '</span>\
+    <span alt>Preview</span>\
+    <a href="' + data.torrent + '" target="_blank">Torrent</a>\
+    <a href="' + data.magnet + ' style="display: ' + (data.torrent ? 'block' : 'none') + '">Magnet</a>\
+    <span alt>Copy</span>';
+    menu.querySelectorAll('span[alt]').forEach((item, index) => item.addEventListener('click', click[index]));
+    popup.appendChild(menu);
+}
 
 // Extract data
 document.querySelectorAll('table > tbody > tr').forEach((element) => {
@@ -209,8 +205,8 @@ function noValidPreview(data) {
 
 // Create preview
 function createPreview(data, mouse) {
-    data.image.className = 'previewItem';
-    data.image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 900 > screen.availHeight ? screen.availHeight - 900 : mouse.top) + 'px; left: ' + (mouse.left + 600 > screen.availWidth ? screen.availWidth - 600 : mouse.left) + 'px;';
+    data.image.className = 'filter-preview';
+    data.image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
     data.image.addEventListener('click', (event) => data.image.remove());
     document.body.appendChild(data.image);
     action[data.id] = false;
