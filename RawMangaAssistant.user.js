@@ -15,7 +15,6 @@
 // @match           *://batoscan.net/*
 // @match           *://manga11.com/*
 // @match           *://komiraw.com/*
-// @match           *://kissaway.net/*
 // @match           *://rawdevart.com/*
 // @connect         *
 // @grant           GM_getValue
@@ -184,13 +183,6 @@ var mangas = {
         folder: () => {return chapter.slice(1).join('\\')},
         selector: 'img[class^="chapter-img"]',
         shortcut: ['#prev_chap', '#next_chap']
-    },
-    'kissaway.net': {
-        chapter: /\/read-(.+)-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
-        selector: 'img.chapter-img',
-        ads: ['div.row.ads'],
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'rawdevart.com': {
         chapter: /\/([^\/]+)\/chapter-([^\/]+)\//,
