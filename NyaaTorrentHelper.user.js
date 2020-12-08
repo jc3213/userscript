@@ -29,7 +29,7 @@ css.innerHTML = '.filter-button {background-color: #056b00; border: 1px solid bl
 .filter-item {position: relative; padding: 2px;}\
 .filter-item > * {color: #fff; padding: 10px 5px; width: fit-content; border-radius: 3px; position: absolute; display: inline-block; text-decoration: none; vertical-align: middle;}\
 .filter-item > *:not(:first-child) {cursor: pointer; width: 60px; text-align: center; user-select: none;}\
-.filter-item > span:hover, filter-button:hover {filter: opacity(60%);}\
+.filter-item *:not(:first-child):hover, filter-button:hover {filter: opacity(60%);}\
 .filter-item > *:nth-child(1) {background-color: #2bceec; overflow: hidden; z-index: 3213; width: 728px;}\
 .filter-item > *:nth-child(1):hover {min-width: fit-content;}\
 .filter-item > *:nth-child(2) {background-color: #ee1c1c; left: 733px;}\
