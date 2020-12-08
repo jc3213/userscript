@@ -88,11 +88,11 @@ function getFilterResult(data) {
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
-    <span alt>Preview</span>\
+    <span button>Preview</span>\
     <a href="' + data.torrent + '" target="_blank">Torrent</a>\
     <a href="' + data.magnet + ' style="display: ' + (data.torrent ? 'block' : 'none') + '">Magnet</a>\
-    <span alt>Copy</span>';
-    menu.querySelectorAll('span[alt]').forEach((item, index) => item.addEventListener('click', click[index]));
+    <span button>Copy</span>';
+    menu.querySelectorAll('span[button]').forEach((item, index) => item.addEventListener('click', click[index]));
     popup.appendChild(menu);
 }
 
