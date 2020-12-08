@@ -233,15 +233,12 @@ document.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (event.target.id === 'assistant_aria2_server' || event.target.id === 'assistant_aria2_secret') {
+    if (event.target.classList.contains('menuAria2Item')) {
         return;
     }
-    if (event.target.id === 'assistant_button') {
+    if (button === event.target) {
         if (container.style.display === 'none') {
             container.style.display = 'block';
-        }
-        else {
-            container.style.display = 'none';
         }
     }
     else {
@@ -249,101 +246,96 @@ document.addEventListener('click', (event) => {
     }
 });
 
-// Create menuitems
-var downMenu = document.createElement('div');
-downMenu.innerHTML = '<div id="assistant_save" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
-<div id="assistant_copy" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div id="assistant_aria2" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
-downMenu.className = 'menuContainer';
-downMenu.style.display = 'none';
-downMenu.addEventListener('click', (event) => {
-    if (event.target.id === 'assistant_save') {
-        save.forEach((item, index) => {
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: item[0],
-                responseType: 'blob',
-                onload: (details) => {
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(details.response);
-                    a.download = item[1];
-                    a.click();
-                    if (index === images.length - 1) {
-                        notification('save', 'done');
-                    }
-                },
-                onerror: () => notification('save', 'error', item[0])
-            });
+// Primary menus
+var downWorker =[() => {
+    save.forEach((item, index) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: item[0],
+            responseType: 'blob',
+            onload: (details) => {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(details.response);
+                a.download = item[1];
+                a.click();
+                if (index === images.length - 1) {
+                    notification('save', 'done');
+                }
+            },
+            onerror: () => notification('save', 'error', item[0])
         });
-    }
-    else if (event.target.id === 'assistant_copy') {
-        navigator.clipboard.writeText(urls.join('\n'));
-        notification('copy', 'done');
-    }
-    else if (event.target.id === 'assistant_aria2') {
-        aria2RequestHandler({
-            method: 'aria2.getGlobalOption'
-        }, (details) => {
-            if (details.status === 200) {
-                if (details.response.includes('Unauthorized')) {
-                    notification('aria2', 'nokey');
-                }
-                else {
-                    var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
-                    var aria2 = save.map((item, index) => aria2RequestHandler({
-                        method: 'aria2.addUri',
-                        options: [[item[0]], {out: item[1], dir: dir, header: header}]
-                    }, () => {
-                        if (index === images.length - 1) {
-                            notification('aria2', 'done');
-                        }
-                    }));
-                }
+    });
+}, () => {
+    navigator.clipboard.writeText(urls.join('\n'));
+    notification('copy', 'done');
+}, () => {
+    aria2RequestHandler({
+        method: 'aria2.getGlobalOption'
+    }, (details) => {
+        if (details.status === 200) {
+            if (details.response.includes('Unauthorized')) {
+                notification('aria2', 'nokey');
             }
             else {
-                notification('aria2', 'norpc');
+                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
+                var aria2 = save.map((item, index) => aria2RequestHandler({
+                    method: 'aria2.addUri',
+                    options: [[item[0]], {out: item[1], dir: dir, header: header}]
+                }, () => {
+                    if (index === images.length - 1) {
+                        notification('aria2', 'done');
+                    }
+                }));
             }
-        }, (error) => {
-            notification('aria2', 'norpc');
-        });
-    }
-});
-downMenu.addEventListener('contextmenu', (event) => {
-    if (event.target.id === 'assistant_aria2') {
-        event.preventDefault();
-        if (aria2Menu.style.display === 'block') {
-            aria2Menu.style.display = 'none';
         }
         else {
-            aria2Menu.style.display = 'block';
+            notification('aria2', 'norpc');
         }
+    }, (error) => {
+        notification('aria2', 'norpc');
+    });
+    function aria2RequestHandler(request, onload, onerror) {
+        GM_xmlhttpRequest({
+            url: aria2Menu.querySelector('#assistant_aria2_server').value,
+            method: 'POST',
+            data: JSON.stringify({
+                id: '',
+                jsonrpc: '2.0',
+                method: request.method,
+                params: ['token:' + aria2Menu.querySelector('#assistant_aria2_secret').value].concat(request.options)
+            }),
+            onload: onload,
+            onerror: onerror
+        });
+    }
+}];
+var downMenu = document.createElement('div');
+downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
+<div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
+<div id="aria2_menu" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
+downMenu.className = 'menuContainer';
+downMenu.style.display = 'none';
+downMenu.querySelectorAll('.assistantMenu').forEach((item, index) => item.addEventListener('click', downWorker[index]));
+downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    if (aria2Menu.style.display === 'block') {
+        aria2Menu.style.display = 'none';
+    }
+    else {
+        aria2Menu.style.display = 'block';
     }
 });
 container.appendChild(downMenu);
 
 var aria2Menu = document.createElement('form');
-aria2Menu.innerHTML = '<input id="assistant_aria2_server" class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
-<input id="assistant_aria2_secret" class="assistantMenu menuAria2Item" type="password" name=secret" value="' + GM_getValue('secret', '') + '">';
+aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
+<input class="assistantMenu menuAria2Item" type="password" name=secret" value="' + GM_getValue('secret', '') + '">';
 aria2Menu.className = 'menuContainer';
 aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
 aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
 container.appendChild(aria2Menu);
 
-function aria2RequestHandler(request, onload, onerror) {
-    GM_xmlhttpRequest({
-        url: aria2Menu.querySelector('#assistant_aria2_server').value,
-        method: 'POST',
-        data: JSON.stringify({
-            id: '',
-            jsonrpc: '2.0',
-            method: request.method,
-            params: ['token:' + aria2Menu.querySelector('#assistant_aria2_secret').value].concat(request.options)
-        }),
-        onload: onload,
-        onerror: onerror
-    });
-}
-
+// Secondary menus
 var clickMenu = document.createElement('div');
 clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
@@ -354,63 +346,61 @@ clickMenu.addEventListener('click', (event) => {
 });
 container.appendChild(clickMenu);
 
-var switchItem = {
-    lazy: {
-        on: () => {
-            if (!images || !watching.lazyload) {
-                return;
-            }
-            lazyload = setInterval(() => {
-                if (images.length === urls.length) {
-                    images.forEach((element) => element.setAttribute('src', element.getAttribute(watching.lazyload)));
-                    clearInterval(lazyload);
-                }
-            }, 100);
-        },
-        off: () => {
-            clearInterval(lazyload);
+// Switchable Menus
+var switchWorker = [{
+    on: () => {
+        if (!images || !watching.lazyload) {
+            return;
         }
+        lazyload = setInterval(() => {
+            if (images.length === urls.length) {
+                images.forEach((element) => element.setAttribute('src', element.getAttribute(watching.lazyload)));
+                clearInterval(lazyload);
+            }
+        }, 100);
     },
-    menu: {
-        on: () => {
-            button.style.display = 'none';
-            document.addEventListener('contextmenu', switchItem.menu.handler);
-        },
-        off: () => {
-            document.removeEventListener('contextmenu', switchItem.menu.handler);
-            button.style.display = 'block';
-            container.style.top = button.offsetTop + 'px';
-            container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-        },
-        handler: (event) => {
-            if (event.target.id === 'assistant_aria2' || event.shiftKey) {
-                return;
-            }
-            event.preventDefault();
-            container.style.top = event.clientY + 'px';
-            container.style.left = event.clientX + 'px';
-            container.style.display = 'block';
-        }
+    off: () => {
+        clearInterval(lazyload);
     }
-}
+},{
+    on: () => {
+        button.style.display = 'none';
+        document.addEventListener('contextmenu', contextMenuHandler);
+    },
+    off: () => {
+        document.removeEventListener('contextmenu', contextMenuHandler);
+        button.style.display = 'block';
+        container.style.top = button.offsetTop + 'px';
+        container.style.left = button.offsetLeft + button.offsetWidth + 'px';
+    }
+}];
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div id="assistant_lazy" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'off') + '"></div>\
-<div id="assistant_menu" class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
-switchMenu.addEventListener('click', (event) => {
-    var input = event.target.querySelector('input');
-    input.value = input.value === 'on' ? 'off' : 'on';
-    GM_setValue(input.name, input.value);
-    switchHandler(event.target);
-});
+switchMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'off') + '"></div>\
+<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
 switchMenu.className = 'menuContainer';
+switchMenu.querySelectorAll('.assistantMenu').forEach((item, index) => {
+    var input = item.querySelector('input');
+    switchHandler(item, input.value, switchWorker[index][input.value]);
+    item.addEventListener('click', (event) => {
+        input.value = input.value === 'on' ? 'off' : 'on';
+        GM_setValue(input.name, input.value);
+        switchHandler(item, input.value, switchWorker[index][input.value]);
+    });
+});
 container.appendChild(switchMenu);
-switchMenu.childNodes.forEach(item => switchHandler(item));
 
-function switchHandler(menu) {
-    var input = menu.querySelector('input');
-    var worker = switchItem[input.name][input.value];
-    menu.firstElementChild.innerHTML = input.value === 'on' ? '✅' : '';
+function switchHandler(item, value, worker) {
+    item.firstElementChild.innerHTML = value === 'on' ? '✅' : '';
     if (typeof worker === 'function') { worker(); }
+}
+function contextMenuHandler(event) {
+    if (event.target.id === 'assistant_aria2' || event.shiftKey) {
+        return;
+    }
+    event.preventDefault();
+    container.style.top = event.clientY + 'px';
+    container.style.left = event.clientX + 'px';
+    container.style.display = 'block';
 }
 
 // Extract images data
