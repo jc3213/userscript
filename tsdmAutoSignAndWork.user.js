@@ -26,61 +26,29 @@ if (autoed) {
 }
 
 var css = document.createElement('style');
-css.innerHTML = '.my-button {padding: 5px; border: 1px outset #000; text-align: center; background-color: #FFF; width: 50px;}\
+css.innerHTML = '.my-button {padding: 5px; border: 1px outset #000; text-align: center; vertical-align: middle; display: inline-block; background-color: #FFF; width: 60px; height: 20px; cursor: pointer; font-weight: bold;}\
 .my-button:hover {filter: opacity(60%);}\
 .my-button:active {filter: opacity(30%);}\
-.my-checked {padding: 4px; border: 2px inset #00F;}\
-.my-dropdown {background-color: #FFF;}'
+.my-menu {background-color: #fff; position: absolute; top: 15px; left: 100px; z-index: 99999;}'
 document.head.appendChild(css);
 
-var container = document.createElement('div');
-container.style.cssText = 'position: absolute; top: 3px; left: calc(50% - 50px); font-weight: bold; cursor: pointer;';
-document.body.appendChild(container);
-
-var menu = document.createElement('div');
-menu.innerHTML = '菜单';
-menu.className = 'my-button';
-menu.addEventListener('click', (event) => {
-    if (menu.classList.contains('my-checked')) {
-        box.style.display = 'none';
-    }
-    else {
-        box.style.display = 'block';
-    }
-    menu.classList.toggle('my-checked');
-});
-container.appendChild(menu);
-
-var box = document.createElement('div');
-box.className = 'my-dropdown';
-box.style.cssText = 'display: none;';
-container.appendChild(box);
-
-var sign = document.createElement('div');
-sign.innerHTML = '签到';
-sign.className = 'my-button';
-sign.addEventListener('click', (event) => autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler));
-box.appendChild(sign);
-
-var work = document.createElement('div');
-work.innerHTML = '打工';
-work.className = 'my-button';
-work.addEventListener('click', (event) => autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler));
-box.appendChild(work);
-
-var auto = document.createElement('div');
-auto.className = 'my-button';
-auto.addEventListener('click', (event) => {
+var click = [(event) => {
+    autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
+}, (event) => {
+    autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
+}, (event) => {
     autoed = !autoed;
-    autoIcon.innerHTML = autoed ? '✅' : '';
+    menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
     GM_setValue('autoed', autoed);
-});
-box.appendChild(auto);
-var autoIcon = document.createElement('span');
-autoIcon.innerHTML = autoed ? '✅' : '';
-var autoText = document.createTextNode('自动');
-auto.appendChild(autoIcon);
-auto.appendChild(autoText);
+}];
+var menu = document.createElement('div');
+menu.innerHTML = '<span class="my-button">签到</span>\
+<span class="my-button">打工</span>\
+<span class="my-button"><span class="my-auto"></span>自动</span>';
+menu.className = 'my-menu';
+menu.querySelectorAll('.my-button').forEach((item, index) => item.addEventListener('click', click[index]));
+menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
+document.body.appendChild(menu);
 
 function autoHandler(url, load) {
     var id = 'auto-' + url.match(/\w{4}$/)[0];
@@ -114,7 +82,7 @@ function workHandler(node, url, id, warn) {
         var text = node.querySelector('#messagetext > p:nth-child(1)').innerHTML.split(/<br>|<script/)[1];
         var clock = text.match(/\d+/g);
         var next = (clock[0] | 0) * 3600000 + (clock[1] | 0) * 60000 + (clock[2] | 0) * 1000;
-        GM_setValue('worked', Date.now() + next);
+        if (worked === 0) GM_setValue('worked', Date.now() + next);
         warnOver(id, text);
     }
     else {
@@ -163,7 +131,7 @@ function warnStart(id) {
     var data = id === 'auto-sign' ? {top: '125px', text: '查询签到状态...'} : {top: '165px', text: '查询打工状态...'};
     var warn = document.createElement('div');
     warn.id = id;
-    warn.style.cssText = 'border-radius: 5px; background-color: #FFF; padding: 5px; position: fixed; width: 380px; text-align: center; left: calc((100% - 380px) / 2); font-size: 16px; top: ' + data.top;
+    warn.style.cssText = 'border-radius: 5px; background-color: #FFF; padding: 5px; position: fixed; width: 380px; text-align: center; left: ' + (innerWidth - 380) / 2 + 'px; font-size: 16px; top: ' + data.top;
     warn.innerHTML = data.text;
     document.body.appendChild(warn);
     return warn;
