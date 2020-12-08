@@ -50,7 +50,7 @@ document.head.appendChild(css);
 var manager = document.createElement('span');
 manager.innerHTML = '書庫管理';
 manager.className = 'manager-button';
-manager.style.cssText = 'margin: 10px 5px;'
+manager.style.cssText = 'margin: 8px 5px;'
 manager.addEventListener('click', (event) => {
     if (manager.classList.contains('manager-checked')) {
         container.style.display = 'none';
@@ -86,10 +86,10 @@ var mainmenu = [() => {
     event.target.classList.toggle('manager-checked');
 }];
 var container = document.createElement('div');
-container.innerHTML = '<div class="manager-menu"><span id="subscribe-ncode" class="manager-button">NCODE登録</span>\
-<input id="bookmark-ncode" style="padding: 5px;">\
-<span id="download-all-ncode" class="manager-button">NCODE一括更新</span>\
-<span id="display-fancylog" class="manager-button">ログ表示</span></div>\
+container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
+<input style="padding: 5px;">\
+<span class="manager-button">NCODE一括更新</span>\
+<span class="manager-button">ログ表示</span></div>\
 <div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
 <div class="manager-logs" style="display: none;"></div>';
 container.className = 'manager-container';
