@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           14
+// @version           15
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -190,13 +190,13 @@ batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', (
         batch.value = '';
     }
 });
-batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
+batch_box.querySelector('.fancybutton:nth-child(2)').addEventListener('click', () => {
     if (confirm('确定要导出当前屏蔽列表吗？')) {
         var list = Object.entries(banned).map(item => item[0] + ', ' + item[1]).join('\n');
         blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
     }
 });
-batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
+batch_box.querySelector('.fancybutton:nth-child(3)').addEventListener('click', () => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
         ban_list.querySelector('.fancybody').innerHTML = '';
         banned = {};
