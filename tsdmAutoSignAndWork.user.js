@@ -32,23 +32,24 @@ css.innerHTML = '.my-button {padding: 5px; border: 1px outset #000; text-align: 
 .my-menu {background-color: #fff; position: absolute; top: 15px; left: 100px; z-index: 99999;}'
 document.head.appendChild(css);
 
-var click = [(event) => {
-    autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
-}, (event) => {
-    autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
-}, (event) => {
-    autoed = !autoed;
-    menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
-    GM_setValue('autoed', autoed);
-}];
 var menu = document.createElement('div');
 menu.innerHTML = '<span class="my-button">签到</span>\
 <span class="my-button">打工</span>\
 <span class="my-button"><span class="my-auto"></span>自动</span>';
 menu.className = 'my-menu';
-menu.querySelectorAll('.my-button').forEach((item, index) => item.addEventListener('click', click[index]));
 menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
 document.body.appendChild(menu);
+menu.querySelector('.my-button:nth-child(1)').addEventListener('click', (event) => {
+    autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
+});
+menu.querySelector('.my-button:nth-child(2)').addEventListener('click', (event) => {
+    autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
+});
+menu.querySelector('.my-button:nth-child(3)').addEventListener('click', (event) => {
+    autoed = !autoed;
+    menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
+    GM_setValue('autoed', autoed);
+});
 
 function autoHandler(url, load) {
     var id = 'auto-' + url.match(/\w{4}$/)[0];
