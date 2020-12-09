@@ -79,21 +79,21 @@ container.appendChild(popup);
 
 // Show filter result
 function getFilterResult(data) {
-    var click = [(event) => {
-        event.target.style.cssText = 'background-color: #C3C;';
-        getPreviewHandler(data, {top: event.clientY, left: event.clientX});
-    }, (event) => {
-        navigator.clipboard.writeText(data.name + '\n' + (data.torrent ? data.torrent + '\n' : '') + data.magnet);
-    }];
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
-    <span button>Preview</span>\
+    <span>Preview</span>\
     <a href="' + data.torrent + '" target="_blank">Torrent</a>\
     <a href="' + data.magnet + ' style="display: ' + (data.torrent ? 'block' : 'none') + '">Magnet</a>\
-    <span button>Copy</span>';
-    menu.querySelectorAll('span[button]').forEach((item, index) => item.addEventListener('click', click[index]));
+    <span>Copy</span>';
     popup.appendChild(menu);
+    menu.querySelector('span:nth-child(2)').addEventListener('click', (event) => {
+        event.target.style.cssText = 'background-color: #C3C;';
+        getPreviewHandler(data, {top: event.clientY, left: event.clientX});
+    });
+    menu.querySelector('span:nth-child(5)').addEventListener('click', (event) => {
+        navigator.clipboard.writeText(data.name + '\n' + (data.torrent ? data.torrent + '\n' : '') + data.magnet);
+    });
 }
 
 // Extract data
