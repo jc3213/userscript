@@ -251,7 +251,14 @@ document.addEventListener('click', (event) => {
 });
 
 // Primary menus
-var downWorker =[() => {
+var downMenu = document.createElement('div');
+downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
+<div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
+<div class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
+downMenu.className = 'menuContainer';
+downMenu.style.display = 'none';
+container.appendChild(downMenu);
+downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
     save.forEach((item, index) => {
         GM_xmlhttpRequest({
             method: 'GET',
@@ -269,10 +276,12 @@ var downWorker =[() => {
             onerror: () => notification('save', 'error', item[0])
         });
     });
-}, () => {
+});
+downMenu.querySelector('.assistantMenu:nth-child(2)').addEventListener('click', () => {
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
-}, () => {
+});
+downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', () => {
     aria2RequestHandler({
         method: 'aria2.getGlobalOption'
     }, (details) => {
@@ -312,23 +321,7 @@ var downWorker =[() => {
             onerror: onerror
         });
     }
-}];
-var downMenu = document.createElement('div');
-downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
-<div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
-downMenu.className = 'menuContainer';
-downMenu.style.display = 'none';
-downMenu.querySelectorAll('.assistantMenu').forEach((item, index) => item.addEventListener('click', downWorker[index]));
-
-// Aria2 Sub Menu
-var aria2Menu = document.createElement('form');
-aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
-<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
-aria2Menu.className = 'menuContainer';
-aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
-aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
-container.appendChild(aria2Menu);
+});
 downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextmenu', (event) => {
     event.preventDefault();
     if (aria2Menu.style.display === 'block') {
@@ -338,16 +331,23 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextm
         aria2Menu.style.display = 'block';
     }
 });
-container.appendChild(downMenu);
+
+// Aria2 Sub Menu
+var aria2Menu = document.createElement('form');
+aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
+<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
+aria2Menu.className = 'menuContainer';
+aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
+aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
+container.appendChild(aria2Menu);
 
 // Secondary menus
-var clickWorker = [() => {
-    document.documentElement.scrollTop = 0;
-}]
 var clickMenu = document.createElement('div');
 clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
-clickMenu.querySelectorAll('.assistantMenu').forEach((item, index) => item.addEventListener('click', clickWorker[index]));
+clickMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
+        document.documentElement.scrollTop = 0;
+});
 container.appendChild(clickMenu);
 
 // Switchable Menus
