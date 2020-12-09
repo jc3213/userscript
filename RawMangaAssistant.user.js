@@ -23,6 +23,7 @@
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.googletagservices.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.googletagmanager.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.amazon-adsystem.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.cloudfront.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
