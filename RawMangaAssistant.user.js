@@ -236,7 +236,7 @@ document.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (event.target.classList.contains('menuAria2Item')) {
+    if (aria2Menu.contains(event.target)) {
         return;
     }
     if (button === event.target) {
@@ -315,10 +315,19 @@ var downWorker =[() => {
 var downMenu = document.createElement('div');
 downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
 <div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div id="aria2_menu" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
+<div class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 downMenu.querySelectorAll('.assistantMenu').forEach((item, index) => item.addEventListener('click', downWorker[index]));
+
+// Aria2 Sub Menu
+var aria2Menu = document.createElement('form');
+aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
+<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
+aria2Menu.className = 'menuContainer';
+aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
+aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
+container.appendChild(aria2Menu);
 downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextmenu', (event) => {
     event.preventDefault();
     if (aria2Menu.style.display === 'block') {
@@ -330,23 +339,14 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextm
 });
 container.appendChild(downMenu);
 
-var aria2Menu = document.createElement('form');
-aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
-<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
-aria2Menu.className = 'menuContainer';
-aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
-aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
-container.appendChild(aria2Menu);
-
 // Secondary menus
+var clickWorker = [() => {
+    document.documentElement.scrollTop = 0;
+}]
 var clickMenu = document.createElement('div');
 clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
-clickMenu.addEventListener('click', (event) => {
-    if (event.target.id === 'assistant_gotop') {
-        document.documentElement.scrollTop = 0;
-    }
-});
+clickMenu.querySelectorAll('.assistantMenu').forEach((item, index) => item.addEventListener('click', clickWorker[index]));
 container.appendChild(clickMenu);
 
 // Switchable Menus
@@ -411,18 +411,17 @@ if (watching) {
     var chapter = location.pathname.match(watching.chapter);
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
-        removeMultipleElement(watching.ads);
+        removeAdsElement(watching.ads);
         extractImage(watching.lazyload);
         appendShortcuts(watching.shortcut);
     }
 }
 
-function removeMultipleElement(selector, node) {
-    node = node || document;
+function removeAdsElement(selector) {
     Array.isArray(selector) ? selector.forEach(item => removeElement(item)) : removeElement(selector);
 
     function removeElement(sel) {
-        node.querySelectorAll(sel).forEach(item => item.remove());
+        document.querySelectorAll(sel).forEach(item => item.remove());
     }
 }
 
@@ -454,7 +453,7 @@ function extractImage(lazyload) {
 function getExtension(index, url, name) {
     var ext = url.match(/(png|jpg|jpeg|webp)/);
     if (ext) {
-        storeImageInfo(index, url, name, ext);
+        storeImageInfo(index, url, name, ext[0]);
     }
     else {
         GM_xmlhttpRequest({
@@ -462,7 +461,9 @@ function getExtension(index, url, name) {
             method: 'HEAD',
             onload: (details) => {
                 ext = details.responseHeaders.match(/(png|jpg|jpeg|webp)/);
-                storeImageInfo(index, url, name, ext);
+                if (ext) {
+                    storeImageInfo(index, url, name, ext[0]);
+                }
             },
             onerror: () => {
                 fail.push(url);
@@ -471,9 +472,7 @@ function getExtension(index, url, name) {
     }
 }
 function storeImageInfo(index, url, name, ext) {
-    if (ext) {
-        name += '.' + ext[0];
-    }
+    name += '.' + ext;
     urls.push(url);
     save.push([url, name]);
 }
