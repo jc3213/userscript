@@ -75,9 +75,9 @@ function createRecordWindow(id, content, top, left) {
     container.className = 'speedrun-window';
     container.style.cssText = 'top: ' + top / 2 + 'px; left: ' + left / 2 + 'px;';
     container.innerHTML = '<div class="speedrun-menu"><span class="speedrun-item">✖</span></div>';
-    container.querySelector('.speedrun-item').addEventListener('click', (event) => container.remove());
-    document.body.appendChild(container);
     container.appendChild(content);
+    document.body.appendChild(container);
+    container.querySelector('.speedrun-item').addEventListener('click', (event) => container.remove());
 }
 
 document.addEventListener('dragstart', (event) => {
