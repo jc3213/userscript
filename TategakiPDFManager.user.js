@@ -76,7 +76,8 @@ var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
 <input style="padding: 5px;">\
 <span class="manager-button">NCODE一括更新</span>\
-<span class="manager-button">ログ表示</span></div>\
+<span class="manager-button">ログ表示</span>\
+<span class="manager-button" style="display: none;">書庫更新</span></div>\
 <div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
 <div class="manager-logs" style="display: none;"></div>';
 container.className = 'manager-container';
@@ -114,6 +115,7 @@ container.querySelector('.manager-button:nth-child(4)').addEventListener('click'
     }
     event.target.classList.toggle('manager-checked');
 });
+container.querySelector('.manager-button:nth-child(5)').addEventListener('click', () => GM_setValue('bookmark', bookmark));
 
 // NCODE検証&登録
 function validateNcode(ncode) {
@@ -149,7 +151,7 @@ function subscribeNcode(ncode, title) {
     }
     fancyTableItem(book, bookmark.length);
     bookmark.push(book);
-    GM_setValue('bookmark', bookmark);
+    container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
     myFancyLog(ncode, title, 'は書庫に登録しました！', true);
 }
 
@@ -168,7 +170,7 @@ function fancyTableItem(book, index) {
         if (confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
             mybook.remove();
             bookmark = [...bookmark.slice(0, index), ...bookmark.slice(index + 1)];
-            GM_setValue('bookmark', bookmark);
+            container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
             myFancyLog(book.ncode, book.title, 'は書庫から削除しました！', true);
         }
     });
@@ -180,14 +182,14 @@ function fancyTableItem(book, index) {
     mybook.querySelector('input').addEventListener('change', (event) => {
         var day = parseInt(event.target.value);
         book.next = day;
-        GM_setValue('bookmark', bookmark);
+        container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
         if (day === 0) {
             event.target.parentNode.title = '更新しないように設定します';
-            myFancyPopup(book[0], book[1], 'は更新しないように設定します！');
+            myFancyPopup(book.ncode, book.title, 'は更新しないように設定します！');
         }
         else {
             event.target.parentNode.title = '更新間隔を' + day + '日に設定します';
-            myFancyPopup(book[0], book[1], 'は ' + day + ' 日置きに更新します！');
+            myFancyPopup(book.ncode, book.title, 'は ' + day + ' 日置きに更新します！');
         }
     });
     mybook.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
@@ -222,7 +224,7 @@ function updateObserver(worker, callback) {
                 callback();
             }
             session = {};
-            GM_setValue('bookmark', bookmark);
+            container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
             clearInterval(observer);
         }
     }, 1000);
