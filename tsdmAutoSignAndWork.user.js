@@ -14,7 +14,7 @@
 var signed = GM_getValue('signed', 0);
 var worked = GM_getValue('worked', 0);
 var autoed = GM_getValue('autoed', false);
-var today = [new Date().getYear(), new Date().getMonth(), new Date().getDate()].join('');
+var today = new Date().getYear() + new Date().getMonth() + new Date().getDate();
 
 if (autoed) {
     if (today > signed) {
