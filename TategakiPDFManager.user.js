@@ -97,7 +97,12 @@ container.querySelector('.manager-button:nth-child(1)').addEventListener('click'
     }
 });
 container.querySelector('input:nth-child(2)').addEventListener('change', (event) => {novelist.myncode = event.target.value || novelist.ncode;} );
-container.querySelector('.manager-button:nth-child(3)').addEventListener('click', () => bookmarkSyncPreHandler());
+container.querySelector('.manager-button:nth-child(3)').addEventListener('click', () => {
+    if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
+        bookmarkSyncPreHandler();
+        bookmark.forEach(item => batchDownloadPreHandler(item));
+    }
+});
 container.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
     if (event.target.classList.contains('manager-checked')) {
         container.querySelector('.manager-logs').style.display = 'none';
@@ -156,7 +161,7 @@ function fancyTableItem(book, index) {
     mybook.id = book.ncode;
     mybook.innerHTML = '<span class="manager-button" title="NCODEを書庫から削除します">' + book.ncode + '</span>\
     <span class="manager-button" title="小説のウェブページを開きます">' + book.title + '</span>\
-    <span title="' + (book[2] === 0 ? '更新しないように設定します' :'更新間隔を' + book[2] + '日に設定します') + '"><input value="' + book[2] + '"></span>\
+    <span title="' + (book.next === 0 ? '更新しないように設定します' :'更新間隔を' + book.next + '日に設定します') + '"><input value="' + book.next + '"></span>\
     <span class="manager-button" title="縦書きPDFの更新をチェックします">' + new Date(book.last).toLocaleString('ja') + '</span>';
     container.querySelector('.manager-shelf').appendChild(mybook);
     mybook.querySelector('.manager-button:nth-child(1)').addEventListener('click', () => {
@@ -177,7 +182,7 @@ function fancyTableItem(book, index) {
         book.next = day;
         GM_setValue('bookmark', bookmark);
         if (day === 0) {
-            event.target.parentNode.title = 'は更新しないように設定します！';
+            event.target.parentNode.title = '更新しないように設定します';
             myFancyPopup(book[0], book[1], 'は更新しないように設定します！');
         }
         else {
@@ -196,6 +201,7 @@ function fancyTableItem(book, index) {
 // PDF自動更新関連
 if (novelist.now >= scheduler) {
     bookmarkSyncPreHandler();
+    bookmark.forEach(item => updateFancyBookmark(item));
 }
 function bookmarkSyncPreHandler() {
     if (worker) {
@@ -208,7 +214,6 @@ function bookmarkSyncPreHandler() {
         GM_setValue('scheduler', Date.now() + 14400000);
         myFancyPopup('', '登録した全てのNコード', 'の更新が完了しました！');
     });
-    bookmark.forEach(item => updateFancyBookmark(item));
 }
 function updateObserver(worker, callback) {
     var observer = setInterval(() => {
@@ -223,6 +228,9 @@ function updateObserver(worker, callback) {
     }, 1000);
 }
 function updateFancyBookmark(book) {
+    if (book.next === 0) {
+        return myFancyLog(book.ncode, book.title, 'は更新しないように設定しています！！');
+    }
     var next = book.next - (novelist.now - book.last) / 86400000;
     if (next > 0) {
         next = next >= 1 ? (next | 0) + '日' : (next * 24 | 0) + '時間';
