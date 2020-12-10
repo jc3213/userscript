@@ -30,7 +30,8 @@ if (!Array.isArray(bookmark)) {
         item[1].ncode = item[0];
         temp.push(item[1]);
     });
-    GM_setValue('bookmark', temp);
+    bookmark = temp;
+    GM_setValue('bookmark', bookmark);
 }
 
 // UI作成関連
