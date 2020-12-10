@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      18
+// @version      19
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -86,6 +86,7 @@ container.querySelector('.manager-button:nth-child(1)').addEventListener('click'
     bookmark.forEach((item, index) => {if (item.ncode === novelist.myncode) search = index;});
     if (search !== -1) {
         myFancyPopup(novelist.myncode, bookmark[search].title, 'は既に書庫に登録しています！');
+        validate[novelist.myncode] = bookmark[search].title;
     }
     else if (novelist.myncode === novelist.ncode) {
         subscribeNcode(novelist.ncode, novelist.title);
@@ -110,11 +111,17 @@ container.querySelector('.manager-button:nth-child(4)').addEventListener('click'
 
 // NCODE検証&登録
 function validateNcode(ncode) {
-    if (validate[ncode] === '検証中') {
-        return myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！');
-    }
-    if (validate[ncode] === 'エラー') {
-        return myFancyLog('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！', true);
+    if (validate[ncode]) {
+        if (validate[ncode] === '検証中') {
+            myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！');
+        }
+        else if (validate[ncode] === 'エラー') {
+            myFancyLog('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！', true);
+        }
+        else {
+            subscribeNcode(ncode, validate[ncode]);
+        }
+        return;
     }
     validate[ncode] = '検証中';
     myFancyLog('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！', true);
