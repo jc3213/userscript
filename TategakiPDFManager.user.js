@@ -167,7 +167,7 @@ function fancyTableItem(book, index) {
     mybook.id = book.ncode;
     mybook.innerHTML = '<span class="manager-button" title="NCODEを書庫から削除します">' + book.ncode + '</span>\
     <span class="manager-button" title="小説のウェブページを開きます">' + book.title + '</span>\
-    <span title="' + (book.next === 0 ? '更新しないように設定します' :'更新間隔を' + book.next + '日に設定します') + '"><input value="' + book.next + '"></span>\
+    <span title="' + (book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します') + '"><input value="' + book.next + '"></span>\
     <span class="manager-button" title="縦書きPDFの更新をチェックします">' + generateTimeFormat(book.last) + '</span>';
     container.querySelector('.manager-shelf').appendChild(mybook);
     mybook.querySelector('.manager-button:nth-child(1)').addEventListener('click', () => {
@@ -188,12 +188,12 @@ function fancyTableItem(book, index) {
         book.next = day;
         container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
         if (day === 0) {
-            event.target.parentNode.title = '更新しないように設定します';
-            myFancyPopup(book.ncode, book.title, 'は更新しないように設定します！');
+            event.target.parentNode.title = '自動更新をしません';
+            myFancyPopup(book.ncode, book.title, 'は更新しないように設定しました！');
         }
         else {
-            event.target.parentNode.title = '更新間隔を' + day + '日に設定します';
-            myFancyPopup(book.ncode, book.title, 'は ' + day + ' 日置きに更新します！');
+            event.target.parentNode.title = day + '日間隔で更新します';
+            myFancyPopup(book.ncode, book.title, 'は ' + day + ' 日間隔で更新するように設定しました！');
         }
     });
     mybook.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
