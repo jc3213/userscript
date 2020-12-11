@@ -119,6 +119,7 @@ container.querySelector('.manager-button:nth-child(4)').addEventListener('click'
 container.querySelector('.manager-button:nth-child(5)').addEventListener('click', (event) => {
     GM_setValue('bookmark', bookmark);
     event.target.style.display = 'none';
+    container.querySelector('.manager-logs').innerHTML = '';
 });
 
 // NCODE検証&登録
@@ -189,11 +190,11 @@ function fancyTableItem(book, index) {
         container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
         if (day === 0) {
             event.target.parentNode.title = '自動更新をしません';
-            myFancyPopup(book.ncode, book.title, 'は更新しないように設定しました！');
+            myFancyLog(book.ncode, book.title, 'は更新しないように設定しました！');
         }
         else {
             event.target.parentNode.title = day + '日間隔で更新します';
-            myFancyPopup(book.ncode, book.title, 'は ' + day + ' 日間隔で更新するように設定しました！');
+            myFancyLog(book.ncode, book.title, 'は ' + day + ' 日間隔で更新するように設定しました！');
         }
     });
     mybook.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
@@ -227,6 +228,7 @@ function bookmarkSyncPreHandler(start) {
     }, () => {
         GM_setValue('bookmark', bookmark);
         myFancyPopup('', '登録した全てのNコード', 'の更新が完了しました！');
+        container.querySelector('.manager-logs').innerHTML = '';
     });
 }
 function updateObserver(queue, start, end) {
@@ -251,12 +253,12 @@ function updateObserver(queue, start, end) {
 function updateFancyBookmark(book) {
     if (book.next === 0) {
         session.push(book.ncode);
-        return myFancyLog(book.ncode, book.title, 'は更新しないように設定しています！！');
+        return myFancyPopup(book.ncode, book.title, 'は更新しないように設定しています！！');
     }
     var next = book.next - (novelist.now - book.last) / 86400000;
     if (next > 0) {
         next = next >= 1 ? (next | 0) + '日' : (next * 24 | 0) + '時間';
-        myFancyLog(book.ncode, book.title, 'は <b>' + next + '</b> 後に更新する予定です！');
+        myFancyPopup(book.ncode, book.title, 'は <b>' + next + '</b> 後に更新する予定です！');
         session.push(book.ncode);
     }
     else {
@@ -268,7 +270,7 @@ function batchDownloadPreHandler(book) {
         return myFancyPopup(book.ncode, book.title, 'はまだ処理しています、しばらくお待ちください！');
     }
     download[book.ncode] = 'ダウンロード';
-    myFancyLog(book.ncode, book.title, 'のダウンロードを開始しました！', true);
+    myFancyPopup(book.ncode, book.title, 'のダウンロードを開始しました！', true);
     GM_xmlhttpRequest({
         url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf',
         method: 'GET',
