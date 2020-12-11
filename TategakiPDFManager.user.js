@@ -76,8 +76,8 @@ var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
 <input style="padding: 5px;">\
 <span class="manager-button">NCODE一括更新</span>\
-<span class="manager-button">ログ表示</span>\
-<span class="manager-button" style="display: none;">書庫更新</span></div>\
+<span class="manager-button" style="display: none; background-color: #387ec8; color: #fff">書庫更新</span>\
+<span class="manager-button" style="display: none;">ログ表示</span></div>\
 <div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
 <div class="manager-logs" style="display: none;"></div>';
 container.className = 'manager-container';
@@ -105,7 +105,13 @@ container.querySelector('.manager-button:nth-child(3)').addEventListener('click'
         });
     }
 });
-container.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
+container.querySelector('.manager-button:nth-child(4)').addEventListener('click', (event) => {
+    GM_setValue('bookmark', bookmark);
+    container.querySelector('.manager-logs').innerHTML = '';
+    container.querySelector('.manager-button:nth-child(4)').style.display = 'none';
+    container.querySelector('.manager-button:nth-child(5)').style.display = 'none';
+});
+container.querySelector('.manager-button:nth-child(5)').addEventListener('click', () => {
     if (event.target.classList.contains('manager-checked')) {
         container.querySelector('.manager-logs').style.display = 'none';
         container.querySelector('.manager-shelf').style.display = 'block';
@@ -116,11 +122,6 @@ container.querySelector('.manager-button:nth-child(4)').addEventListener('click'
     }
     event.target.classList.toggle('manager-checked');
 });
-container.querySelector('.manager-button:nth-child(5)').addEventListener('click', (event) => {
-    GM_setValue('bookmark', bookmark);
-    event.target.style.display = 'none';
-    container.querySelector('.manager-logs').innerHTML = '';
-});
 
 // NCODE検証&登録
 function validateNcode(ncode) {
@@ -129,7 +130,7 @@ function validateNcode(ncode) {
             myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！');
         }
         else if (validate[ncode] === 'エラー') {
-            myFancyLog('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！', true);
+            myFancyPopup('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！');
         }
         else {
             subscribeNcode(ncode, validate[ncode]);
@@ -137,7 +138,7 @@ function validateNcode(ncode) {
         return;
     }
     validate[ncode] = '検証中';
-    myFancyLog('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！', true);
+    myFancyPopup('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！');
     GM_xmlhttpRequest({
         url: 'https://ncode.syosetu.com/' + ncode,
         method: 'GET',
@@ -156,8 +157,8 @@ function subscribeNcode(ncode, title) {
     }
     fancyTableItem(book, bookmark.length);
     bookmark.push(book);
-    container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
-    myFancyLog(ncode, title, 'は書庫に登録しました！', true);
+    saveBookmarkButton();
+    myFancyLog(ncode, title, 'は書庫に登録しました！');
 }
 
 // ブックマーク表記生成
@@ -175,8 +176,8 @@ function fancyTableItem(book, index) {
         if (confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
             mybook.remove();
             bookmark = [...bookmark.slice(0, index), ...bookmark.slice(index + 1)];
-            container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
-            myFancyLog(book.ncode, book.title, 'は書庫から削除しました！', true);
+            saveBookmarkButton();
+            myFancyLog(book.ncode, book.title, 'は書庫から削除しました！');
         }
     });
     mybook.querySelector('.manager-button:nth-child(2)').addEventListener('click', () => {
@@ -187,7 +188,7 @@ function fancyTableItem(book, index) {
     mybook.querySelector('input').addEventListener('change', (event) => {
         var day = parseInt(event.target.value);
         book.next = day;
-        container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
+        saveBookmarkButton();
         if (day === 0) {
             event.target.parentNode.title = '自動更新をしません';
             myFancyLog(book.ncode, book.title, 'は更新しないように設定しました！');
@@ -201,15 +202,17 @@ function fancyTableItem(book, index) {
         if (confirm(book.title + ' をダウンロードしますか？')) {
             updateObserver(1, () => {
                 batchDownloadPreHandler(book);
-            }, () => {
-                container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
-            });
+            }, saveBookmarkButton);
         }
     });
 }
 function generateTimeFormat(ms) {
     var time = new Date(ms);
     return time.getFullYear() + '/' + time.getMonth() + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
+}
+function saveBookmarkButton() {
+    container.querySelector('.manager-button:nth-child(4)').style.display = 'inline-block';
+    container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
 }
 
 // PDF自動更新関連
@@ -270,7 +273,7 @@ function batchDownloadPreHandler(book) {
         return myFancyPopup(book.ncode, book.title, 'はまだ処理しています、しばらくお待ちください！');
     }
     download[book.ncode] = 'ダウンロード';
-    myFancyPopup(book.ncode, book.title, 'のダウンロードを開始しました！', true);
+    myFancyPopup(book.ncode, book.title, 'のダウンロードを開始しました！');
     GM_xmlhttpRequest({
         url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf',
         method: 'GET',
@@ -283,7 +286,7 @@ function batchDownloadPreHandler(book) {
                 a.click();
                 book.last = novelist.now;
                 container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now());
-                myFancyLog(book.ncode, book.title, 'のダウンロードは完了しました！', true);
+                myFancyLog(book.ncode, book.title, 'のダウンロードは完了しました！');
                 delete download[book.ncode];
                 session.push(book.ncode)
             }
@@ -307,14 +310,12 @@ function downloadPDFHandler(book) {
 }
 
 // ログ関連
-function myFancyLog(ncode, title, result, popup) {
+function myFancyLog(ncode, title, result) {
     var html = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
     var log = document.createElement('p');
     log.innerHTML = html;
     container.querySelector('.manager-logs').prepend(log);
-    if (popup === true) {
-        myFancyPopup(ncode, title, result);
-    }
+    myFancyPopup(ncode, title, result);
 }
 function myFancyPopup(ncode, title, result) {
     var popup = document.createElement('div');
