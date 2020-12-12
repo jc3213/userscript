@@ -64,6 +64,7 @@ manager.style.cssText = 'margin: 8px 5px;'
 manager.addEventListener('click', (event) => {
     if (!show) {
         Object.entries(bookmark).forEach(item => fancyTableItem(...item));
+        show = true;
     }
     if (manager.classList.contains('manager-checked')) {
         container.style.display = 'none';
