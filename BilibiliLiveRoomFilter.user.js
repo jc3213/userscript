@@ -12,6 +12,7 @@
 
 'use strict';
 var banned = GM_getValue('banned', {});
+var show = false;
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
@@ -137,6 +138,10 @@ var manager = document.createElement('span');
 manager.innerHTML = '管理屏蔽列表';
 manager.className = 'fancybutton';
 manager.addEventListener('click', (event) => {
+    if (!show) {
+        Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
+        show = true;
+    }
     if (ban_list.style.display === 'none') {
         ban_list.style.display = 'block';
         batch_box.style.display = 'block';
@@ -155,8 +160,6 @@ ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间<
 ban_list.className = 'fancylist';
 ban_list.style.cssText = 'display: none; left: 242px;'
 manager.after(ban_list);
-
-Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
 
 function makeBanlist(id, liver) {
     var ban = document.createElement('div');
