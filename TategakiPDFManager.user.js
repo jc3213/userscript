@@ -217,7 +217,7 @@ function saveBookmarkButton() {
 // PDF自動更新関連
 if (novelist.today !== scheduler) {
     bookmarkSyncPreHandler(() => {
-        Object.entires(bookmark).forEach(item => updateFancyBookmark(...item));
+        Object.entries(bookmark).forEach(item => updateFancyBookmark(...item));
     });
     GM_setValue('scheduler', novelist.today);
 }
