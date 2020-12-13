@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           15
+// @version           16
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -28,7 +28,7 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 .fancytitle {background-color: #000; color: #fff;}\
 .fancybody span:nth-child(2) {background-color: #ddd;}\
 .fancyfooter .fancybutton {margin: 0px 3px 0px 2px;}\
-div.sort-box > span:nth-child(n+2), div.room-info-down-row > span {margin-left: 5px}';
+div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
 var player = document.querySelector('section.player-and-aside-area');
@@ -151,7 +151,7 @@ manager.addEventListener('click', (event) => {
         batch_box.style.display = 'none';
     }
 });
-document.querySelector('div.sort-box').appendChild(manager);
+document.querySelector('div.list-filter-bar').appendChild(manager);
 
 var ban_list = document.createElement('div');
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span>\
