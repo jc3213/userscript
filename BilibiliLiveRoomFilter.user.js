@@ -20,7 +20,7 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 .fancybutton:active {filter: opacity(30%);}\
 .fancymenu {display: block; margin-bottom: 10px;}\
 .fancymenu .fancybutton:nth-child(n+2) {margin-left: 5px;}\
-.fancylist {background-color: #fff; font-size: 14px; width: 270px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute;}\
+.fancylist {background-color: #fff; font-size: 14px; width: 270px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute; top: 22px;}\
 .fancylist span:nth-child(1) {width: calc(50% - 50px);}\
 .fancylist span:nth-child(2) {width: calc(50% + 25px);}\
 .fancylist textarea {resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px;}\
@@ -158,7 +158,7 @@ ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间<
 <span class="fancyitem">主播</span></div>\
 <div class="fancybody"></div>';
 ban_list.className = 'fancylist';
-ban_list.style.cssText = 'display: none; left: 242px;'
+ban_list.style.cssText = 'display: none; left: 244px;'
 manager.after(ban_list);
 
 function makeBanlist(id, liver) {
@@ -180,7 +180,7 @@ batch_box.innerHTML = '<textarea id="batch_list"></textarea><div class="fancyfoo
 <span class="fancybutton">导出列表</span>\
 <span class="fancybutton">清空列表</span></div>';
 batch_box.className = 'fancylist';
-batch_box.style.cssText = 'display: none;';
+batch_box.style.cssText = 'display: none; width: 245px;';
 manager.after(batch_box);
 batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
