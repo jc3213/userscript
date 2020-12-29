@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         56
+// @version         57
 // @description     Assistant for raw manga online (LoveHeaven, MangaSum, BatoScan, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, BatoScan, Komiraw等) 助手脚本
 // @author          jc3213
@@ -155,20 +155,20 @@ var i18n = messages[navigator.language] || messages['en-US'];
 var mangas = {
     'loveheaven.net': {
         chapter: /\/read-(.+)-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
+        folder: () => {return chapter[1].replace(/(-manga|-raw)/g, '') + '\\' + chapter[2]},
         selector: 'img.chapter-img',
         ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangasum.com': {
-        chapter: /\/manga\/(.+)-raw\/chapter-(.+)\//,
-        folder: () => {return chapter[1].replace(/-manga/, '') + '\\' + chapter[2]},
+        chapter: /\/manga\/([^\/]+)\/chapter-([^\/]+)\//,
+        folder: () => {return chapter[1].replace(/(-manga|-raw|-mang)/g, '') + '\\' + chapter[2]},
         selector: 'div[id^="page_"] > img',
         lazyload: 'data-original'
     },
     'batoscan.net': {
         chapter: /\/read-(.+)-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/-manga(-raw)?/, '') + '\\' + chapter[2]},
+        folder: () => {return chapter[1].replace(/(-manga|-raw)/g, '') + '\\' + chapter[2]},
         selector: 'img[class="chapter-img"]',
         lazyload: 'data-original',
     },
