@@ -156,7 +156,7 @@ var mangas = {
         lazyload: 'data-original',
     },
     'manga1000.com': {
-        chapter: /%E3%80%90%E7%AC%AC(.+)%E8%A9%B1%E3%80%91(.+)-raw/,
+        chapter: /-raw/,
         folder: () => {var array = document.querySelector('h1.entry-title').innerText.split('–'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
         selector: 'figure[class="wp-block-image"] > img',
         shortcut: 'div.linkchap > a'
