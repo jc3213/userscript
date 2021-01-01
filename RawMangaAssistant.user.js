@@ -2,20 +2,19 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         57
-// @description     Assistant for raw manga online (LoveHeaven, MangaSum, BatoScan, Komiraw and etc.)
-// @description:zh  漫画生肉网站 (LoveHeaven, MangaSum, BatoScan, Komiraw等) 助手脚本
+// @version         58
+// @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
+// @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
-// @match           *://loveheaven.net/*
-// @match           *://loveha.net/*
+// @match           *://lovehug.net/*
 // @match           *://mangasum.com/*
 // @match           *://mangant.com/*
 // @match           *://manga1000.com/*
 // @match           *://manga1001.com/*
-// @match           *://batoscan.net/*
-// @match           *://manga11.com/*
 // @match           *://komiraw.com/*
+// @match           *://manga11.com/*
 // @match           *://rawdevart.com/*
+// @match           *://batoscan.net/*
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -29,35 +28,20 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// loveheaven.net / loveha.net
-// @webRequest      {"selector": "*.bidadx.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*jiltlargosirk.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*alignclamstram.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// @webRequest      {"selector": "*mehebborc.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.vlitag.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*prosumsit.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.spolecznosci.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.leadzutw.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
+// komiraw.com / manga11.com / rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
+// manga1000.com / manga1001.com
+// @webRequest      {"selector": "*manga1000.com/atba.js", "action": "cancel"}
+// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
+// rawdevart.com
+// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 // batoscan.net
 // @webRequest      {"selector": "*.yjaobumyovp.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.ntkjbweenycfq.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.betteradsystem.com/*", "action": "cancel"}
-// komiraw.com / manga11.com
-// @webRequest      {"selector": "*fnrrm2fn1njl1.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*moncoerbb.com/*", "action": "cancel"}
-// manga1000.com / manga1001.com
-// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.adsco.re/*", "action": "cancel"}
-// rawdevart.com
-// @webRequest      {"selector": "*inpagepush.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -153,11 +137,10 @@ var i18n = messages[navigator.language] || messages['en-US'];
 
 // Supported sites
 var mangas = {
-    'loveheaven.net': {
-        chapter: /\/read-(.+)-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/(-manga|-raw)/g, '') + '\\' + chapter[2]},
+    'lovehug.net': {
+        chapter: /\d+\/\d+/,
+        folder: () => {var array = document.querySelectorAll('span[itemprop]'); return array[1].innerText.slice(0, -7) + '\\' + array[2].innerText.match(/\d+/)[0];},
         selector: 'img.chapter-img',
-        ads: ['h3', 'br:nth-child(-n+3)', 'div.float-ck', 'div.chapter-content center'],
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangasum.com': {
@@ -174,15 +157,15 @@ var mangas = {
     },
     'manga1000.com': {
         chapter: /%E3%80%90%E7%AC%AC(.+)%E8%A9%B1%E3%80%91(.+)-raw/,
-        folder: () => {return decodeURI(chapter[2]) + '\\' + chapter[1]},
+        folder: () => {var array = document.querySelector('h1.entry-title').innerText.split('–'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
         selector: 'figure[class="wp-block-image"] > img',
-        ads: ['iframe'],
         shortcut: 'div.linkchap > a'
     },
     'komiraw.com': {
-        chapter: /\/([^\/]+)-raw-chap-(.+)/,
-        folder: () => {return chapter.slice(1).join('\\')},
-        selector: 'img[class^="chapter-img"]',
+        chapter: /\/[^\/]+\/.+/,
+        folder: () => {return document.querySelector('#boxtopchap > a').innerText.split('|')[0].trim() + '\\' + document.querySelector('#boxtopchap > h2 > a > span > span').innerText.match(/\d+/)[0];},
+        ads: ['iframe'],
+        selector: 'img.chapter-img ',
         shortcut: ['#prev_chap', '#next_chap']
     },
     'rawdevart.com': {
@@ -192,7 +175,6 @@ var mangas = {
         lazyload: 'data-src'
     }
 };
-mangas['loveha.net'] = mangas['loveheaven.net'];
 mangas['mangant.com'] = mangas['mangasum.com'];
 mangas['manga1001.com'] = mangas['manga1000.com'];
 mangas['manga11.com'] = mangas['komiraw.com'];
