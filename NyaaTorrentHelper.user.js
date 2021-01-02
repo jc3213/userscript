@@ -19,7 +19,7 @@ var action = {};
 var hosts = {
     'hentai-covers.site': '#image-viewer-container > img',
     'e-hentai.org': '#gd1 > div',
-    'www.dlsite.com': 'div.slider_body'
+    'www.dlsite.com': 'li.slider_item.active > img'
 }
 
 // Create UI
