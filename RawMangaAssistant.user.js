@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         58
+// @version         59
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -14,7 +14,7 @@
 // @match           *://komiraw.com/*
 // @match           *://manga11.com/*
 // @match           *://rawdevart.com/*
-// @match           *://batoscan.net/*
+// @match           *://lhscan.me/*
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -149,18 +149,6 @@ var mangas = {
         selector: 'div[id^="page_"] > img',
         lazyload: 'data-original'
     },
-    'batoscan.net': {
-        chapter: /\/read-(.+)-chapter-(.+)\.html/,
-        folder: () => {return chapter[1].replace(/(-manga|-raw)/g, '') + '\\' + chapter[2]},
-        selector: 'img[class="chapter-img"]',
-        lazyload: 'data-original',
-    },
-    'manga1000.com': {
-        chapter: /-raw/,
-        folder: () => {var array = document.querySelector('h1.entry-title').innerText.split('–'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
-        selector: 'figure[class="wp-block-image"] > img',
-        shortcut: 'div.linkchap > a'
-    },
     'komiraw.com': {
         chapter: /\/[^\/]+\/.+/,
         folder: () => {return document.querySelector('#boxtopchap > a').innerText.split('|')[0].trim() + '\\' + document.querySelector('#boxtopchap > h2 > a > span > span').innerText.match(/\d+/)[0];},
@@ -173,6 +161,17 @@ var mangas = {
         folder: () => {return chapter[1] + '\\' + chapter[2]},
         selector: 'div.mb-3 > img',
         lazyload: 'data-src'
+    },
+    'manga1000.com': {
+        chapter: /-raw/,
+        folder: () => {var array = document.querySelector('h1.entry-title').innerText.split('–'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
+        selector: 'img.aligncenter',
+        shortcut: 'div.linkchap > a'
+    },
+    'lhscan.me': {
+        chapter: /\/chapter-\d+/,
+        folder: () => {var array = document.querySelector('#chapter-heading').innerText.split('-'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
+        selector: 'img.wp-manga-chapter-img'
     }
 };
 mangas['mangant.com'] = mangas['mangasum.com'];
