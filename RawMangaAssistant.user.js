@@ -179,14 +179,15 @@ mangas['manga1001.com'] = mangas['manga1000.com'];
 mangas['manga11.com'] = mangas['komiraw.com'];
 watching = mangas[location.host];
 
+// Create UI
 var css = document.createElement('style');
-css.innerHTML = '.menuOverlay {position: fixed; z-index: 999999999; background-color: white;}\
-.menuContainer {min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
+css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index: 999999999;}\
+.menuContainer {background-color: #fff; min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
 .assistantIcon {width: 30px; display: inline-block; text-align: center}\
 .assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
-.assistantMenu:hover {background-color: darkviolet; color: white; cursor: default;}\
-.menuAria2Item {width: 300px; height: 42px; overflow: hidden;}\
-.menuAria2Item:focus {background-color: darkblue; color: white;}'
+.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
+.menuAria2Item {width: 300px !important; height: 41px; border: 1px ridge darkblue; overflow: hidden;}\
+.menuAria2Item:focus {background-color: darkblue !important; color: white;}';
 document.head.appendChild(css);
 
 var button = document.createElement('span');
@@ -194,7 +195,8 @@ button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay assistantMenu';
 button.draggable = true;
-button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px;';
+button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
+button.addEventListener('click', (event) => { container.style.display = 'block'; });
 document.body.appendChild(button);
 
 var container = document.createElement('div');
@@ -218,17 +220,11 @@ document.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (aria2Menu.contains(event.target)) {
+    if (aria2Menu.contains(event.target) || button.contains(event.target)) {
         return;
     }
-    if (button === event.target) {
-        if (container.style.display === 'none') {
-            container.style.display = 'block';
-        }
-    }
-    else {
-        container.style.display = 'none';
-    }
+    container.style.display = 'none';
+    aria2Menu.style.display = 'none';
 });
 
 // Primary menus
