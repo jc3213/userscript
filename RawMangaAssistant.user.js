@@ -2,11 +2,12 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         59
+// @version         60
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
 // @match           *://lovehug.net/*
+// @match           *://kissaway.net/*
 // @match           *://mangasum.com/*
 // @match           *://mangant.com/*
 // @match           *://manga1000.com/*
@@ -28,7 +29,7 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// komiraw.com / manga11.com / rawdevart.com
+// komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // manga1000.com / manga1001.com
 // @webRequest      {"selector": "*manga1000.com/atba.js", "action": "cancel"}
@@ -38,10 +39,10 @@
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// batoscan.net
-// @webRequest      {"selector": "*.yjaobumyovp.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.ntkjbweenycfq.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.betteradsystem.com/*", "action": "cancel"}
+// kissaway.net
+// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -172,6 +173,13 @@ var mangas = {
         chapter: /\/chapter-\d+/,
         folder: () => {var array = document.querySelector('#chapter-heading').innerText.split('-'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
         selector: 'img.wp-manga-chapter-img'
+    },
+    'kissaway.net': {
+        chapter: /\d+\/\d+/,
+        folder: () => {var array = document.querySelectorAll('span[itemprop]'); return array[1].innerText.slice(0, -7) + '\\' + array[2].innerText.match(/\d+/)[0];},
+        selector: 'img.chapter-img',
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
+        lazyload: 'data-original'
     }
 };
 mangas['mangant.com'] = mangas['mangasum.com'];
