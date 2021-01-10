@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         60
+// @version         61
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -19,6 +19,7 @@
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @grant           GM_download
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
@@ -47,18 +48,10 @@
 
 'use strict';
 // Initial variables
-var urls = [];
-var save = [];
-var aria2 = [];
-var fail = [];
-var observer;
 var images;
 var watching;
-var mousedown;
-var moving = false;
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
 var offset = {};
-var lazyload;
 var warning;
 var header = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
 
@@ -244,25 +237,16 @@ downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
 downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
-    save.forEach((item, index) => {
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: item[0],
-            responseType: 'blob',
-            onload: (details) => {
-                var a = document.createElement('a');
-                a.href = URL.createObjectURL(details.response);
-                a.download = item[1];
-                a.click();
-                if (index === images.length - 1) {
-                    notification('save', 'done');
-                }
-            },
-            onerror: () => notification('save', 'error', item[0])
-        });
+    extractImage((index, url, name) => {
+        GM_download(url, name);
+        if (index === images.length - 1) {
+            notification('save', 'done');
+        }
     });
 });
 downMenu.querySelector('.assistantMenu:nth-child(2)').addEventListener('click', () => {
+    var urls = [];
+    extractImage((index, url, name) => urls.push(url));
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 });
@@ -276,14 +260,16 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
             }
             else {
                 var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
-                var aria2 = save.map((item, index) => aria2RequestHandler({
-                    method: 'aria2.addUri',
-                    options: [[item[0]], {out: item[1], dir: dir, header: header}]
-                }, () => {
-                    if (index === images.length - 1) {
-                        notification('aria2', 'done');
-                    }
-                }));
+                extractImage((index, url, name) => {
+                    aria2RequestHandler({
+                        method: 'aria2.addUri',
+                        options: [[url], {out: name, dir: dir, header: header}]
+                    }, () => {
+                        if (index === images.length - 1) {
+                            notification('aria2', 'done');
+                        }
+                    });
+                });
             }
         }
         else {
@@ -331,27 +317,12 @@ var clickMenu = document.createElement('div');
 clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
 clickMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
-        document.documentElement.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
 });
 container.appendChild(clickMenu);
 
 // Switchable Menus
 var switchWorker = [{
-    on: () => {
-        if (!images || !watching.lazyload) {
-            return;
-        }
-        lazyload = setInterval(() => {
-            if (images.length === urls.length) {
-                images.forEach((element) => element.setAttribute('src', element.getAttribute(watching.lazyload)));
-                clearInterval(lazyload);
-            }
-        }, 100);
-    },
-    off: () => {
-        clearInterval(lazyload);
-    }
-},{
     on: () => {
         button.style.display = 'none';
         document.addEventListener('contextmenu', contextMenuHandler);
@@ -364,8 +335,7 @@ var switchWorker = [{
     }
 }];
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.lazy.label + '<input type="hidden" name="lazy" value="' + GM_getValue('lazy', 'off') + '"></div>\
-<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
+switchMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
 switchMenu.className = 'menuContainer';
 switchMenu.querySelectorAll('.assistantMenu').forEach((item, index) => {
     var input = item.querySelector('input');
@@ -397,9 +367,12 @@ if (watching) {
     var chapter = location.pathname.match(watching.chapter);
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
+        downMenu.style.display = 'block';
         removeAdsElement(watching.ads);
-        extractImage(watching.lazyload);
         appendShortcuts(watching.shortcut);
+        if (images.length === 0) {
+            return notification('extract', 'fatal');
+        }
     }
 }
 
@@ -411,52 +384,37 @@ function removeAdsElement(selector) {
     }
 }
 
-function extractImage(lazyload) {
-    if (images.length === 0) {
-        return notification('extract', 'fatal');
-    }
-    warning = notification('extract', 'start');
+function extractImage(callback) {
     images.forEach((element, index) => {
-        var source = element.getAttribute(lazyload || 'src');
+        var source = element.getAttribute(watching.lazyload || 'src');
         var url = source.trim().replace(/^\/\//, 'http://');
         var name = ('000' + index).substr(index.toString().length);
         getExtension(index, url, name);
     });
-    observer = setInterval(() => {
-        if (images.length === urls.length + fail.length) {
-            warning.remove();
-            clearInterval(observer);
-            if (fail.length === 0) {
-                downMenu.style.display = 'block';
-                notification('extract', 'done');
-            }
-            else {
-                notification('extract', 'fail', '\n' + fail.join('\n'));
-            }
+
+    function getExtension(index, url, name) {
+        var ext = url.match(/(png|jpg|jpeg|webp)/);
+        if (ext) {
+            callback(index, url, name + '.' + ext[0]);
         }
-    }, 100);
-}
-function getExtension(index, url, name) {
-    var ext = url.match(/(png|jpg|jpeg|webp)/);
-    if (ext) {
-        storeImageInfo(index, url, name, ext[0]);
-    }
-    else {
-        GM_xmlhttpRequest({
-            url, url,
-            method: 'HEAD',
-            onload: (details) => {
-                ext = details.responseHeaders.match(/(png|jpg|jpeg|webp)/);
-                if (ext) {
-                    storeImageInfo(index, url, name, ext[0]);
+        else {
+            GM_xmlhttpRequest({
+                url, url,
+                method: 'HEAD',
+                onload: (details) => {
+                    ext = details.responseHeaders.match(/(png|jpg|jpeg|webp)/);
+                    if (ext) {
+                        callback(index, url, name + '.' + ext[0]);
+                    }
+                },
+                onerror: () => {
+                    notification('extract', 'fail', '\n' + url);
                 }
-            },
-            onerror: () => {
-                fail.push(url);
-            }
-        });
+            });
+        }
     }
 }
+
 function storeImageInfo(index, url, name, ext) {
     name += '.' + ext;
     urls.push(url);
