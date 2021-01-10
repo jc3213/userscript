@@ -77,9 +77,6 @@ var messages = {
         gotop: {
             label: 'Back to Top',
         },
-        lazy: {
-            label: 'Preload All Images'
-        },
         menu: {
             label: 'Context Menu Mode'
         },
