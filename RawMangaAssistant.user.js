@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         61
+// @version         62
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -19,7 +19,6 @@
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
-// @grant           GM_download
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
@@ -48,6 +47,10 @@
 
 'use strict';
 // Initial variables
+var urls = [];
+var save = [];
+var fail = [];
+var observer;
 var images;
 var watching;
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
@@ -76,6 +79,9 @@ var messages = {
         secret: 'Secret token updated, reloading page in 5 seconds',
         gotop: {
             label: 'Back to Top',
+        },
+        lazy: {
+            label: 'Preload All Images'
         },
         menu: {
             label: 'Context Menu Mode'
@@ -130,45 +136,44 @@ var i18n = messages[navigator.language] || messages['en-US'];
 var mangas = {
     'lovehug.net': {
         chapter: /\d+\/\d+/,
-        folder: () => {var array = document.querySelectorAll('span[itemprop]'); return array[1].innerText.slice(0, -7) + '\\' + array[2].innerText.match(/\d+/)[0];},
-        selector: 'img.chapter-img',
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
+        folder: () => { return getFolerforAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
+        selector: 'img.chapter-img'
     },
     'mangasum.com': {
-        chapter: /\/manga\/([^\/]+)\/chapter-([^\/]+)\//,
-        folder: () => {return chapter[1].replace(/(-manga|-raw|-mang)/g, '') + '\\' + chapter[2]},
+        chapter: /chapter-/,
+        folder: () => { return getFolerforAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
         selector: 'div[id^="page_"] > img',
+        bad: 'https://st.mangasum.com/Data/logos/logo.png',
         lazyload: 'data-original'
     },
     'komiraw.com': {
-        chapter: /\/[^\/]+\/.+/,
-        folder: () => {return document.querySelector('#boxtopchap > a').innerText.split('|')[0].trim() + '\\' + document.querySelector('#boxtopchap > h2 > a > span > span').innerText.match(/\d+/)[0];},
+        chapter: /chap-/,
+        folder: () => { return getFolerforAria2(document.querySelector('#boxtopchap > h2 > a').title); },
         ads: ['iframe'],
-        selector: 'img.chapter-img ',
+        selector: 'div.chapter-c > img',
         shortcut: ['#prev_chap', '#next_chap']
     },
     'rawdevart.com': {
-        chapter: /\/([^\/]+)\/chapter-([^\/]+)\//,
-        folder: () => {return chapter[1] + '\\' + chapter[2]},
-        selector: 'div.mb-3 > img',
+        chapter: /chapter-/,
+        folder: () => { return getFolerforAria2(document.querySelector('a.d-inline-block.font-weight-bold').innerText, document.querySelector('h1.font-26.d-inline-block.font-weight-bolder').innerText); },
+        selector: '#img-container > div.mb-3 > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
         chapter: /-raw/,
-        folder: () => {var array = document.querySelector('h1.entry-title').innerText.split('–'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
+        folder: () => { return getFolerforAria2(document.querySelector('h1.entry-title').innerText); },
         selector: 'img.aligncenter',
         shortcut: 'div.linkchap > a'
     },
     'lhscan.me': {
-        chapter: /\/chapter-\d+/,
-        folder: () => {var array = document.querySelector('#chapter-heading').innerText.split('-'); return array[0].trim() + '\\' + array[1].match(/\d+/)[0];},
+        chapter: /\/chapter-/,
+        folder: () => { return getFolerforAria2(document.querySelector('#chapter-heading').innerText); },
         selector: 'img.wp-manga-chapter-img'
     },
     'kissaway.net': {
         chapter: /\d+\/\d+/,
-        folder: () => {var array = document.querySelectorAll('span[itemprop]'); return array[1].innerText.slice(0, -7) + '\\' + array[2].innerText.match(/\d+/)[0];},
+        folder: () => { return getFolerforAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
         selector: 'img.chapter-img',
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         lazyload: 'data-original'
     }
 };
@@ -176,6 +181,13 @@ mangas['mangant.com'] = mangas['mangasum.com'];
 mangas['manga1001.com'] = mangas['manga1000.com'];
 mangas['manga11.com'] = mangas['komiraw.com'];
 watching = mangas[location.host];
+
+function getFolerforAria2(title, chapter) {
+    var array = title.split(/[\|\-\–]/g);
+    title = array.shift();
+    chapter = chapter || array.pop();
+    return '\\' + title.trim().replace(/[\/\\:\*\?\"\<\>]/g, '_') + '\\' + chapter.match(/\d+([\.-_]\d)?/)[0];
+}
 
 // Create UI
 var css = document.createElement('style');
@@ -234,16 +246,25 @@ downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
 downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
-    extractImage((index, url, name) => {
-        GM_download(url, name);
-        if (index === images.length - 1) {
-            notification('save', 'done');
-        }
+    save.forEach((item, index) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: item.url,
+            responseType: 'blob',
+            onload: (details) => {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(details.response);
+                a.download = item.name;
+                a.click();
+                if (index === images.length - 1) {
+                    notification('save', 'done');
+                }
+            },
+            onerror: () => notification('save', 'error', item[0])
+        });
     });
 });
 downMenu.querySelector('.assistantMenu:nth-child(2)').addEventListener('click', () => {
-    var urls = [];
-    extractImage((index, url, name) => urls.push(url));
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 });
@@ -256,17 +277,15 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
                 notification('aria2', 'nokey');
             }
             else {
-                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + watching.folder();
-                extractImage((index, url, name) => {
-                    aria2RequestHandler({
-                        method: 'aria2.addUri',
-                        options: [[url], {out: name, dir: dir, header: header}]
-                    }, () => {
-                        if (index === images.length - 1) {
-                            notification('aria2', 'done');
-                        }
-                    });
-                });
+                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + watching.folder();
+                var aria2 = save.map((item, index) => aria2RequestHandler({
+                    method: 'aria2.addUri',
+                    options: [[item.url], {out: item.name, dir: dir, header: header}]
+                }, () => {
+                    if (index === images.length - 1) {
+                        notification('aria2', 'done');
+                    }
+                }));
             }
         }
         else {
@@ -364,12 +383,10 @@ if (watching) {
     var chapter = location.pathname.match(watching.chapter);
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
-        downMenu.style.display = 'block';
         removeAdsElement(watching.ads);
         appendShortcuts(watching.shortcut);
-        if (images.length === 0) {
-            return notification('extract', 'fatal');
-        }
+        downMenu.style.display = 'block';
+        extractImage(watching.lazyload);
     }
 }
 
@@ -381,10 +398,30 @@ function removeAdsElement(selector) {
     }
 }
 
-function extractImage(callback) {
+function extractImage(lazyload) {
+    if (images.length === 0) {
+        return notification('extract', 'fatal');
+    }
+    warning = notification('extract', 'start');
+    observer = setInterval(() => {
+        if (images.length === urls.length + fail.length) {
+            warning.remove();
+            clearInterval(observer);
+            if (fail.length === 0) {
+                downMenu.style.display = 'block';
+                notification('extract', 'done');
+            }
+            else {
+                notification('extract', 'fail', '\n' + fail.map(item => { return 'page ' + (item + 1); } ));
+            }
+        }
+    }, 250);
     images.forEach((element, index) => {
-        var source = element.getAttribute(watching.lazyload || 'src');
-        var url = source.trim().replace(/^\/\//, 'http://');
+        var src = element.getAttribute(watching.lazyload) || element.getAttribute('src');
+        var url = src.trim().replace(/^\/\//, 'http://');
+        if (url === watching.bad) {
+            return fail.push(index);
+        }
         var name = ('000' + index).substr(index.toString().length);
         getExtension(index, url, name);
     });
@@ -392,7 +429,7 @@ function extractImage(callback) {
     function getExtension(index, url, name) {
         var ext = url.match(/(png|jpg|jpeg|webp)/);
         if (ext) {
-            callback(index, url, name + '.' + ext[0]);
+            storeImageInfo(index, url, name, ext[0]);
         }
         else {
             GM_xmlhttpRequest({
@@ -401,11 +438,11 @@ function extractImage(callback) {
                 onload: (details) => {
                     ext = details.responseHeaders.match(/(png|jpg|jpeg|webp)/);
                     if (ext) {
-                        callback(index, url, name + '.' + ext[0]);
+                        storeImageInfo(index, url, name, ext[0]);
                     }
                 },
                 onerror: () => {
-                    notification('extract', 'fail', '\n' + url);
+                    fail.push(index);
                 }
             });
         }
@@ -415,7 +452,7 @@ function extractImage(callback) {
 function storeImageInfo(index, url, name, ext) {
     name += '.' + ext;
     urls.push(url);
-    save.push([url, name]);
+    save.push({url: url, name: name});
 }
 
 // Add shortcut for chapter
