@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         62
+// @version         63
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -29,17 +29,19 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
+//                  lovehug.net
+// @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-// manga1000.com / manga1001.com
+//                  manga1000.com / manga1001.com
 // @webRequest      {"selector": "*manga1000.com/atba.js", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-// rawdevart.com
+//                  rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// kissaway.net
+//                  kissaway.net
 // @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
@@ -48,7 +50,6 @@
 'use strict';
 // Initial variables
 var urls = [];
-var save = [];
 var fail = [];
 var observer;
 var images;
@@ -131,19 +132,18 @@ var messages = {
     }
 };
 var i18n = messages[navigator.language] || messages['en-US'];
-
 // Supported sites
 var mangas = {
     'lovehug.net': {
         chapter: /\d+\/\d+/,
-        folder: () => { return getFolerforAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
+        folder: () => { return getFolerforAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
         selector: 'img.chapter-img'
     },
     'mangasum.com': {
         chapter: /chapter-/,
         folder: () => { return getFolerforAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
         selector: 'div[id^="page_"] > img',
-        bad: 'https://st.mangasum.com/Data/logos/logo.png',
+        fallback: 'https://st.mangasum.com/Data/logos/logo.png',
         lazyload: 'data-original'
     },
     'komiraw.com': {
@@ -246,21 +246,21 @@ downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
 downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
-    save.forEach((item, index) => {
+    urls.forEach((url, index) => {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: item.url,
+            url: url,
             responseType: 'blob',
             onload: (details) => {
                 var a = document.createElement('a');
                 a.href = URL.createObjectURL(details.response);
-                a.download = item.name;
+                a.download = ('000' + index).slice(-3) + '.' + details.responseHeaders.match(/(png|jpg|jpeg|webp)/)[0];
                 a.click();
                 if (index === images.length - 1) {
                     notification('save', 'done');
                 }
             },
-            onerror: () => notification('save', 'error', item[0])
+            onerror: () => notification('save', 'error', url)
         });
     });
 });
@@ -278,10 +278,10 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
             }
             else {
                 var dir = details.response.match(/"dir":"([^"]+)"/)[1] + watching.folder();
-                var aria2 = save.map((item, index) => aria2RequestHandler({
+                var aria2 = urls.map((url, index) => aria2RequestHandler({
                     method: 'aria2.addUri',
-                    options: [[item.url], {out: item.name, dir: dir, header: header}]
-                }, () => {
+                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: header}]
+                }, (result) => {
                     if (index === images.length - 1) {
                         notification('aria2', 'done');
                     }
@@ -294,6 +294,7 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
     }, (error) => {
         notification('aria2', 'norpc');
     });
+
     function aria2RequestHandler(request, onload, onerror) {
         GM_xmlhttpRequest({
             url: aria2Menu.querySelector('input[name="server"]').value,
@@ -385,7 +386,6 @@ if (watching) {
         images = document.querySelectorAll(watching.selector);
         removeAdsElement(watching.ads);
         appendShortcuts(watching.shortcut);
-        downMenu.style.display = 'block';
         extractImage(watching.lazyload);
     }
 }
@@ -406,6 +406,7 @@ function extractImage(lazyload) {
     observer = setInterval(() => {
         if (images.length === urls.length + fail.length) {
             warning.remove();
+            downMenu.style.display = 'block';
             clearInterval(observer);
             if (fail.length === 0) {
                 downMenu.style.display = 'block';
@@ -419,40 +420,27 @@ function extractImage(lazyload) {
     images.forEach((element, index) => {
         var src = element.getAttribute(watching.lazyload) || element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        if (url === watching.bad) {
-            return fail.push(index);
+        if (url === watching.fallback) {
+            var wrapper = new MutationObserver(lazyloadWrapper);
+            wrapper.observe(element, {attributes: true});
+            return;
         }
-        var name = ('000' + index).substr(index.toString().length);
-        getExtension(index, url, name);
+        urls.push(url);
     });
 
-    function getExtension(index, url, name) {
-        var ext = url.match(/(png|jpg|jpeg|webp)/);
-        if (ext) {
-            storeImageInfo(index, url, name, ext[0]);
-        }
-        else {
-            GM_xmlhttpRequest({
-                url, url,
-                method: 'HEAD',
-                onload: (details) => {
-                    ext = details.responseHeaders.match(/(png|jpg|jpeg|webp)/);
-                    if (ext) {
-                        storeImageInfo(index, url, name, ext[0]);
-                    }
-                },
-                onerror: () => {
-                    fail.push(index);
+    function lazyloadWrapper(lazyload) {
+        lazyload.forEach(event => {
+            if (event.attributeName === 'src') {
+                var url = event.target.src;
+                if (url === watching.fallback) {
+                    fail.push(url);
                 }
-            });
-        }
+                else {
+                    urls.push(url);
+                }
+            }
+        });
     }
-}
-
-function storeImageInfo(index, url, name, ext) {
-    name += '.' + ext;
-    urls.push(url);
-    save.push({url: url, name: name});
 }
 
 // Add shortcut for chapter
