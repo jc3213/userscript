@@ -103,7 +103,7 @@ container.querySelector('input:nth-child(2)').addEventListener('change', (event)
 container.querySelector('.manager-button:nth-child(3)').addEventListener('click', () => {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         bookmarkSyncPreHandler(() => {
-            bookmark.forEach(item => batchDownloadPreHandler(item));
+            Object.entries(bookmark).forEach(item => batchDownloadPreHandler(...item));
         });
     }
 });
@@ -207,7 +207,7 @@ function fancyTableItem(ncode, book) {
 }
 function generateTimeFormat(ms) {
     var time = new Date(ms);
-    return time.getFullYear() + '/' + time.getMonth() + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
+    return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
 }
 function saveBookmarkButton() {
     container.querySelector('.manager-button:nth-child(4)').style.display = 'inline-block';
@@ -300,7 +300,7 @@ function downloadPDFHandler(ncode, book) {
     myFancyPopup(ncode, book.title, 'の縦書きPDFは只今生成中です、 60秒後に再試行します！');
     var timer = 60;
     var retry = setInterval(() => {
-        timer.html --;
+        timer --;
         if (timer === 0) {
             batchDownloadPreHandler(ncode, book);
             clearInterval(retry);
