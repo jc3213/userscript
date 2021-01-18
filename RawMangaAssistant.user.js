@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         63
+// @version         64
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -137,7 +137,8 @@ var mangas = {
     'lovehug.net': {
         chapter: /\d+\/\d+/,
         folder: () => { return getFolerforAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
-        selector: 'img.chapter-img'
+        selector: 'img.chapter-img',
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangasum.com': {
         chapter: /chapter-/,
@@ -163,7 +164,7 @@ var mangas = {
         chapter: /-raw/,
         folder: () => { return getFolerforAria2(document.querySelector('h1.entry-title').innerText); },
         selector: 'img.aligncenter',
-        shortcut: 'div.linkchap > a'
+        shortcut: ['div.linkchap > a']
     },
     'lhscan.me': {
         chapter: /\/chapter-/,
@@ -385,7 +386,7 @@ if (watching) {
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
         removeAdsElement(watching.ads);
-        appendShortcuts(watching.shortcut);
+        appendShortcuts(...watching.shortcut);
         extractImage(watching.lazyload);
     }
 }
@@ -444,13 +445,8 @@ function extractImage(lazyload) {
 }
 
 // Add shortcut for chapter
-function appendShortcuts(shortcut) {
-    if (Array.isArray(shortcut)) {
-        var button = shortcut.map(item => document.querySelector(item));
-    }
-    else {
-        button = document.querySelectorAll(shortcut);
-    }
+function appendShortcuts(prev, next) {
+    var button = next ? [document.querySelector(prev), document.querySelector(next)] : document.querySelectorAll(prev);
     document.addEventListener('keydown', (event) => {
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
         if (index !== -1) {
