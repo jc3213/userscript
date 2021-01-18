@@ -103,7 +103,7 @@ function addMenuToLiveRoom(element) {
     var id = banLiveRoom(element);
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
-    var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https:\/\/[^\@]+/)[0];
+    var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https?:\/\/[^\@]+/)[0];
 
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
