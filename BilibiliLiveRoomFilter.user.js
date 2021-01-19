@@ -178,7 +178,7 @@ document.querySelector('div.list-filter-bar').appendChild(manager);
 var container = document.createElement('div');
 container.className = 'fancybox';
 container.style.display = 'none';
-manager.after(container);
+document.querySelector('div.list-filter-bar').after(container);
 
 var ban_list = document.createElement('div');
 ban_list.className = 'fancylist';
