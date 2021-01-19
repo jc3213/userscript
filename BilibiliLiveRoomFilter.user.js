@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           18
+// @version           19
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -144,7 +144,7 @@ function addMenuToLiveRoom(element) {
         event.preventDefault();
         if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', preview, true);
+            xhr.open('GET', preview.replace(/https?/, 'https'), true);
             xhr.responseType = 'blob';
             xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
             xhr.send();
