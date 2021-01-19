@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           16
+// @version           18
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -20,14 +20,17 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 .fancybutton:active {filter: opacity(30%);}\
 .fancymenu {display: block; margin-bottom: 10px;}\
 .fancymenu .fancybutton:nth-child(n+2) {margin-left: 5px;}\
-.fancylist {background-color: #fff; font-size: 14px; width: 270px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; z-index: 999999; position: absolute; top: 22px;}\
+.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute; top: 24px;}\
+.fancylist {width: 320px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; display: inline-block;}\
 .fancylist span:nth-child(1) {width: calc(50% - 50px);}\
 .fancylist span:nth-child(2) {width: calc(50% + 25px);}\
 .fancylist textarea {resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px;}\
 .fancyitem {display: inline-block; padding: 5px; text-align: center; border: 1px solid #fff;}\
 .fancytitle {background-color: #000; color: #fff;}\
+.fancybody span:nth-child(1) {padding: 7px 5px 6px;}\
 .fancybody span:nth-child(2) {background-color: #ddd;}\
-.fancyfooter .fancybutton {margin: 0px 3px 0px 2px;}\
+.fancyfooter {margin-top: 3px;}\
+.fancyfooter .fancybutton:nth-child(n+2) {margin-left: 5px;}\
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
@@ -65,6 +68,19 @@ list.addEventListener('DOMNodeInserted', (event) => {
     }
 });
 
+function makeBanlist(id, liver) {
+    var ban = document.createElement('div');
+    ban.id = 'banned_' + id;
+    ban.innerHTML = '<span id="remove_liveroom" class="fancyitem fancybutton">' + id + '</span><span class="fancyitem">' + liver + '</span>';
+    ban.querySelector('.fancybutton').addEventListener('click', (event) => {
+        if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
+            removeBanlist(id);
+            saveBanlist();
+        }
+    });
+    ban_list.querySelector('.fancybody').appendChild(ban);
+}
+
 function addBanlist(id, liver) {
     if (!banned[id]) {
         banned[id] = liver;
@@ -84,6 +100,14 @@ function saveBanlist() {
     if (list) {
         list.querySelectorAll('li').forEach(item => banLiveRoom(item));
     }
+}
+
+function batchAddList(list) {
+    list.match(/^(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/mg).forEach(item => {
+        var rule = item.split(/[\s\/\.\@\#\$\,\/\\]+/);
+        addBanlist(rule[0], rule[1]);
+    });
+    saveBanlist();
 }
 
 function banLiveRoom(element) {
@@ -142,53 +166,39 @@ manager.addEventListener('click', (event) => {
         Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
         show = true;
     }
-    if (ban_list.style.display === 'none') {
-        ban_list.style.display = 'block';
-        batch_box.style.display = 'block';
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
     }
     else {
-        ban_list.style.display = 'none';
-        batch_box.style.display = 'none';
+        container.style.display = 'none';
     }
 });
 document.querySelector('div.list-filter-bar').appendChild(manager);
 
+var container = document.createElement('div');
+container.className = 'fancybox';
+container.style.display = 'none';
+manager.after(container);
+
 var ban_list = document.createElement('div');
+ban_list.className = 'fancylist';
 ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span>\
 <span class="fancyitem">主播</span></div>\
 <div class="fancybody"></div>';
-ban_list.className = 'fancylist';
-ban_list.style.cssText = 'display: none; left: 244px;'
-manager.after(ban_list);
-
-function makeBanlist(id, liver) {
-    var ban = document.createElement('div');
-    ban.id = 'banned_' + id;
-    ban.innerHTML = '<span id="remove_liveroom" class="fancyitem fancybutton">' + id + '</span><span class="fancyitem">' + liver + '</span>';
-    ban.querySelector('.fancybutton').addEventListener('click', (event) => {
-        if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
-            removeBanlist(id);
-            saveBanlist();
-        }
-    });
-    ban_list.querySelector('.fancybody').appendChild(ban);
-}
+container.appendChild(ban_list);
 
 var batch_box = document.createElement('div');
+batch_box.className = 'fancylist';
 batch_box.innerHTML = '<textarea id="batch_list"></textarea><div class="fancyfooter">\
 <span class="fancybutton">批量屏蔽</span>\
 <span class="fancybutton">导出列表</span>\
-<span class="fancybutton">清空列表</span></div>';
-batch_box.className = 'fancylist';
-batch_box.style.cssText = 'display: none; width: 245px;';
-manager.after(batch_box);
+<span class="fancybutton">导入列表</span>\
+<span class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="text/plain">';
+container.prepend(batch_box);
 batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
         var batch = document.getElementById('batch_list');
-        var pattern = batch.value.match(/^(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/mg).forEach(item => {
-            var rule = item.split(/[\s\/\.\@\#\$\,\/\\]+/);
-            addBanlist(rule[0], rule[1]);
-        });
+        batchAddList(batch.value);
         saveBanlist();
         batch.value = '';
     }
@@ -199,11 +209,19 @@ batch_box.querySelector('.fancybutton:nth-child(2)').addEventListener('click', (
         blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
     }
 });
-batch_box.querySelector('.fancybutton:nth-child(3)').addEventListener('click', () => {
+batch_box.querySelector('.fancybutton:nth-child(3)').addEventListener('click', () => batch_box.querySelector('input').click() );
+batch_box.querySelector('input').addEventListener('change', (event) => {
+    if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -4) + '】吗？')) {
+        var reader = new FileReader();
+        reader.readAsText(event.target.files[0]);
+        reader.onload = () => batchAddList(reader.result);
+        batch_box.querySelector('input').value = '';
+    }
+});
+batch_box.querySelector('.fancybutton:nth-child(4)').addEventListener('click', () => {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
         ban_list.querySelector('.fancybody').innerHTML = '';
         banned = {};
         saveBanlist();
     }
 });
-
