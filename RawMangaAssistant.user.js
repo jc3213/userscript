@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         64
+// @version         65
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -143,7 +143,7 @@ var mangas = {
     'mangasum.com': {
         chapter: /chapter-/,
         folder: () => { return getFolerforAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
-        selector: 'div[id^="page_"] > img',
+        selector: 'div.page-chapter > img',
         fallback: 'https://st.mangasum.com/Data/logos/logo.png',
         lazyload: 'data-original'
     },
@@ -164,7 +164,7 @@ var mangas = {
         chapter: /-raw/,
         folder: () => { return getFolerforAria2(document.querySelector('h1.entry-title').innerText); },
         selector: 'img.aligncenter',
-        shortcut: ['div.linkchap > a']
+        shortcut: 'div.linkchap > a'
     },
     'lhscan.me': {
         chapter: /\/chapter-/,
@@ -175,7 +175,8 @@ var mangas = {
         chapter: /\d+\/\d+/,
         folder: () => { return getFolerforAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
         selector: 'img.chapter-img',
-        lazyload: 'data-original'
+        lazyload: 'data-original',
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     }
 };
 mangas['mangant.com'] = mangas['mangasum.com'];
@@ -386,7 +387,7 @@ if (watching) {
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
         removeAdsElement(watching.ads);
-        appendShortcuts(...watching.shortcut);
+        appendShortcuts(watching.shortcut);
         extractImage(watching.lazyload);
     }
 }
@@ -445,8 +446,11 @@ function extractImage(lazyload) {
 }
 
 // Add shortcut for chapter
-function appendShortcuts(prev, next) {
-    var button = next ? [document.querySelector(prev), document.querySelector(next)] : document.querySelectorAll(prev);
+function appendShortcuts(shortcut) {
+    if (!shortcut) {
+        return;
+    }
+    var button = Array.isArray(shortcut) ? shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(shortcut);
     document.addEventListener('keydown', (event) => {
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
         if (index !== -1) {
