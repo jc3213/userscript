@@ -20,7 +20,7 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 .fancybutton:active {filter: opacity(30%);}\
 .fancymenu {display: block; margin-bottom: 10px;}\
 .fancymenu .fancybutton:nth-child(n+2) {margin-left: 5px;}\
-.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute; top: 24px;}\
+.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .fancylist {width: 320px; height: 360px; overflow-y: auto; border: 1px solid #23ade5; display: inline-block;}\
 .fancylist span:nth-child(1) {width: calc(50% - 50px);}\
 .fancylist span:nth-child(2) {width: calc(50% + 25px);}\
