@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         65
+// @version         66
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -31,6 +31,7 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 //                  lovehug.net
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*tearpilotzoo.com/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -137,6 +138,7 @@ var mangas = {
     'lovehug.net': {
         chapter: /\d+\/\d+/,
         folder: () => { return getFolerforAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
+        ads: ['h5'],
         selector: 'img.chapter-img',
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
