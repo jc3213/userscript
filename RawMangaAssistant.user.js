@@ -32,6 +32,7 @@
 //                  lovehug.net
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*tearpilotzoo.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*sitefeytout.com/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
