@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         66
+// @version         67
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -33,6 +33,8 @@
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*tearpilotzoo.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*sitefeytout.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -455,6 +457,9 @@ function appendShortcuts(shortcut) {
     }
     var button = Array.isArray(shortcut) ? shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(shortcut);
     document.addEventListener('keydown', (event) => {
+        if (event.target.tagName === 'INPUT') {
+            return;
+        }
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
         if (index !== -1) {
             button[index].click();
