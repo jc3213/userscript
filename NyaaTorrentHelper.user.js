@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      24
+// @version      25
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -21,6 +21,28 @@ var hosts = {
     'e-hentai.org': '#gd1 > div',
     'www.dlsite.com': 'li.slider_item.active > img'
 }
+
+var messages = {
+    'en-US': {
+        filter: 'Filter',
+        keyword: 'Keyword...',
+        name: 'Name',
+        preview: 'Preview',
+        torrent: 'torrent',
+        magnet: 'Magnet',
+        copy: 'Copy'
+    },
+    'zh-CN': {
+        filter: '过滤',
+        keyword: '关键词...',
+        name: '名字',
+        preview: '预览',
+        torrent: '种子',
+        magnet: '磁链',
+        copy: '复制'
+    }
+};
+var i18n = messages[navigator.language] || messages['en-US'];
 
 // Create UI
 var css= document.createElement('style');
@@ -45,13 +67,13 @@ document.body.appendChild(container);
 
 var input = document.createElement('input');
 input.style.cssText = 'color: black; border: 1px solid black; padding: 5px; width: 180px; height: 38px;';
-input.placeholder = 'Keyword...';
+input.placeholder = i18n.keyword;
 input.addEventListener('keypress', (event) => { if (event.key === 'Enter') {button.click();} });
 container.appendChild(input);
 
 var button = document.createElement('span');
 button.className = 'filter-button';
-button.innerHTML = 'Filter';
+button.innerHTML = i18n.filter;
 button.addEventListener('click', (event) => {
     var keys = input.value.split(/[\|\/\\\+\,\:\; ]+/);
     if (filter && keys.join() === keyword.join()) {
@@ -82,17 +104,17 @@ function getFilterResult(data) {
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
-    <span>Preview</span>\
-    <a href="' + data.torrent + '" target="_blank">Torrent</a>\
-    <a href="' + data.magnet + ' style="display: ' + (data.torrent ? 'block' : 'none') + '">Magnet</a>\
-    <span>Copy</span>';
+    <span>' + i18n.preview + '</span>\
+    <a href="' + data.torrent + '" target="_blank">' + i18n.torrent + '</a>\
+    <a href="' + data.magnet + ' style="display: ' + (data.torrent ? 'block' : 'none') + '">' + i18n.magnet + '</a>\
+    <span>' + i18n.copy + '</span>';
     popup.appendChild(menu);
     menu.querySelector('span:nth-child(2)').addEventListener('click', (event) => {
         event.target.style.cssText = 'background-color: #C3C;';
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
     menu.querySelector('span:nth-child(5)').addEventListener('click', (event) => {
-        navigator.clipboard.writeText(data.name + '\n' + (data.torrent ? data.torrent + '\n' : '') + data.magnet);
+        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + '\n\n' + (data.image ? i18n.preview + ':\n' + data.image.src + '\n\n' : '') + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
     });
 }
 
