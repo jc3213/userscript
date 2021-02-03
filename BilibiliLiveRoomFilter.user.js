@@ -34,7 +34,7 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
-var liveroom = location.pathname.match(/^\/(\d+)$/);
+var liveroom = location.pathname.match(/^\/(\d+)/);
 if (liveroom) {
     var id = liveroom[1];
     var player = document.querySelector('section.player-and-aside-area');
