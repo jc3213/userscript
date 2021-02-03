@@ -34,9 +34,9 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
-var liveroom = location.pathname.match(/^\/\d+$/);
+var liveroom = location.pathname.match(/^\/(\d+)$/);
 if (liveroom) {
-    var id = liveroom[0];
+    var id = liveroom[1];
     var player = document.querySelector('section.player-and-aside-area');
     if (player) {
         banInsideLiveRoom(player);
@@ -103,7 +103,9 @@ function makeBanlist(id, liver) {
 function addBanlist(id, liver) {
     if (!banned[id]) {
         banned[id] = liver;
-        makeBanlist(id, liver);
+        if (ban_list) {
+            makeBanlist(id, liver);
+        }
     }
 }
 
