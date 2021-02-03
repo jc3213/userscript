@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           19
+// @version           20
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -34,11 +34,33 @@ css.innerHTML = '.fancybutton {background-color: #23ade5; color: #ffffff; paddin
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
-var player = document.querySelector('section.player-and-aside-area');
-if (player) {
-    var id = location.pathname.match(/\d+/)[0];
-    var liver = player.querySelector('a.room-owner-username').innerHTML;
-    var area = player.querySelector('a.area-link').href;
+var liveroom = location.pathname.match(/^\/\d+$/);
+if (liveroom) {
+    var id = liveroom[0];
+    var player = document.querySelector('section.player-and-aside-area');
+    if (player) {
+        banInsideLiveRoom(player);
+    }
+    else {
+        document.addEventListener('DOMNodeInserted', (event) => {
+            if (event.target.tagName === 'DIV' && event.target.style.margin === '0px auto') {
+                event.target.querySelector('iframe').addEventListener('load', (event) => {
+                    event.target.contentDocument.head.appendChild(css);
+                    event.target.contentDocument.addEventListener('DOMNodeInserted', (event) => {
+                        if (event.target.id === 'head-info-vm') {
+                            banInsideLiveRoom(event.target);
+                        }
+                    });
+                });
+            }
+        });
+    }
+    return;
+}
+
+function banInsideLiveRoom(domPlayer) {
+    var liver = domPlayer.querySelector('a.room-owner-username').innerHTML;
+    var area = domPlayer.querySelector('a.area-link').href;
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
     block.className = 'fancybutton';
@@ -49,7 +71,7 @@ if (player) {
             open(area, '_self');
         }
     });
-    player.querySelector('a.room-owner-username').after(block);
+    domPlayer.querySelector('a.room-owner-username').after(block);
     if (banned[id]) {
         if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
             open(area, '_self');
@@ -58,9 +80,6 @@ if (player) {
 }
 
 var list = document.querySelector('ul.list');
-if (!list) {
-    return;
-}
 list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
 list.addEventListener('DOMNodeInserted', (event) => {
     if (event.target.tagName === 'LI' && event.target.className === '') {
