@@ -143,6 +143,7 @@ var mangas = {
         folder: () => { return getFolerforAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
         ads: ['h5'],
         selector: 'img.chapter-img',
+        lazyload: 'data-src',
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangasum.com': {
@@ -391,21 +392,24 @@ if (watching) {
     var chapter = location.pathname.match(watching.chapter);
     if (chapter) {
         images = document.querySelectorAll(watching.selector);
-        removeAdsElement(watching.ads);
-        appendShortcuts(watching.shortcut);
-        extractImage(watching.lazyload);
+        removeAdsElement();
+        appendShortcuts();
+        extractImage();
     }
 }
 
-function removeAdsElement(selector) {
-    Array.isArray(selector) ? selector.forEach(item => removeElement(item)) : removeElement(selector);
+function removeAdsElement() {
+    if (!watching.ads) {
+        return;
+    }
+    Array.isArray(watching.ads) ? watching.ads.forEach(item => removeElement(item)) : removeElement(watching.ads);
 
-    function removeElement(sel) {
-        document.querySelectorAll(sel).forEach(item => item.remove());
+    function removeElement(selector) {
+        document.querySelectorAll(selector).forEach(item => item.remove());
     }
 }
 
-function extractImage(lazyload) {
+function extractImage() {
     if (images.length === 0) {
         return notification('extract', 'fatal');
     }
@@ -451,11 +455,11 @@ function extractImage(lazyload) {
 }
 
 // Add shortcut for chapter
-function appendShortcuts(shortcut) {
-    if (!shortcut) {
+function appendShortcuts() {
+    if (!watching.shortcut) {
         return;
     }
-    var button = Array.isArray(shortcut) ? shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(shortcut);
+    var button = Array.isArray(watching.shortcut) ? watching.shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(watching.shortcut);
     document.addEventListener('keydown', (event) => {
         if (event.target.tagName === 'INPUT') {
             return;
