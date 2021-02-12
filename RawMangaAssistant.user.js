@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         68
+// @version         69
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -438,10 +438,10 @@ function extractImage() {
     images.forEach((element, index) => {
         var src = element.getAttribute(watching.lazyload) || element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        if (watching.logo.includes(url)) {
+        if (watching.logo && watching.logo.includes(url)) {
             logo.push(url);
         }
-        else if (watching.fallback.includes(url)) {
+        else if (watching.fallback && watching.fallback.includes(url)) {
             var wrapper = new MutationObserver(lazyloadWrapper);
             wrapper.observe(element, {attributes: true});
         }
