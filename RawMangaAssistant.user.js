@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         69
+// @version         4.70
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -31,9 +31,9 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 //                  lovehug.net
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*tearpilotzoo.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*sitefeytout.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*eatsidebicep.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*drawnperink.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
@@ -142,7 +142,7 @@ var mangas = {
     'lovehug.net': {
         chapter: /\d+\/\d+/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        folder: () => { return getFolerforAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
+        folder: () => { return getFolderForAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
         selector: 'img.chapter-img',
         lazyload: 'data-srcset',
         fallback: ['/uploads/lazy_loading.gif.pagespeed.ce.l2uogikTCA.gif'],
@@ -151,7 +151,7 @@ var mangas = {
     },
     'mangasum.com': {
         chapter: /chapter-/,
-        folder: () => { return getFolerforAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
+        folder: () => { return getFolderForAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
         selector: 'div.page-chapter > img',
         fallback: ['https://st.mangasum.com/Data/logos/logo.png'],
         lazyload: 'data-original'
@@ -159,31 +159,31 @@ var mangas = {
     'komiraw.com': {
         chapter: /chap-/,
         shortcut: ['#prev_chap', '#next_chap'],
-        folder: () => { return getFolerforAria2(document.querySelector('#boxtopchap > h2 > a').title); },
+        folder: () => { return getFolderForAria2(document.querySelector('#boxtopchap > h2 > a').title); },
         ads: ['iframe'],
         selector: 'div.chapter-c > img'
     },
     'rawdevart.com': {
         chapter: /chapter-/,
-        folder: () => { return getFolerforAria2(document.querySelector('a.d-inline-block.font-weight-bold').innerText, document.querySelector('h1.font-26.d-inline-block.font-weight-bolder').innerText); },
+        folder: () => { return getFolderForAria2(document.querySelector('a.d-inline-block.font-weight-bold').innerText, document.querySelector('h1.font-26.d-inline-block.font-weight-bolder').innerText); },
         selector: '#img-container > div.mb-3 > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
         chapter: /-raw/,
         shortcut: 'div.linkchap > a',
-        folder: () => { return getFolerforAria2(document.querySelector('h1.entry-title').innerText); },
+        folder: () => { return getFolderForAria2(document.querySelector('h1.entry-title').innerText); },
         selector: 'img.aligncenter'
     },
     'lhscan.me': {
         chapter: /\/chapter-/,
-        folder: () => { return getFolerforAria2(document.querySelector('#chapter-heading').innerText); },
+        folder: () => { return getFolderForAria2(document.querySelector('#chapter-heading').innerText); },
         selector: 'img.wp-manga-chapter-img'
     },
     'kissaway.net': {
         chapter: /\d+\/\d+/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        folder: () => { return getFolerforAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
+        folder: () => { return getFolderForAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
         selector: 'img.chapter-img',
         lazyload: 'data-original'
     }
@@ -193,15 +193,17 @@ mangas['manga1001.com'] = mangas['manga1000.com'];
 mangas['manga11.com'] = mangas['komiraw.com'];
 watching = mangas[location.host];
 
-function getFolerforAria2(title, chapter) {
+function getFolderForAria2(title, chapter) {
     var array = title.split(/[\|\-\–]/g);
     title = array.shift();
     chapter = chapter || array.pop();
-    return '\\' + title.trim().replace(/[\/\\:\*\?\"\<\>]/g, '_') + '\\' + longDecimalNumber(chapter.match(/\d+([\.-_]\d)?/)[0], 3);
+    return '\\' + title.trim().replace(/[\/\\:\*\?\"\<\>]/g, '_') + '\\' + longDecimalNumber(chapter.match(/\d+([\.-_]\d)?/)[0]);
 }
 
-function longDecimalNumber(number, length) {
-    return ((10 ** length).toString() + number).slice(0 - length);
+function longDecimalNumber(number, length = 3) {
+    number = number.toString();
+    var float = number.length - number.split(/[\._-]/)[0].length;
+    return (10 ** length + number).slice(0 - length - float);
 }
 
 // Create UI
@@ -269,7 +271,7 @@ downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', 
             onload: (details) => {
                 var a = document.createElement('a');
                 a.href = URL.createObjectURL(details.response);
-                a.download = longDecimalNumber(index, 3) + '.' + details.responseHeaders.match(/(png|jpg|jpeg|webp)/)[0];
+                a.download = longDecimalNumber(index) + '.' + details.responseHeaders.match(/(png|jpg|jpeg|webp)/)[0];
                 a.click();
                 if (index === images.length - 1) {
                     notification('save', 'done');
