@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.2
+// @version         5.3
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -68,7 +68,6 @@ var watching;
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
 var offset = {};
 var warning;
-var headera = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
 
 // i18n strings and labels
@@ -148,7 +147,7 @@ var i18n = messages[navigator.language] || messages['en-US'];
 var mangas = {
     'lovehug.net': {
         chapter: /chap\s([^\s]+)/,
-        title: /Read\s(.+)\s-\s(?:RAW\s)?chap/,
+        title: /Read\s(.+)\s(?:-\sRAW\s)?chap/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
         lazyload: 'data-srcset',
@@ -298,7 +297,7 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
                 var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
                 var aria2 = urls.map((url, index) => aria2RequestHandler({
                     method: 'aria2.addUri',
-                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: headera}]
+                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
                 }, (result) => {
                     if (index === urls.length - 1) {
                         notification('aria2', 'done');
@@ -404,7 +403,7 @@ if (watching) {
     title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
     if (chapter && title) {
         chapter = chapter[1];
-        title = title[1];
+        title = title[1].replace(/[:\?\|\\\/]/, '');
         images = document.querySelectorAll(watching.selector);
         appendShortcuts();
         extractImage();
