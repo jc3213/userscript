@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.3
+// @version         5.4
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -146,7 +146,7 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'lovehug.net': {
-        chapter: /chap\s([^\s]+)/,
+        chapter: /chap\s(\S+)\s/,
         title: /Read\s(.+)\s(?:-\sRAW\s)?chap/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
@@ -156,40 +156,40 @@ var mangas = {
         ads: ['div.col-lg-4.col-sm-4 > center', 'h5']
     },
     'mangasum.com': {
-        chapter: /Chapter\s([^\s]+)/,
+        chapter: /Chapter\s(\S+)/,
         title: /^(.+)\s-/,
         selector: 'div.page-chapter > img',
         fallback: ['https://st.mangasum.com/Data/logos/logo.png'],
         lazyload: 'data-original'
     },
     'komiraw.com': {
-        chapter: /^Chapter\s([^\s]+)\s/,
+        chapter: /^Chapter\s(\S+)\s/,
         title: () => (document.querySelector('#boxtopchap > a').title.match(/^(.+)\s\|/)),
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['iframe'],
         selector: 'div.chapter-c > img'
     },
     'rawdevart.com': {
-        chapter: /^Chapter\s([^\s]+)/,
+        chapter: /^Chapter\s(\S+)/,
         title: /\|\s(.+)\s\|/,
         selector: '#img-container > div.mb-3 > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
-        chapter: /【第([^\s]+)話】/,
+        chapter: /【第(\S+)話】/,
         title: /^(.+)\s–\sRaw/,
         shortcut: 'div.linkchap > a',
         selector: 'img.aligncenter'
     },
     'kissaway.net': {
-        chapter: /Chapter\s([^\s]+)/,
+        chapter: /Chapter\s(\S+)/,
         title: /^(.+)\s-\s(?:Raw\s)?Chapter/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
         lazyload: 'data-original'
     },
     'lhscan.me': {
-        chapter: () => (document.querySelector('#chapter-heading').innerText.match(/Chapter\s([^\s]+)/)),
+        chapter: () => (document.querySelector('#chapter-heading').innerText.match(/Chapter\s(\S+)/)),
         title: /^Read\s(.+)\s(?:Raw\s)?Raw/,
         selector: 'img.wp-manga-chapter-img'
     }
@@ -403,7 +403,7 @@ if (watching) {
     title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
     if (chapter && title) {
         chapter = chapter[1];
-        title = title[1].replace(/[:\?\|\\\/]/, '');
+        title = title[1].replace(/[\\\/:*?"<>|]/g, '');
         images = document.querySelectorAll(watching.selector);
         appendShortcuts();
         extractImage();
