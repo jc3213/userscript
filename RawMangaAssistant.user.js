@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.1
+// @version         5.2
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -68,7 +68,8 @@ var watching;
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
 var offset = {};
 var warning;
-var header = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
+var headera = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent: ' + navigator.userAgent];
+var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
 
 // i18n strings and labels
 var messages = {
@@ -267,10 +268,11 @@ downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', 
             method: 'GET',
             url: url,
             responseType: 'blob',
+            headers: headers,
             onload: (details) => {
                 var a = document.createElement('a');
                 a.href = URL.createObjectURL(details.response);
-                a.download = longDecimalNumber(index) + '.' + details.responseHeaders.match(/(png|jpg|jpeg|webp)/)[0];
+                a.download = longDecimalNumber(index);
                 a.click();
                 if (index === images.length - 1) {
                     notification('save', 'done');
@@ -296,7 +298,7 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
                 var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
                 var aria2 = urls.map((url, index) => aria2RequestHandler({
                     method: 'aria2.addUri',
-                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: header}]
+                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: headera}]
                 }, (result) => {
                     if (index === urls.length - 1) {
                         notification('aria2', 'done');
