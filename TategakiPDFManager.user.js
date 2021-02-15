@@ -80,6 +80,7 @@ var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
 <input style="padding: 5px;">\
 <span class="manager-button">NCODE一括更新</span>\
+<span class="manager-button">NCODEをエックスポート</span>\
 <span class="manager-button" style="display: none; background-color: #387ec8; color: #fff">書庫更新</span>\
 <span class="manager-button" style="display: none;">ログ表示</span></div>\
 <div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
@@ -107,13 +108,21 @@ container.querySelector('.manager-button:nth-child(3)').addEventListener('click'
         });
     }
 });
-container.querySelector('.manager-button:nth-child(4)').addEventListener('click', (event) => {
+container.querySelector('.manager-button:nth-child(4)').addEventListener('click', () => {
+    if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
+        var books = []
+        Object.entries(bookmark).forEach(item => books.push(exportBookmarkInfo(...item)));
+        navigator.clipboard.writeText(JSON.stringify(books));
+        alert('情報のエックスポートは無事に成功しました！');
+    }
+});
+container.querySelector('.manager-button:nth-child(5)').addEventListener('click', (event) => {
     GM_setValue('bookmark', bookmark);
     container.querySelector('.manager-logs').innerHTML = '';
-    container.querySelector('.manager-button:nth-child(4)').style.display = 'none';
     container.querySelector('.manager-button:nth-child(5)').style.display = 'none';
+    container.querySelector('.manager-button:nth-child(6)').style.display = 'none';
 });
-container.querySelector('.manager-button:nth-child(5)').addEventListener('click', () => {
+container.querySelector('.manager-button:nth-child(6)').addEventListener('click', () => {
     if (event.target.classList.contains('manager-checked')) {
         container.querySelector('.manager-logs').style.display = 'none';
         container.querySelector('.manager-shelf').style.display = 'block';
@@ -160,6 +169,12 @@ function subscribeNcode(ncode, title) {
     bookmark[ncode] = book
     saveBookmarkButton();
     myFancyLog(ncode, title, 'は書庫に登録しました！');
+}
+
+function exportBookmarkInfo(ncode, book) {
+    var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
+    var filename = book.title + '.pdf';
+    return {url, filename}
 }
 
 // ブックマーク表記生成
@@ -210,8 +225,8 @@ function generateTimeFormat(ms) {
     return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
 }
 function saveBookmarkButton() {
-    container.querySelector('.manager-button:nth-child(4)').style.display = 'inline-block';
     container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
+    container.querySelector('.manager-button:nth-child(6)').style.display = 'inline-block';
 }
 
 // PDF自動更新関連
