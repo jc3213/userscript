@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name              哔哩哔哩直播间屏蔽工具
 // @namespace         https://github.com/jc3213/userscript
-// @version           20
+// @version           21.1
 // @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author            jc3213
 // @match             *://live.bilibili.com/*
@@ -103,7 +103,7 @@ function makeBanlist(id, liver) {
 function addBanlist(id, liver) {
     if (!banned[id]) {
         banned[id] = liver;
-        if (ban_list) {
+        if (ban_list && show) {
             makeBanlist(id, liver);
         }
     }
@@ -124,8 +124,8 @@ function saveBanlist() {
 }
 
 function batchAddList(list) {
-    list.match(/^(\d+)[\s\/\.\@\#\$\,\/\\]+([^\s\/\.\@\#\$\,\/\\]+)/mg).forEach(item => {
-        var rule = item.split(/[\s\/\.\@\#\$\,\/\\]+/);
+    list.match(/^(\d+)[\\\/\s.@#$^&]+([^\\\/\s.@#$^&]+)/mg).forEach(item => {
+        var rule = item.split(/[\\\/\s.@#$^&]+/);
         addBanlist(rule[0], rule[1]);
     });
     saveBanlist();
