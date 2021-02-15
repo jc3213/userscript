@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         4.70
+// @version         5.1
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -49,6 +49,10 @@
 // @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
+//                  lhscan.me
+// @webRequest      {"selector": "*in-page-push.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*upgulpinon.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*extenttheirsdelinquent.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -56,6 +60,8 @@
 var urls = [];
 var fail = [];
 var logo = [];
+var title;
+var chapter;
 var observer;
 var images;
 var watching;
@@ -140,65 +146,58 @@ var i18n = messages[navigator.language] || messages['en-US'];
 // Supported sites
 var mangas = {
     'lovehug.net': {
-        chapter: /\d+\/\d+/,
+        chapter: /chap\s([^\s]+)/,
+        title: /Read\s(.+)\s-\s(?:RAW\s)?chap/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        folder: () => { return getFolderForAria2(document.querySelectorAll('span[itemprop="name"]')[1].innerText, document.querySelectorAll('span[itemprop="name"]')[2].innerText); },
         selector: 'img.chapter-img',
         lazyload: 'data-srcset',
         fallback: ['/uploads/lazy_loading.gif.pagespeed.ce.l2uogikTCA.gif'],
-        logo: ['https://s4.imfaclub.com/images/20210124/LoveHug_600cfd96e98ff.jpg'],
-        ads: ['h5']
+        logo: ['https://s4.ihlv1.xyz/images/20210124/LoveHug_600cfd96e98ff.jpg'],
+        ads: ['div.col-lg-4.col-sm-4 > center', 'h5']
     },
     'mangasum.com': {
-        chapter: /chapter-/,
-        folder: () => { return getFolderForAria2(document.querySelector('h1.txt-primary > a').innerText, document.querySelector('h1.txt-primary > span').innerText); },
+        chapter: /Chapter\s([^\s]+)/,
+        title: /^(.+)\s-/,
         selector: 'div.page-chapter > img',
         fallback: ['https://st.mangasum.com/Data/logos/logo.png'],
         lazyload: 'data-original'
     },
     'komiraw.com': {
-        chapter: /chap-/,
+        chapter: /^Chapter\s([^\s]+)\s/,
+        title: () => (document.querySelector('#boxtopchap > a').title.match(/^(.+)\s\|/)),
         shortcut: ['#prev_chap', '#next_chap'],
-        folder: () => { return getFolderForAria2(document.querySelector('#boxtopchap > h2 > a').title); },
         ads: ['iframe'],
         selector: 'div.chapter-c > img'
     },
     'rawdevart.com': {
-        chapter: /chapter-/,
-        folder: () => { return getFolderForAria2(document.querySelector('a.d-inline-block.font-weight-bold').innerText, document.querySelector('h1.font-26.d-inline-block.font-weight-bolder').innerText); },
+        chapter: /^Chapter\s([^\s]+)/,
+        title: /\|\s(.+)\s\|/,
         selector: '#img-container > div.mb-3 > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
-        chapter: /-raw/,
+        chapter: /【第([^\s]+)話】/,
+        title: /^(.+)\s–\sRaw/,
         shortcut: 'div.linkchap > a',
-        folder: () => { return getFolderForAria2(document.querySelector('h1.entry-title').innerText); },
         selector: 'img.aligncenter'
     },
-    'lhscan.me': {
-        chapter: /\/chapter-/,
-        folder: () => { return getFolderForAria2(document.querySelector('#chapter-heading').innerText); },
-        selector: 'img.wp-manga-chapter-img'
-    },
     'kissaway.net': {
-        chapter: /\d+\/\d+/,
+        chapter: /Chapter\s([^\s]+)/,
+        title: /^(.+)\s-\s(?:Raw\s)?Chapter/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        folder: () => { return getFolderForAria2(document.querySelector('div.chapter-content-top > ol > li:nth-child(3) > a').title); },
         selector: 'img.chapter-img',
         lazyload: 'data-original'
+    },
+    'lhscan.me': {
+        chapter: () => (document.querySelector('#chapter-heading').innerText.match(/Chapter\s([^\s]+)/)),
+        title: /^Read\s(.+)\s(?:Raw\s)?Raw/,
+        selector: 'img.wp-manga-chapter-img'
     }
 };
 mangas['mangant.com'] = mangas['mangasum.com'];
 mangas['manga1001.com'] = mangas['manga1000.com'];
 mangas['manga11.com'] = mangas['komiraw.com'];
 watching = mangas[location.host];
-
-function getFolderForAria2(title, chapter) {
-    var array = title.split(/[\|\-\–]/g);
-    title = array.shift();
-    chapter = chapter || array.pop();
-    return '\\' + title.trim().replace(/[\/\\:\*\?\"\<\>]/g, '_') + '\\' + longDecimalNumber(chapter.match(/\d+([\.-_]\d)?/)[0]);
-}
 
 function longDecimalNumber(number, length = 3) {
     number = number.toString();
@@ -294,12 +293,12 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
                 notification('aria2', 'nokey');
             }
             else {
-                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + watching.folder();
+                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
                 var aria2 = urls.map((url, index) => aria2RequestHandler({
                     method: 'aria2.addUri',
                     options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: header}]
                 }, (result) => {
-                    if (index === images.length - 1) {
+                    if (index === urls.length - 1) {
                         notification('aria2', 'done');
                     }
                 }));
@@ -398,10 +397,13 @@ function contextMenuHandler(event) {
 
 // Extract images data
 if (watching) {
-    var chapter = location.pathname.match(watching.chapter);
-    if (chapter) {
+    removeAdsElement();
+    chapter = watching.chapter.constructor.name === 'RegExp' ? document.title.match(watching.chapter) : watching.chapter();
+    title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
+    if (chapter && title) {
+        chapter = chapter[1];
+        title = title[1];
         images = document.querySelectorAll(watching.selector);
-        removeAdsElement();
         appendShortcuts();
         extractImage();
     }
