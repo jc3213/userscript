@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.4
+// @version         5.10
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -62,9 +62,15 @@ var fail = [];
 var logo = [];
 var title;
 var chapter;
+var folder;
 var observer;
 var images;
 var watching;
+var options = {
+    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
+    secret: GM_getValue('secret', ''),
+    menu: GM_getValue('menu', 'on')
+};
 var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
 var offset = {};
 var warning;
@@ -84,6 +90,7 @@ var messages = {
         },
         aria2: {
             label: 'Send to Aria2 RPC',
+            option: 'Options Aria2 RPC',
             done: 'All %n% image urls <b>have been sent to Aria2 RPC</b>',
             norpc: '<b>No response</b> from Aria2 RPC server',
             nokey: 'Aria2 RPC secret <b>token is invalid</b>'
@@ -118,6 +125,7 @@ var messages = {
         },
         aria2: {
             label: '发送至 Aria2 RPC',
+            option: '设置 Aria2 RPC',
             icon: '🖅',
             done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
             norpc: 'Aria2 RPC <b>服务器没有响应</b>',
@@ -212,7 +220,10 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .assistantIcon {width: 30px; display: inline-block; text-align: center}\
 .assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
 .assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
-.menuAria2Item {width: 300px !important; height: 41px; border: 1px ridge darkblue; overflow: hidden;}\
+.aria2Container {position: fixed; background-color: #fff; font-size: 14px;}\
+.aria2Container div {display: inline-block;}\
+.aria2Container div.assistantMenu {border: 1px ridge darkblue; vertical-align: top; padding: 17px 8px 63px; width: 60px; font-size: 30px;}\
+.menuAria2Item {width: 300px !important; height: 41px; border: 1px ridge darkblue; overflow: hidden; word-break: break-word; user-select: none;}\
 .menuAria2Item:focus {background-color: darkblue !important; color: white;}';
 document.head.appendChild(css);
 
@@ -246,18 +257,18 @@ document.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (aria2Menu.contains(event.target) || button.contains(event.target)) {
+    if (button.contains(event.target)) {
         return;
     }
     container.style.display = 'none';
-    aria2Menu.style.display = 'none';
 });
 
 // Primary menus
 var downMenu = document.createElement('div');
 downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
 <div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>';
+<div class="assistantMenu" style="display: none;"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
+<div class="assistantMenu"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
@@ -276,8 +287,7 @@ downMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', 
                 if (index === images.length - 1) {
                     notification('save', 'done');
                 }
-            },
-            onerror: () => notification('save', 'error', url)
+            }
         });
     });
 });
@@ -285,7 +295,22 @@ downMenu.querySelector('.assistantMenu:nth-child(2)').addEventListener('click', 
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 });
+
+// Aria2 Menuitems
 downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', () => {
+    urls.forEach((url, index) => aria2RequestHandler({
+        method: 'aria2.addUri',
+        options: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
+    }, (result) => {
+        if (index === urls.length - 1) {
+            notification('aria2', 'done');
+        }
+    }));
+});
+downMenu.querySelector('.assistantMenu:nth-child(4)').addEventListener('click', () => {
+    aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + position.top + 'px;';
+});
+function checkAria2Availability() {
     aria2RequestHandler({
         method: 'aria2.getGlobalOption'
     }, (details) => {
@@ -294,61 +319,49 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
                 notification('aria2', 'nokey');
             }
             else {
-                var dir = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
-                var aria2 = urls.map((url, index) => aria2RequestHandler({
-                    method: 'aria2.addUri',
-                    options: [[url], {out: ('000' + index).slice(-3) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: dir, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
-                }, (result) => {
-                    if (index === urls.length - 1) {
-                        notification('aria2', 'done');
-                    }
-                }));
+                folder = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
+                downMenu.querySelector('.assistantMenu:nth-child(3)').style.display = 'block';
             }
-        }
-        else {
-            notification('aria2', 'norpc');
         }
     }, (error) => {
         notification('aria2', 'norpc');
     });
+}
+function aria2RequestHandler(request, onload, onerror) {
+    GM_xmlhttpRequest({
+        url: options.server,
+        method: 'POST',
+        data: JSON.stringify({
+            id: '',
+            jsonrpc: '2.0',
+            method: request.method,
+            params: ['token:' + options.secret].concat(request.options)
+        }),
+        onload: onload,
+        onerror: onerror
+    });
+}
 
-    function aria2RequestHandler(request, onload, onerror) {
-        GM_xmlhttpRequest({
-            url: aria2Menu.querySelector('input[name="server"]').value,
-            method: 'POST',
-            data: JSON.stringify({
-                id: '',
-                jsonrpc: '2.0',
-                method: request.method,
-                params: ['token:' + aria2Menu.querySelector('input[name="secret"]').value].concat(request.options)
-            }),
-            onload: onload,
-            onerror: onerror
-        });
-    }
-});
-downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-    if (aria2Menu.style.display === 'block') {
-        aria2Menu.style.display = 'none';
-    }
-    else {
-        aria2Menu.style.display = 'block';
-    }
-});
-
-// Aria2 Sub Menu
+// Aria2 Sub Menus
 var aria2Menu = document.createElement('form');
-aria2Menu.innerHTML = '<input class="assistantMenu menuAria2Item" name="server" value="' + GM_getValue('server', 'http://localhost:6800/jsonrpc') + '">\
-<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + GM_getValue('secret', '') + '">';
-aria2Menu.className = 'menuContainer';
-aria2Menu.style.cssText = 'position: absolute; display: none; top: 80px; left: 190px;';
-aria2Menu.addEventListener('change', (event) => GM_setValue(event.target.name, event.target.value));
-container.appendChild(aria2Menu);
+aria2Menu.innerHTML = '<div><input class="assistantMenu menuAria2Item" name="server" value="' + options.server + '">\
+<input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
+<div class="assistantMenu">💽</div>';
+aria2Menu.className = 'aria2Container';
+aria2Menu.style.cssText = 'display: none;';
+aria2Menu.querySelector('div.assistantMenu').addEventListener('click', () => {
+    aria2Menu.style.display = 'none';
+    options.server = aria2Menu.querySelector('.menuAria2Item:nth-child(1)').value;
+    options.secret = aria2Menu.querySelector('.menuAria2Item:nth-child(2)').value;
+    GM_setValue('server', options.server);
+    GM_setValue('secret', options.secret);
+    checkAria2Availability();
+});
+document.body.after(aria2Menu);
 
 // Secondary menus
 var clickMenu = document.createElement('div');
-clickMenu.innerHTML = '<div id="assistant_gotop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
+clickMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
 clickMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click', () => {
     document.documentElement.scrollTop = 0;
@@ -356,35 +369,42 @@ clickMenu.querySelector('.assistantMenu:nth-child(1)').addEventListener('click',
 container.appendChild(clickMenu);
 
 // Switchable Menus
-var switchWorker = [{
-    on: () => {
-        button.style.display = 'none';
-        document.addEventListener('contextmenu', contextMenuHandler);
-    },
-    off: () => {
-        document.removeEventListener('contextmenu', contextMenuHandler);
-        button.style.display = 'block';
-        container.style.top = button.offsetTop + 'px';
-        container.style.left = button.offsetLeft + button.offsetWidth + 'px';
+var switchWorker = {
+    menu: {
+        on: () => {
+            button.style.display = 'none';
+            document.addEventListener('contextmenu', contextMenuHandler);
+        },
+        off: () => {
+            document.removeEventListener('contextmenu', contextMenuHandler);
+            button.style.display = 'block';
+            container.style.top = button.offsetTop + 'px';
+            container.style.left = button.offsetLeft + button.offsetWidth + 'px';
+        }
     }
-}];
+};
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon"></span>' + i18n.menu.label + '<input type="hidden" name="menu" value="' + GM_getValue('menu', 'on') + '"></div>';
+switchMenu.innerHTML = '<div class="assistantMenu" name="menu"><span class="assistantIcon"></span>' + i18n.menu.label + '</div>';
 switchMenu.className = 'menuContainer';
-switchMenu.querySelectorAll('.assistantMenu').forEach((item, index) => {
-    var input = item.querySelector('input');
-    switchHandler(item, input.value, switchWorker[index][input.value]);
-    item.addEventListener('click', (event) => {
-        input.value = input.value === 'on' ? 'off' : 'on';
-        GM_setValue(input.name, input.value);
-        switchHandler(item, input.value, switchWorker[index][input.value]);
-    });
+switchMenu.querySelectorAll('.assistantMenu').forEach(switchHandler);
+switchMenu.addEventListener('click', (event) => {
+    var name = event.target.getAttribute('name');
+    options[name] = options[name] === 'on' ? 'off' : 'on';
+    switchHandler(event.target);
+    GM_setValue(name, options[name]);
 });
 container.appendChild(switchMenu);
 
-function switchHandler(item, value, worker) {
-    item.firstElementChild.innerHTML = value === 'on' ? '✅' : '';
-    if (typeof worker === 'function') { worker(); }
+function switchHandler(item) {
+    var name = item.getAttribute('name');
+    if (options[name] === 'on') {
+        switchWorker[name].on();
+        item.querySelector('.assistantIcon').innerHTML = '✅';
+    }
+    else {
+        switchWorker[name].off();
+        item.querySelector('.assistantIcon').innerHTML = '';
+    }
 }
 function contextMenuHandler(event) {
     if (event.target.id === 'assistant_aria2' || event.shiftKey) {
@@ -405,6 +425,7 @@ if (watching) {
         chapter = chapter[1];
         title = title[1].replace(/[\\\/:*?"<>|]/g, '');
         images = document.querySelectorAll(watching.selector);
+        checkAria2Availability();
         appendShortcuts();
         extractImage();
     }
