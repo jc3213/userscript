@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.10
+// @version         5.12
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -105,6 +105,8 @@ var messages = {
         menu: {
             label: 'Context Menu Mode'
         },
+        submit: 'Submit',
+        cancel: 'Cancel',
         extract: {
             start: '<b>Extracting</b> manga source',
             done: 'A total of %n% image urls <b>has been extracted</b>',
@@ -141,6 +143,8 @@ var messages = {
         menu: {
             label: '右键菜单模式',
         },
+        submit: '确定',
+        cancel: '取消',
         extract: {
             start: '<b>正在解析</b>图像来源',
             done: '已<b>成功解析</b>全部 %n% 图像来源',
@@ -151,6 +155,7 @@ var messages = {
     }
 };
 var i18n = messages[navigator.language] || messages['en-US'];
+
 // Supported sites
 var mangas = {
     'lovehug.net': {
@@ -222,8 +227,8 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
 .aria2Container {position: fixed; background-color: #fff; font-size: 14px;}\
 .aria2Container div {display: inline-block;}\
-.aria2Container div.assistantMenu {border: 1px ridge darkblue; vertical-align: top; padding: 17px 8px 63px; width: 60px; font-size: 30px;}\
-.menuAria2Item {width: 300px !important; height: 41px; border: 1px ridge darkblue; overflow: hidden; word-break: break-word; user-select: none;}\
+.aria2Container span.assistantMenu {border: 1px outset darkviolet; width: fit-content; display: block; height: 38px; margin: 1px; padding: 8px 10px;}\
+.menuAria2Item {width: 240px !important; height: 38px; border: 1px ridge darkblue; overflow: hidden; word-break: break-word; user-select: none; margin: 1px;}\
 .menuAria2Item:focus {background-color: darkblue !important; color: white;}';
 document.head.appendChild(css);
 
@@ -257,7 +262,7 @@ document.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (button.contains(event.target)) {
+    if (button.contains(event.target) || aria2Menu.contains(event.target) || event.target.id === 'aria2Option') {
         return;
     }
     container.style.display = 'none';
@@ -268,7 +273,7 @@ var downMenu = document.createElement('div');
 downMenu.innerHTML = '<div class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
 <div class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
 <div class="assistantMenu" style="display: none;"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
-<div class="assistantMenu"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
+<div class="assistantMenu" id="aria2Option"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
@@ -308,7 +313,7 @@ downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', 
     }));
 });
 downMenu.querySelector('.assistantMenu:nth-child(4)').addEventListener('click', () => {
-    aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + position.top + 'px;';
+    aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + (position.top + 82) + 'px;';
 });
 function checkAria2Availability() {
     aria2RequestHandler({
@@ -346,18 +351,23 @@ function aria2RequestHandler(request, onload, onerror) {
 var aria2Menu = document.createElement('form');
 aria2Menu.innerHTML = '<div><input class="assistantMenu menuAria2Item" name="server" value="' + options.server + '">\
 <input class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
-<div class="assistantMenu">💽</div>';
+<div><span class="assistantMenu">' + i18n.submit +'</span>\
+<span class="assistantMenu">' + i18n.cancel +'</span></div>';
 aria2Menu.className = 'aria2Container';
 aria2Menu.style.cssText = 'display: none;';
-aria2Menu.querySelector('div.assistantMenu').addEventListener('click', () => {
-    aria2Menu.style.display = 'none';
+container.appendChild(aria2Menu);
+aria2Menu.querySelector('span.assistantMenu:nth-child(1)').addEventListener('click', () => {
     options.server = aria2Menu.querySelector('.menuAria2Item:nth-child(1)').value;
     options.secret = aria2Menu.querySelector('.menuAria2Item:nth-child(2)').value;
     GM_setValue('server', options.server);
     GM_setValue('secret', options.secret);
     checkAria2Availability();
 });
-document.body.after(aria2Menu);
+aria2Menu.querySelector('div:nth-child(2)').addEventListener('click', (event) => {
+    if (event.target.tagName === 'SPAN') {
+        aria2Menu.style.display = 'none';
+    }
+});
 
 // Secondary menus
 var clickMenu = document.createElement('div');
