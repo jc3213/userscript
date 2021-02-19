@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.22
+// @version      3.23
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -174,7 +174,8 @@ function subscribeNcode(ncode, title) {
 function exportBookmarkInfo(ncode, book) {
     var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
     var filename = book.title + '.pdf';
-    return {url, filename}
+    var folder = '小説家になろう';
+    return {url, filename, folder};
 }
 
 // ブックマーク表記生成
