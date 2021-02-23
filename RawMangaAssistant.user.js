@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.12
+// @version         5.13
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -198,6 +198,7 @@ var mangas = {
         chapter: /Chapter\s(\S+)/,
         title: /^(.+)\s-\s(?:Raw\s)?Chapter/,
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
+        ads: ['div.float-ck'],
         selector: 'img.chapter-img',
         lazyload: 'data-original'
     },
