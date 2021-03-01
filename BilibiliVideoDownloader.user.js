@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Help you download videos on Bilibili
 // @author       jc3213
-// @match        *://*.bilibili.com/video/*
+// @match        *://www.bilibili.com/video/*
 // @match        *://*.bilivideo.com/*
 // @match        *://*.bilivideo.cn/*
 // @match        *://*.cdnnodedns.cn/*
@@ -15,26 +15,24 @@ var record = [];
 var title = document.title.split('_')[0];
 var referer = location.href;
 var ext = [
-    {r: '30280', x: '.aac', d: '音频'},
-    {r: '30080', x: '1080.mp4', d: '1080高清'},
-    {r: '30064', x: '720.mp4', d: '720高清'},
-    {r: '30032', x: '480.mp4', d: '480清晰'},
-    {r: '30015', x: '360.mp4', d: '360流畅'},
+    {d: '30280', x: '.aac', r: '音频'},
+    {d: '30120', x: '4K-UHQ.mp4', r: '4K 超清'},
+    {d: '30116', x: '1080HFR.mp4', r: '1080P 60帧'},
+    {d: '30112', x: '1080HBR.mp4', r: '1080P 高码率'},
+    {d: '30080', x: '1080.mp4', r: '1080P 高清'},
+    {d: '30074', x: '720HFR.mp4', r: '720P 60帧'},
+    {d: '30064', x: '720.mp4', r: '720P 高清'},
+    {d: '30032', x: '480.mp4', r: '480P 清晰'},
+    {d: '30016', x: '360.mp4', r: '360P 流畅'},
+    {d: '30015', x: '360LQ.mp4', r: '360P 流畅'},
 ];
 
-var btncss = 'background-color: #c26; color: #fff; margin: 1px; padding: 10px; display: block; user-select: none; cursor: pointer;';
+var btncss = 'background-color: #c26; color: #fff; margin: 1px; padding: 10px; display: inline-block; user-select: none; cursor: pointer;';
 var boxcss = 'position: absolute; z-index: 99999; left: 33%;';
-
-var mybtn = document.createElement('div')
-mybtn.innerText = '下载';
-mybtn.style.cssText = btncss + boxcss + ' top: 94%;';
-mybtn.addEventListener('click', () => {
-    mybox.style.display = mybox.style.display === 'none' ? 'block' : 'none';
-});
-document.body.appendChild(mybtn);
+var whocss = document.querySelector('#viewbox_report') ? 'top: 94%; left: 33%' : 'top: 87%; left: 35%;';
 
 var mybox = document.createElement('div');
-mybox.style.cssText = boxcss + ' top: 98.15%; display: none';
+mybox.style.cssText = boxcss + whocss;
 document.body.appendChild(mybox);
 
 GM_webRequest([
@@ -42,7 +40,7 @@ GM_webRequest([
     {selector: '*://*.bilivideo.cn:*/*', action: 'redirect'},
     {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
-    if (details.url.includes('data')) {
+    if (details.url.includes('data') || details.url.includes('webmask')) {
         return;
     }
 
@@ -52,14 +50,14 @@ GM_webRequest([
     if (record.includes(file)) {
         return;
     }
-
     record.push(file);
-    var type = ext.find(item => item.r === file.split('-').pop().split('.').shift());
+
+    var type = ext.find(item => item.d === file.split('-').pop().split('.').shift());
     var filename = title + type.x;
 
     //console.log(JSON.stringify({filename, url, referer}));
     var item = document.createElement('a');
-    item.innerText = type.d;
+    item.innerText = type.r;
     item.href = url;
     item.download = filename;
     item.target = '_self';
