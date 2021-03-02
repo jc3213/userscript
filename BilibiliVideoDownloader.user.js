@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.2
+// @version         0.3
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -16,17 +16,27 @@
 var record = [];
 var title = document.title.split('_')[0];
 var referer = location.href;
-var ext = [
-    {d: '30280', x: '.aac', r: '音频'},
+var format = [
+    {d: '30280', x: 'HQ.aac', r: '音频 高码率'},
+    {d: '30216', x: 'LQ.aac', r: '音频 低码率'},
     {d: '30120', x: '4K-UHQ.mp4', r: '4K 超清'},
-    {d: '30116', x: '1080HFR.mp4', r: '1080P 60帧'},
-    {d: '30112', x: '1080HBR.mp4', r: '1080P 高码率'},
+    {d: '30116', x: '1080HQ.mp4', r: '1080P 60帧'},
+    {d: '30112', x: '1080HBr.mp4', r: '1080P 高码率'},
     {d: '30080', x: '1080.mp4', r: '1080P 高清'},
-    {d: '30074', x: '720HFR.mp4', r: '720P 60帧'},
+    {d: '30074', x: '720HQ.mp4', r: '720P 60帧'},
     {d: '30064', x: '720.mp4', r: '720P 高清'},
     {d: '30032', x: '480.mp4', r: '480P 清晰'},
     {d: '30016', x: '360.mp4', r: '360P 流畅'},
     {d: '30015', x: '360LQ.mp4', r: '360P 流畅'},
+    {d: '120', x: '4K-UHQ.flv', r: '4K 超清 FLV'},
+    {d: '116', x: '1080HQ.flv', r: '1080P 60帧 FLV'},
+    {d: '112', x: '1080HBr.flv', r: '1080P 高码率 FLV'},
+    {d: '80', x: '1080.flv', r: '1080P 高清 FLV'},
+    {d: '74', x: '720HQ.flv', r: '720P 60帧 FLV'},
+    {d: '64', x: '720.flv', r: '720P 高清 FLV'},
+    {d: '32', x: '480.flv', r: '480P 清晰 FLV'},
+    {d: '16', x: '360.flv', r: '360P 流畅 FLV'},
+    {d: '15', x: '360LQ.flv', r: '360P 流畅 FLV'},
 ];
 
 var btncss = 'background-color: #c26; color: #fff; margin: 1px; padding: 10px; display: inline-block; user-select: none; cursor: pointer;';
@@ -39,6 +49,8 @@ document.body.appendChild(mybox);
 
 document.querySelector('video').addEventListener('loadstart', (event) => {
     record = [];
+    referer = location.href;
+    title = document.title.split('_')[0];
     mybox.innerHTML = '';
 });
 
@@ -47,22 +59,20 @@ GM_webRequest([
     {selector: '*://*.bilivideo.cn:*/*', action: 'redirect'},
     {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
-    if (details.url.includes('data') || details.url.includes('webmask')) {
-        return;
-    }
-
-    var url = details.url;
-    var file = url.split('?')[0];
-
+    var file = details.url.split('?').shift().split('/').pop();
     if (record.includes(file)) {
         return;
     }
     record.push(file);
 
-    var type = ext.find(item => item.d === file.split('-').pop().split('.').shift());
+    var type = format.find(item => item.d === file.split('-').pop().split('.').shift());
+    if (!type) {
+        return console.log(details.url);
+    }
+
+    var url = details.url;
     var filename = title + type.x;
 
-    //console.log(JSON.stringify({filename, url, referer}));
     var item = document.createElement('a');
     item.innerText = type.r;
     item.href = url;
@@ -72,7 +82,7 @@ GM_webRequest([
     item.addEventListener('click', (event) => {
         if (event.altKey) {
             event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({filename, url}) + '\n' + referer);
+            navigator.clipboard.writeText(JSON.stringify({url, filename}) + '\n' + referer);
         }
     });
     mybox.appendChild(item);
