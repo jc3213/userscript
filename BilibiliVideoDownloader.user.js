@@ -1,14 +1,16 @@
 // ==UserScript==
-// @name         Bilibili Video Downloader
-// @namespace    https://github.com/jc3213/userscript
-// @version      0.1
-// @description  Help you download videos on Bilibili
-// @author       jc3213
-// @match        *://www.bilibili.com/video/*
-// @match        *://*.bilivideo.com/*
-// @match        *://*.bilivideo.cn/*
-// @match        *://*.cdnnodedns.cn/*
-// @grant        GM_webRequest
+// @name            Bilibili Video Downloader
+// @name:zh         哔哩哔哩视频下载器
+// @namespace       https://github.com/jc3213/userscript
+// @version         0.2
+// @description     Download videos from Bilibili Douga (No Bangumi Support)
+// @description:zh  从哔哩哔哩下载视频（不支持番剧）
+// @author          jc3213
+// @match           *://www.bilibili.com/video/*
+// @match           *://*.bilivideo.com/*
+// @match           *://*.bilivideo.cn/*
+// @match           *://*.cdnnodedns.cn/*
+// @grant           GM_webRequest
 // ==/UserScript==
 
 var record = [];
@@ -34,6 +36,11 @@ var whocss = document.querySelector('#viewbox_report') ? 'top: 94%; left: 33%' :
 var mybox = document.createElement('div');
 mybox.style.cssText = boxcss + whocss;
 document.body.appendChild(mybox);
+
+document.querySelector('video').addEventListener('loadstart', (event) => {
+    record = [];
+    mybox.innerHTML = '';
+});
 
 GM_webRequest([
     {selector: '*://*.bilivideo.com/*', action: 'redirect'},
