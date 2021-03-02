@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.3
+// @version         0.4
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -14,8 +14,6 @@
 // ==/UserScript==
 
 var record = [];
-var title = document.title.split('_')[0];
-var referer = location.href;
 var format = [
     {d: '30280', x: 'HQ.aac', r: '音频 高码率'},
     {d: '30216', x: 'LQ.aac', r: '音频 低码率'},
@@ -49,8 +47,6 @@ document.body.appendChild(mybox);
 
 document.querySelector('video').addEventListener('loadstart', (event) => {
     record = [];
-    referer = location.href;
-    title = document.title.split('_')[0];
     mybox.innerHTML = '';
 });
 
@@ -60,7 +56,7 @@ GM_webRequest([
     {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
     var file = details.url.split('?').shift().split('/').pop();
-    if (record.includes(file)) {
+    if (record.includes(file) || details.url.includes('data')) {
         return;
     }
     record.push(file);
@@ -70,20 +66,20 @@ GM_webRequest([
         return console.log(details.url);
     }
 
-    var url = details.url;
-    var filename = title + type.x;
-
     var item = document.createElement('a');
     item.innerText = type.r;
-    item.href = url;
-    item.download = filename;
+    item.href = details.url;
     item.target = '_self';
     item.style.cssText = btncss;
-    item.addEventListener('click', (event) => {
+    item.onmouseenter = (event) => {
+        event.target.download = document.title.split('_')[0] + type.x;
+        item.onmouseenter = null;
+    };
+    item.onclick = (event) => {
         if (event.altKey) {
             event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url, filename}) + '\n' + referer);
+            navigator.clipboard.writeText(JSON.stringify({url: event.target.href, filename: event.target.download}) + '\n' + location.href);
         }
-    });
+    };
     mybox.appendChild(item);
 });
