@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.4
+// @version         0.5
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -39,15 +39,19 @@ var format = {
 
 var btncss = 'background-color: #c26; color: #fff; margin: 1px; padding: 10px; display: inline-block; user-select: none; cursor: pointer;';
 var boxcss = 'position: absolute; z-index: 99999; left: 33%;';
-var whocss = document.querySelector('#viewbox_report') ? 'top: 94%; left: 33%' : 'top: 87%; left: 35%;';
+var whocss = document.querySelector('#viewbox_report') ? 'top: 94%; left: 33%' : document.querySelector('div.special-cover') ? 'top: 93.75%; left: 28%;' : 'top: 86.85%; left: 35%;';
 
 var mybox = document.createElement('div');
 mybox.style.cssText = boxcss + whocss;
 document.body.appendChild(mybox);
 
-document.querySelector('video').addEventListener('loadstart', (event) => {
-    record = [];
-    mybox.innerHTML = '';
+document.addEventListener('DOMNodeInserted', (event) => {
+    if (event.target.tagName === 'VIDEO') {
+        event.target.addEventListener('loadstart', (event) => {
+            record = [];
+            mybox.innerHTML = '';
+        });
+    }
 });
 
 GM_webRequest([
@@ -56,7 +60,7 @@ GM_webRequest([
     {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
     try {
-        var file = details.url.match(/1-(\d+)\.m4s/)[1];
+        var file = details.url.match(/1-(\d+)\.(flv|m4s)/)[1];
         var type = format[file];
         if (record.includes(file)) {
             return;
