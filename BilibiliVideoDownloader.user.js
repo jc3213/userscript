@@ -2,18 +2,15 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.7
+// @version         0.8
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @match           *://*.bilivideo.com/*
-// @match           *://*.bilivideo.cn/*
-// @match           *://*.cdnnodedns.cn/*
 // @grant           GM_webRequest
 // ==/UserScript==
 
-var record = [];
+var record;
 var mybox = document.createElement('div');
 var format = {
     '30280': {x: 'HQ.aac', r: '音频 高码率'},
@@ -51,8 +48,8 @@ document.addEventListener('DOMNodeInserted', (event) => {
 
 function addListenerForVideo(video) {
     video.addEventListener('play', (event) => {
-        var toolbar = document.querySelector('#toolbar_module > div.mobile-info') || document.querySelector('#arc_toolbar_report > div.ops');
-        toolbar.after(mybox);
+        var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
+        toolbar.append(mybox);
     });
     video.addEventListener('loadstart', (event) => {
         record = [];
@@ -84,7 +81,7 @@ GM_webRequest([
     item.href = details.url;
     item.target = '_self';
     item.innerText = type.r;
-    item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 15px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
+    item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 3px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
     item.onmouseenter = (event) => {
         event.target.download = document.title.split('_')[0] + type.x;
         item.onmouseenter = null;
