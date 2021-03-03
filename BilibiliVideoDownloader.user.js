@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.5
+// @version         0.7
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -14,6 +14,7 @@
 // ==/UserScript==
 
 var record = [];
+var mybox = document.createElement('div');
 var format = {
     '30280': {x: 'HQ.aac', r: '音频 高码率'},
     '30216': {x: 'LQ.aac', r: '音频 低码率'},
@@ -37,22 +38,27 @@ var format = {
     '15': {x: '360LQ.flv', r: '360P 流畅 FLV'}
 };
 
-var btncss = 'background-color: #c26; color: #fff; margin: 1px; padding: 10px; display: inline-block; user-select: none; cursor: pointer;';
-var boxcss = 'position: absolute; z-index: 99999; left: 33%;';
-var whocss = document.querySelector('#viewbox_report') ? 'top: 94%; left: 33%' : document.querySelector('div.special-cover') ? 'top: 93.75%; left: 28%;' : 'top: 86.85%; left: 35%;';
-
-var mybox = document.createElement('div');
-mybox.style.cssText = boxcss + whocss;
-document.body.appendChild(mybox);
+var video = document.querySelector('video');
+if (video) {
+    addListenerForVideo(video);
+}
 
 document.addEventListener('DOMNodeInserted', (event) => {
     if (event.target.tagName === 'VIDEO') {
-        event.target.addEventListener('loadstart', (event) => {
-            record = [];
-            mybox.innerHTML = '';
-        });
+        addListenerForVideo(event.target);
     }
 });
+
+function addListenerForVideo(video) {
+    video.addEventListener('play', (event) => {
+        var toolbar = document.querySelector('#toolbar_module > div.mobile-info') || document.querySelector('#arc_toolbar_report > div.ops');
+        toolbar.after(mybox);
+    });
+    video.addEventListener('loadstart', (event) => {
+        record = [];
+        mybox.innerHTML = '';
+    });
+}
 
 GM_webRequest([
     {selector: '*://*.bilivideo.com/*', action: 'redirect'},
@@ -75,10 +81,10 @@ GM_webRequest([
     }
 
     var item = document.createElement('a');
-    item.innerText = type.r;
     item.href = details.url;
     item.target = '_self';
-    item.style.cssText = btncss;
+    item.innerText = type.r;
+    item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 15px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
     item.onmouseenter = (event) => {
         event.target.download = document.title.split('_')[0] + type.x;
         item.onmouseenter = null;
