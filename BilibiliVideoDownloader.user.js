@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.9
+// @version         0.10
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -44,14 +44,15 @@ biliVideoExtractor(document.querySelector('video'));
 
 function biliVideoExtractor(video) {
     if (video) {
-        video.addEventListener('play', (event) => {
+        video.onplaying = () => {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
             toolbar.append(mybox);
-        });
-        video.addEventListener('loadstart', (event) => {
+            video.onplaying = null;
+        }
+        video.onloadstart = () => {
             record = [];
             mybox.innerHTML = '';
-        });
+        }
     }
 }
 
@@ -68,7 +69,7 @@ GM_webRequest([
             return;
         }
         else if (!type) {
-            return console.log(details.url);
+            return console.log(new URL(details.url).hostname);
         }
         record.push(file);
     }
