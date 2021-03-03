@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.8
+// @version         0.9
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -35,32 +35,31 @@ var format = {
     '15': {x: '360LQ.flv', r: '360P 流畅 FLV'}
 };
 
-try {
-    addListenerForVideo();
-}
-catch(e) {
-    document.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'VIDEO') {
-            addListenerForVideo();
-        }
-    });
-}
+document.addEventListener('DOMNodeInserted', (event) => {
+    if (event.target.tagName === 'VIDEO') {
+        biliVideoExtractor(event.target);
+    }
+});
+biliVideoExtractor(document.querySelector('video'));
 
-function addListenerForVideo(video) {
-    document.querySelector('video').addEventListener('play', (event) => {
-        var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
-        toolbar.append(mybox);
-    });
-    document.querySelector('video').addEventListener('loadstart', (event) => {
-        record = [];
-        mybox.innerHTML = '';
-    });
+function biliVideoExtractor(video) {
+    if (video) {
+        video.addEventListener('play', (event) => {
+            var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
+            toolbar.append(mybox);
+        });
+        video.addEventListener('loadstart', (event) => {
+            record = [];
+            mybox.innerHTML = '';
+        });
+    }
 }
 
 GM_webRequest([
     {selector: '*://*.bilivideo.com/*', action: 'redirect'},
     {selector: '*://*.bilivideo.cn:*/*', action: 'redirect'},
-    {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'}
+    {selector: '*://*.cdnnodedns.cn:*/*', action: 'redirect'},
+    {selector: '*://*.cachenode.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
     try {
         var file = details.url.match(/1-(\d+)\.(flv|m4s)/)[1];
