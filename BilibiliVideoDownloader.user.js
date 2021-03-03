@@ -35,23 +35,23 @@ var format = {
     '15': {x: '360LQ.flv', r: '360P 流畅 FLV'}
 };
 
-var video = document.querySelector('video');
-if (video) {
-    addListenerForVideo(video);
+try {
+    addListenerForVideo();
+}
+catch(e) {
+    document.addEventListener('DOMNodeInserted', (event) => {
+        if (event.target.tagName === 'VIDEO') {
+            addListenerForVideo();
+        }
+    });
 }
 
-document.addEventListener('DOMNodeInserted', (event) => {
-    if (event.target.tagName === 'VIDEO') {
-        addListenerForVideo(event.target);
-    }
-});
-
 function addListenerForVideo(video) {
-    video.addEventListener('play', (event) => {
+    document.querySelector('video').addEventListener('play', (event) => {
         var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
         toolbar.append(mybox);
     });
-    video.addEventListener('loadstart', (event) => {
+    document.querySelector('video').addEventListener('loadstart', (event) => {
         record = [];
         mybox.innerHTML = '';
     });
