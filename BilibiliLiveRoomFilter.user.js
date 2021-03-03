@@ -1,12 +1,14 @@
 // ==UserScript==
-// @name              哔哩哔哩直播间屏蔽工具
-// @namespace         https://github.com/jc3213/userscript
-// @version           21.1
-// @description       哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
-// @author            jc3213
-// @match             *://live.bilibili.com/*
-// @grant             GM_getValue
-// @grant             GM_setValue
+// @name            Bilibili Liveroom Filter
+// @name:zh         哔哩哔哩直播间屏蔽工具
+// @namespace       https://github.com/jc3213/userscript
+// @version         21.1
+// @description     Filtering Bilibili liveroom with built-in manager
+// @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
+// @author          jc3213
+// @match           *://live.bilibili.com/*
+// @grant           GM_getValue
+// @grant           GM_setValue
 // @noframes
 // ==/UserScript==
 
