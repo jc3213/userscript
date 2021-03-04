@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.10
+// @version         0.11
 // @description     Download videos from Bilibili Douga (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载视频（不支持番剧）
 // @author          jc3213
@@ -10,7 +10,7 @@
 // @grant           GM_webRequest
 // ==/UserScript==
 
-var record;
+var record = [];
 var mybox = document.createElement('div');
 var format = {
     '30280': {x: 'HQ.aac', r: '音频 高码率'},
@@ -63,7 +63,7 @@ GM_webRequest([
     {selector: '*://*.cachenode.cn:*/*', action: 'redirect'}
 ], (info, message, details) => {
     try {
-        var file = details.url.match(/1-(\d+)\.(flv|m4s)/)[1];
+        var file = details.url.match(/\d+-1-(\d+)\.(?:flv|m4s)/)[1];
         var type = format[file];
         if (record.includes(file)) {
             return;
