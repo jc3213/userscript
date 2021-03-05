@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.16
+// @version         0.17
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -48,12 +48,13 @@ function biliVideoExtractor(video) {
         video.addEventListener('play', () => {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
             toolbar.append(mybox);
-            createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg');
+            mybox.querySelector('a:nth-child(1)').href = document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1]
         });
         video.addEventListener('loadstart', () => {
             record = [];
             mybox.innerHTML = '';
             title = document.title.match(/^[^_]+/)[0];
+            createMenuitem('下载封面', '#', title + '.jpg');
         });
     }
 }
@@ -92,7 +93,7 @@ function createMenuitem(label, url, filename) {
     item.addEventListener('click', (event) => {
         if (event.ctrlKey) {
             event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url, filename}) + '\n' + location.href);
+            navigator.clipboard.writeText(JSON.stringify({url: item.href, filename: item.download}) + '\n' + location.href);
         }
     });
     mybox.appendChild(item);
