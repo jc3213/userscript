@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.18
+// @version         0.19
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -13,11 +13,12 @@
 var record = [];
 var title = document.title.match(/^[^_]+/)[0];
 var mybox = document.createElement('div');
+var thumb = true;
 var format = {
     '30280': {x: '192K.aac', r: '音频 高码率'},
     '30232': {x: '128K.aac', r: '音频 中码率'},
     '30216': {x: '64K.aac', r: '音频 低码率'},
-    '30120': {x: '4K-UHQ.mp4', r: '4K 超清'},
+    '30120': {x: '4K-UHD.mp4', r: '4K 超清'},
     '30116': {x: '1080HQ.mp4', r: '1080P 60帧'},
     '30112': {x: '1080HBr.mp4', r: '1080P 高码率'},
     '30080': {x: '1080.mp4', r: '1080P 高清'},
@@ -44,18 +45,22 @@ document.addEventListener('DOMNodeInserted', (event) => {
 });
 biliVideoExtractor(document.querySelector('video'));
 
+
 function biliVideoExtractor(video) {
     if (video) {
         video.addEventListener('play', () => {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
             toolbar.append(mybox);
-            mybox.querySelector('a:nth-child(1)').href = document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1]
+            if (thumb) {
+                createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg');
+                thumb = false;
+            }
         });
         video.addEventListener('loadstart', () => {
             record = [];
             mybox.innerHTML = '';
             title = document.title.match(/^[^_]+/)[0];
-            createMenuitem('下载封面', '#', title + '.jpg');
+            thumb = true;
         });
     }
 }
