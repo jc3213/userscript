@@ -2,9 +2,9 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.12
-// @description     Download videos from Bilibili Douga (No Bangumi Support)
-// @description:zh  从哔哩哔哩下载视频（不支持番剧）
+// @version         0.14
+// @description     Download videos that you are watching from Bilibili (No Bangumi Support)
+// @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
 // @grant           GM_webRequest
@@ -45,7 +45,7 @@ biliVideoExtractor(document.querySelector('video'));
 
 function biliVideoExtractor(video) {
     if (video) {
-        video.onplaying = () => {
+        video.onplay = () => {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
             toolbar.append(mybox);
             video.onplaying = null;
@@ -54,6 +54,7 @@ function biliVideoExtractor(video) {
             record = [];
             mybox.innerHTML = '';
             title = document.title.match(/^[^_]+/)[0];
+            createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl" content="(https?:\/\/[^\>]+\.jpg)"\>/)[1], title + '.jpg');
         }
     }
 }
@@ -79,20 +80,20 @@ GM_webRequest([
         return;
     }
 
-    addItemToMenu(details.url, type.r, title + type.x);
+    createMenuitem(type.r, details.url, title + type.x);
 });
 
-function addItemToMenu(url, label, name) {
+function createMenuitem(label, url, filename) {
     var item = document.createElement('a');
     item.href = url;
     item.target = '_self';
     item.innerText = label;
-    item.download = name;
+    item.download = filename;
     item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 3px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
     item.onclick = (event) => {
         if (event.ctrlKey) {
             event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url: event.target.href, filename: event.target.download}) + '\n' + location.href);
+            navigator.clipboard.writeText(JSON.stringify({url, filename}) + '\n' + location.href);
         }
     };
     mybox.appendChild(item);
