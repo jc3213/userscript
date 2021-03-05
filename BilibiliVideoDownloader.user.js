@@ -11,8 +11,7 @@
 // ==/UserScript==
 
 var record = [];
-var title;
-var meta = JSON.parse(document.querySelector('script[type="application/ld+json"]').innerText);
+var title = document.title.match(/^[^_]+/)[0];
 var mybox = document.createElement('div');
 var format = {
     '30280': {x: 'HQ.aac', r: '音频 高码率'},
@@ -53,28 +52,10 @@ function biliVideoExtractor(video) {
         }
         video.onloadstart = () => {
             record = [];
-            meta = JSON.parse(document.querySelector('script[type="application/ld+json"]').innerText);
-            title = decodeURIComponent(meta.name);
             mybox.innerHTML = '';
-            addItemToMenu(meta.thumbnailUrl[0], '下载封面', title + '.jpg');
+            title = document.title.match(/^[^_]+/)[0];
         }
     }
-}
-
-function addItemToMenu(url, label, name) {
-    var item = document.createElement('a');
-    item.href = url;
-    item.target = '_self';
-    item.innerText = label;
-    item.download = name;
-    item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 3px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
-    item.onclick = (event) => {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url: event.target.href, filename: event.target.download}) + '\n' + location.href);
-        }
-    };
-    mybox.appendChild(item);
 }
 
 GM_webRequest([
@@ -100,3 +81,19 @@ GM_webRequest([
 
     addItemToMenu(details.url, type.r, title + type.x);
 });
+
+function addItemToMenu(url, label, name) {
+    var item = document.createElement('a');
+    item.href = url;
+    item.target = '_self';
+    item.innerText = label;
+    item.download = name;
+    item.style.cssText = 'background-color: #c26; color: #fff; margin-left: 3px; padding: 10px; position: relative; top: ' + (document.querySelector('#toolbar_module > div.mobile-info') ? '5px' : '0px');
+    item.onclick = (event) => {
+        if (event.ctrlKey) {
+            event.preventDefault();
+            navigator.clipboard.writeText(JSON.stringify({url: event.target.href, filename: event.target.download}) + '\n' + location.href);
+        }
+    };
+    mybox.appendChild(item);
+}
