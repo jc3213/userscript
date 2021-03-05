@@ -49,12 +49,12 @@ function biliVideoExtractor(video) {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
             toolbar.append(mybox);
             video.onplaying = null;
-            createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg');
         }
         video.onloadstart = () => {
             record = [];
             mybox.innerHTML = '';
             title = document.title.match(/^[^_]+/)[0];
+            createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg');
         }
     }
 }
