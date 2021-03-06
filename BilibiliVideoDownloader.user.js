@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.1
+// @version         1.2
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -25,20 +25,15 @@ var format = {
     '16': {x: '360.mp4', r: '360P 流畅'},
     '15': {x: '360LQ.mp4', r: '360P 流畅'},
 };
-var mybox = document.createElement('div');
 var thumb = document.createElement('div');
 var video = document.createElement('div');
 var audio = document.createElement('div');
-mybox.className = 'mybox';
-mybox.appendChild(thumb);
-mybox.appendChild(video);
-mybox.appendChild(audio);
+thumb.className = video.className = audio.className = 'mybox';
 
 var css = document.createElement('style');
-css.innerHTML = '.mybox {position: relative; z-index: 999999; top: -5px; left: 10px;}\
-.mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
-.mybox > div:hover {height: max-content;}\
-.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}';
+css.innerHTML = '.mybox {display: inline-block; position: relative; top: -5px; margin-left: 5px; vertical-align: top; height: 38px; overflow-y: hidden; z-index: 999999;}\
+.mybox:hover {height: max-content;}\
+.mybox > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}';
 
 document.addEventListener('DOMNodeInserted', (event) => {
     if (event.target.tagName === 'VIDEO') {
@@ -51,7 +46,9 @@ function biliVideoExtractor(player) {
     if (player) {
         player.addEventListener('play', () => {
             var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
-            toolbar.appendChild(mybox);
+            toolbar.appendChild(thumb);
+            toolbar.appendChild(video);
+            toolbar.appendChild(audio);
             toolbar.appendChild(css);
             if (extract) {
                 extract = false;
