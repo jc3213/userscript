@@ -87,7 +87,7 @@ function createMenuitem(label, url, filename) {
     item.addEventListener('click', (event) => {
         if (event.ctrlKey) {
             event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url: item.href, filename: item.download}) + '\n' + location.href);
+            navigator.clipboard.writeText(JSON.stringify({url: item.href, filename: item.download, referer: location.href}));
         }
     });
     return item;
