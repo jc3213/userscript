@@ -51,10 +51,10 @@ biliVideoExtractor(document.querySelector('video'));
 function biliVideoExtractor(player) {
     if (player) {
         player.addEventListener('play', () => {
-            var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
-            toolbar.appendChild(mybox);
-            toolbar.appendChild(css);
             if (extract) {
+                var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
+                toolbar.appendChild(mybox);
+                toolbar.appendChild(css);
                 extract = false;
                 thumb.appendChild(createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg'));
                 dashPlayer.state.mpd.video.forEach(meta => video.appendChild(getMediaInfo(meta)));
@@ -69,9 +69,6 @@ function biliVideoExtractor(player) {
             thumb.innerHTML = '';
             video.innerHTML = '';
             audio.innerHTML = '';
-        });
-        player.addEventListener('fullscreenchange', (event) => {
-            console.log(event);
         });
     }
 }
