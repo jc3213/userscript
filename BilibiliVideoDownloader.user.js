@@ -12,27 +12,27 @@
 var title = document.title.match(/^[^_]+/)[0];
 var extract = true;
 var format = {
-    '30280': {x: '192K.aac', r: '音频 高码率'},
-    '30232': {x: '128K.aac', r: '音频 中码率'},
-    '30216': {x: '64K.aac', r: '音频 低码率'},
-    '120': {x: '4K-UHD.mp4', r: '4K 超清'},
-    '116': {x: '1080HQ.mp4', r: '1080P 60帧'},
-    '112': {x: '1080HBr.mp4', r: '1080P 高码率'},
-    '80': {x: '1080.mp4', r: '1080P 高清'},
-    '74': {x: '720HQ.mp4', r: '720P 60帧'},
-    '64': {x: '720.mp4', r: '720P 高清'},
-    '32': {x: '480.mp4', r: '480P 清晰'},
-    '16': {x: '360.mp4', r: '360P 流畅'},
-    '15': {x: '360LQ.mp4', r: '360P 流畅'},
+    '30280': {x: '.192k.aac', r: '音频 高码率'},
+    '30232': {x: '.128k.aac', r: '音频 中码率'},
+    '30216': {x: '.64k.aac', r: '音频 低码率'},
+    '120': {x: '.4K-UHD.mp4', r: '4K 超清'},
+    '116': {x: '.1080HQ.mp4', r: '1080P 60帧'},
+    '112': {x: '.1080Hbr.mp4', r: '1080P 高码率'},
+    '80': {x: '.1080.mp4', r: '1080P 高清'},
+    '74': {x: '.720HQ.mp4', r: '720P 60帧'},
+    '64': {x: '.720.mp4', r: '720P 高清'},
+    '32': {x: '.480.mp4', r: '480P 清晰'},
+    '16': {x: '.360.mp4', r: '360P 流畅'},
+    '15': {x: '.360LQ.mp4', r: '360P 流畅'},
 };
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
 var audio = document.createElement('div');
-mybox.className = 'mybox';
 mybox.appendChild(thumb);
 mybox.appendChild(video);
 mybox.appendChild(audio);
+mybox.className = 'mybox';
 
 var css = document.createElement('style');
 css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; z-index: 99999999;}\
