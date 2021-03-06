@@ -35,10 +35,10 @@ mybox.appendChild(video);
 mybox.appendChild(audio);
 
 var css = document.createElement('style');
-css.innerHTML = '.mybox {margin-left: 5px; position: relative; z-index: 999999; top: -5px;}\
-.mybox > div {margin-left: 3px; display: inline-block; overflow-y: hidden; vertical-align: top; height: 38px;}\
+css.innerHTML = '.mybox {position: relative; z-index: 999999; top: -5px; left: 10px;}\
+.mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
 .mybox > div:hover {height: max-content;}\
-.mybox > div > a {background-color: #c26; color: #fff; height: 16px; line-height: 16px; padding: 10px; display: block; margin-top: 1px;}';
+.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}';
 
 document.addEventListener('DOMNodeInserted', (event) => {
     if (event.target.tagName === 'VIDEO') {
