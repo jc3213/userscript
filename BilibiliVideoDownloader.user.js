@@ -38,7 +38,8 @@ var css = document.createElement('style');
 css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; z-index: 99999999;}\
 .mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
 .mybox > div:hover {height: max-content;}\
-.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}';
+.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}\
+.mybox > div > a:hover {background-color: #26c;}';
 
 document.addEventListener('DOMNodeInserted', (event) => {
     if (event.target.tagName === 'VIDEO') {
