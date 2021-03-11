@@ -238,7 +238,7 @@ batch_box.querySelector('input').addEventListener('change', (event) => {
         var reader = new FileReader();
         reader.readAsText(event.target.files[0]);
         reader.onload = () => batchAddList(reader.result);
-        batch_box.querySelector('input').value = '';
+        event.target.value = '';
     }
 });
 batch_box.querySelector('.fancybutton:nth-child(4)').addEventListener('click', () => {
