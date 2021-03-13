@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4
+// @version         1.5
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -41,11 +41,15 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; z-index: 999
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-document.addEventListener('DOMNodeInserted', (event) => {
-    if (event.target.tagName === 'VIDEO') {
-        biliVideoExtractor(event.target);
-    }
-});
+
+new MutationObserver((list) => {
+    list.forEach(mutation => {
+        var newNode = mutation.addedNodes[0];
+        if (newNode && newNode.tagName === 'VIDEO') {
+            biliVideoExtractor(newNode);
+        }
+    });
+}).observe(document, {childList: true, subtree: true});
 biliVideoExtractor(document.querySelector('video'));
 
 function biliVideoExtractor(player) {
@@ -57,11 +61,11 @@ function biliVideoExtractor(player) {
                 toolbar.appendChild(css);
                 extract = false;
                 title = document.title.match(/^[^_]+/)[0];
+                document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
+                document.querySelector('button[aria-label="退出网页全屏"]').addEventListener('click', () => {mybox.style.display = 'block';});
                 thumb.appendChild(createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg'));
                 dashPlayer.state.mpd.video.forEach(meta => video.appendChild(getMediaInfo(meta)));
                 dashPlayer.state.mpd.audio.forEach(meta => audio.appendChild(getMediaInfo(meta)));
-                document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
-                document.querySelector('button[aria-label="退出网页全屏"]').addEventListener('click', () => {mybox.style.display = 'block';});
             }
         });
         player.addEventListener('loadstart', () => {
