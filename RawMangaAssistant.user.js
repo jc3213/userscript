@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.14
+// @version         5.16
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -35,6 +35,7 @@
 // @webRequest      {"selector": "*eatsidebicep.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*drawnperink.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.doubleclick.net/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -480,27 +481,24 @@ function extractImage() {
             element.remove();
         }
         else if (watching.fallback && watching.fallback.includes(url)) {
-            var wrapper = new MutationObserver(lazyloadWrapper);
-            wrapper.observe(element, {attributes: true});
+            new MutationObserver(mutation => {
+                mutation.forEach(event => {
+                    if (event.attributeName === 'src') {
+                        var url = event.target.src;
+                        if (url === watching.fallback) {
+                            fail.push(url);
+                        }
+                        else {
+                            urls.push(url);
+                        }
+                    }
+                });
+            }).observe(element, {attributes: true});
         }
         else {
             urls.push(url);
         }
     });
-
-    function lazyloadWrapper(lazyload) {
-        lazyload.forEach(event => {
-            if (event.attributeName === 'src') {
-                var url = event.target.src;
-                if (url === watching.fallback) {
-                    fail.push(url);
-                }
-                else {
-                    urls.push(url);
-                }
-            }
-        });
-    }
 }
 
 // Add shortcut for chapter
