@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.14
+// @version         2.16
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -110,13 +110,14 @@ if (liveroom = location.pathname.match(/^\/(\d+)/)) {
         banInsideLiveRoom(player);
     }
     else {
-        document.addEventListener('DOMNodeInserted', (event) => {
-            if (event.target.tagName === 'DIV' && event.target.style.margin === '0px auto') {
-                event.target.querySelector('iframe').addEventListener('load', (event) => {
+        newNodeObserver(document, node => {
+            var player = node.querySelector('iframe');
+            if (player) {
+                player.addEventListener('load', (event) => {
                     event.target.contentDocument.head.appendChild(css);
-                    event.target.contentDocument.addEventListener('DOMNodeInserted', (event) => {
-                        if (event.target.id === 'head-info-vm') {
-                            banInsideLiveRoom(event.target);
+                    newNodeObserver(event.target.contentDocument, node => {
+                        if (node.id === 'head-info-vm') {
+                            banInsideLiveRoom(node);
                         }
                     });
                 });
@@ -125,9 +126,9 @@ if (liveroom = location.pathname.match(/^\/(\d+)/)) {
     }
 }
 else if (location.pathname === '/') {
-    document.querySelector('#app').addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'DIV' && event.target.classList.contains('area-detail-ctnr')) {
-            event.target.querySelectorAll('div.room-card-wrapper').forEach(item => {
+    newNodeObserver(document.querySelector('#app'), node => {
+        if (node.tagName === 'DIV' && node.classList.contains('area-detail-ctnr')) {
+            node.querySelectorAll('div.room-card-wrapper').forEach(item => {
                 addMenuToLiveRoom(item);
             });
         }
@@ -136,16 +137,16 @@ else if (location.pathname === '/') {
 else if (location.pathname.match(/\/\w+(\/)?/)){
     var list = document.querySelector('ul.list');
     list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
-    list.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'LI' && event.target.className === '') {
-            addMenuToLiveRoom(event.target);
+    newNodeObserver(list, node => {
+        if (node.tagName === 'LI' && node.className === '') {
+            addMenuToLiveRoom(node);
         }
     });
-    document.querySelector('div.wrapper').addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'DIV') {
-            if (event.target.className === 'wrap' || event.target.className === 'wrapper') {
-                event.target.querySelector('div.list-filter-bar').appendChild(manager);
-                event.target.querySelector('div.list-filter-bar').after(container);
+    newNodeObserver(document.querySelector('div.wrapper'), node => {
+        if (node.tagName === 'DIV') {
+            if (node.className === 'wrap' || node.className === 'wrapper') {
+                node.querySelector('div.list-filter-bar').appendChild(manager);
+                node.querySelector('div.list-filter-bar').after(container);
             }
         }
     });
@@ -172,6 +173,17 @@ function banInsideLiveRoom(domPlayer) {
             open(area, '_self');
         }
     }
+}
+
+function newNodeObserver(node, callback) {
+    new MutationObserver((list) => {
+        list.forEach(mutation => {
+            var newNode = mutation.addedNodes[0];
+            if (newNode) {
+                callback(newNode);
+            }
+        });
+    }).observe(node, {childList: true, subtree: true});
 }
 
 function makeBanlist(id, liver) {
@@ -259,9 +271,9 @@ function addMenuToLiveRoom(element) {
         }
     });
 
-    element.addEventListener('DOMNodeInserted', (event) => {
-        if (event.target.tagName === 'DIV' && event.target.classList.contains('hover-panel-wrapper')) {
-            event.target.prepend(menu);
+    newNodeObserver(element, node => {
+        if (node.tagName === 'DIV' && node.classList.contains('hover-panel-wrapper')) {
+            node.prepend(menu);
         }
     });
 }
