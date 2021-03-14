@@ -57,13 +57,6 @@ var container = document.createElement('div');
 container.className = 'fancybox';
 container.style.display = 'none';
 
-var ban_list = document.createElement('div');
-ban_list.className = 'fancylist';
-ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span>\
-<span class="fancyitem">主播</span></div>\
-<div class="fancybody"></div>';
-container.appendChild(ban_list);
-
 var batch_box = document.createElement('div');
 batch_box.className = 'fancylist';
 batch_box.innerHTML = '<textarea id="batch_list"></textarea><div class="fancyfooter">\
@@ -71,7 +64,7 @@ batch_box.innerHTML = '<textarea id="batch_list"></textarea><div class="fancyfoo
 <span class="fancybutton">导出列表</span>\
 <span class="fancybutton">导入列表</span>\
 <span class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="text/plain">';
-container.prepend(batch_box);
+container.appendChild(batch_box);
 batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
         var batch = document.getElementById('batch_list');
@@ -102,6 +95,13 @@ batch_box.querySelector('.fancybutton:nth-child(4)').addEventListener('click', (
         saveBanlist();
     }
 });
+
+var ban_list = document.createElement('div');
+ban_list.className = 'fancylist';
+ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间</span>\
+<span class="fancyitem">主播</span></div>\
+<div class="fancybody"></div>';
+container.appendChild(ban_list);
 
 if (liveroom = location.pathname.match(/^\/(\d+)/)) {
     var id = liveroom[1];
@@ -154,6 +154,17 @@ else if (location.pathname.match(/\/\w+(\/)?/)){
     document.querySelector('div.list-filter-bar').after(container);
 }
 
+function newNodeObserver(node, callback) {
+    new MutationObserver((list) => {
+        list.forEach(mutation => {
+            var newNode = mutation.addedNodes[0];
+            if (newNode) {
+                callback(newNode);
+            }
+        });
+    }).observe(node, {childList: true, subtree: true});
+}
+
 function banInsideLiveRoom(domPlayer) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerHTML;
     var area = domPlayer.querySelector('a.area-link').href;
@@ -173,17 +184,6 @@ function banInsideLiveRoom(domPlayer) {
             open(area, '_self');
         }
     }
-}
-
-function newNodeObserver(node, callback) {
-    new MutationObserver((list) => {
-        list.forEach(mutation => {
-            var newNode = mutation.addedNodes[0];
-            if (newNode) {
-                callback(newNode);
-            }
-        });
-    }).observe(node, {childList: true, subtree: true});
 }
 
 function makeBanlist(id, liver) {
