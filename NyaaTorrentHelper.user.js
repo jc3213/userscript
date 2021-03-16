@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      25
+// @version      4.27
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -22,13 +22,14 @@ var hosts = {
     'www.dlsite.com': 'li.slider_item.active > img'
 }
 
+// i18n Strings
 var messages = {
     'en-US': {
         filter: 'Filter',
         keyword: 'Keyword...',
         name: 'Name',
         preview: 'Preview',
-        torrent: 'torrent',
+        torrent: 'Torrent',
         magnet: 'Magnet',
         copy: 'Copy'
     },
@@ -75,7 +76,7 @@ var button = document.createElement('span');
 button.className = 'filter-button';
 button.innerHTML = i18n.filter;
 button.addEventListener('click', (event) => {
-    var keys = input.value.split(/[\|\/\\\+\,\:\; ]+/);
+    var keys = input.value.split(/[\|\/\\\+,:;\s]+/);
     if (filter && keys.join() === keyword.join()) {
         popup.style.display = 'none';
         filter = false;
@@ -180,15 +181,15 @@ function xmlNodeHandler(data, mouse, handler) {
 }
 function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
-    var url = description.match(/(\*\*)?https?:\/\/[^(\*\*)\r\n]+(\*\*)?/g);
-    var img = description.match(/\(https?:\/\/[^\)]+\)/g);
+    var img = description.match(/https?:\/\/[^\)\]]+\.(jpg|png)/g);
     if (img) {
         data.image = document.createElement('img');
-        data.image.src = img[0].substring(1, img[0].length - 1);
-        createPreview(data, mouse);
+        data.image.src = img[0];
+        return createPreview(data, mouse);
     }
-    else if (url) {
-        var src = url[0].replace(/\*\*/g, '');
+    var url = description.match(/https?:\/\/[^\*\r\n]+/g);
+    if (url) {
+        var src = url[0];
         var host = src.split(/[\/:]+/)[1];
         data.src = src;
         if (data.sel = hosts[host]) {
@@ -198,11 +199,10 @@ function getPreviewURL(node, data, mouse) {
             data.new = true;
             openWebPreview(data);
         }
+        return;
     }
-    else {
-        data.none = true;
-        noValidPreview(data);
-    }
+    data.none = true;
+    noValidPreview(data);
 }
 function getWebPreview(node, data, mouse) {
     data.image = node.querySelector(data.sel);
