@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5
+// @version         1.6
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -10,6 +10,7 @@
 // ==/UserScript==
 
 var title = document.title.match(/^[^_]+/)[0];
+var image;
 var extract = true;
 var format = {
     '30280': {x: '.192k.aac', r: '音频 高码率'},
@@ -63,7 +64,7 @@ function biliVideoExtractor(player) {
                 title = document.title.match(/^[^_]+/)[0];
                 document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
                 document.querySelector('button[aria-label="退出网页全屏"]').addEventListener('click', () => {mybox.style.display = 'block';});
-                thumb.appendChild(createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg'));
+                getThumbnail();
                 dashPlayer.state.mpd.video.forEach(meta => video.appendChild(getMediaInfo(meta)));
                 dashPlayer.state.mpd.audio.forEach(meta => audio.appendChild(getMediaInfo(meta)));
             }
@@ -75,6 +76,14 @@ function biliVideoExtractor(player) {
             audio.innerHTML = '';
         });
     }
+}
+
+function getThumbnail() {
+    var url = document.head.innerText.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1];
+    if (url === image) {
+        return;
+    }
+    thumb.appendChild(createMenuitem('下载封面', image = url, title + '.jpg'));
 }
 
 function getMediaInfo(meta) {
