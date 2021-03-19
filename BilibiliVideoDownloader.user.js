@@ -10,7 +10,6 @@
 // ==/UserScript==
 
 var title = document.title.match(/^[^_]+/)[0];
-var image;
 var extract = true;
 var format = {
     '30280': {x: '.192k.aac', r: '音频 高码率'},
