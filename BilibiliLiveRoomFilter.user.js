@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.16
+// @version         2.17
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -103,7 +103,7 @@ ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间<
 <div class="fancybody"></div>';
 container.appendChild(ban_list);
 
-if (liveroom = location.pathname.match(/^\/(\d+)/)) {
+if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
     var id = liveroom[1];
     var player = document.querySelector('section.player-and-aside-area');
     if (player) {
@@ -111,12 +111,12 @@ if (liveroom = location.pathname.match(/^\/(\d+)/)) {
     }
     else {
         newNodeObserver(document, node => {
-            var player = node.querySelector('iframe');
+            var player = node.querySelector('#player-ctnr > div > iframe');
             if (player) {
                 player.addEventListener('load', (event) => {
-                    event.target.contentDocument.head.appendChild(css);
                     newNodeObserver(event.target.contentDocument, node => {
                         if (node.id === 'head-info-vm') {
+                            node.appendChild(css);
                             banInsideLiveRoom(node);
                         }
                     });
@@ -134,7 +134,7 @@ else if (location.pathname === '/') {
         }
     });
 }
-else if (location.pathname.match(/\/\w+(\/)?/)){
+else if (location.pathname.match(/\/(p|area|lol)\/?/)){
     var list = document.querySelector('ul.list');
     list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
     newNodeObserver(list, node => {
