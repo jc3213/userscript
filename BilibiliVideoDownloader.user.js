@@ -41,7 +41,6 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; z-index: 999
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-
 new MutationObserver((list) => {
     list.forEach(mutation => {
         var newNode = mutation.addedNodes[0];
