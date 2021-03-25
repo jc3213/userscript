@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5
+// @version         1.6
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -38,7 +38,7 @@ var css = document.createElement('style');
 css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; z-index: 99999999;}\
 .mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
 .mybox > div:hover {height: max-content;}\
-.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px;}\
+.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
 new MutationObserver((list) => {
