@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.16
+// @version         5.17
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -31,11 +31,12 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 //                  lovehug.net
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*eatsidebicep.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*drawnperink.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.doubleclick.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*ledslevier.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*protagcdn.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.aniview.com/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -167,7 +168,7 @@ var mangas = {
         lazyload: 'data-srcset',
         fallback: ['/uploads/lazy_loading.gif.pagespeed.ce.l2uogikTCA.gif'],
         logo: ['https://s4.ihlv1.xyz/images/20210124/LoveHug_600cfd96e98ff.jpg'],
-        ads: ['div.col-lg-4.col-sm-4 > center', 'h5']
+        ads: ['div.col-lg-4.col-sm-4 > center', 'h5', 'div.container > center']
     },
     'mangasum.com': {
         chapter: /Chapter\s(\S+)/,
