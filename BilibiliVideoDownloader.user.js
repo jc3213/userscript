@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9
+// @version         1.7
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -34,6 +34,13 @@ mybox.appendChild(video);
 mybox.appendChild(audio);
 mybox.className = 'mybox';
 
+var css = document.createElement('style');
+css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px; z-index: 99999999;}\
+.mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
+.mybox > div:hover {height: max-content;}\
+.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
+.mybox > div > a:hover {background-color: #26c;}';
+
 new MutationObserver((list) => {
     list.forEach(mutation => {
         var newNode = mutation.addedNodes[0];
@@ -48,15 +55,9 @@ function biliVideoExtractor(player) {
     if (player) {
         player.addEventListener('play', () => {
             if (extract) {
-                var toolbar = document.querySelector('#toolbar_module');
-                if (toolbar) {
-                    appendCSS('top: -42px; left: ' + (6 + document.querySelector('div.mobile-info').offsetLeft + document.querySelector('div.mobile-info').offsetWidth) + 'px');
-                }
-                else {
-                    toolbar = document.querySelector('#arc_toolbar_report');
-                    appendCSS('top: -30px; left: ' + document.querySelector('div.ops').offsetWidth + 'px;');
-                }
+                var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
                 toolbar.appendChild(mybox);
+                toolbar.appendChild(css);
                 extract = false;
                 title = document.title.match(/^[^_]+/)[0];
                 document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
@@ -73,16 +74,6 @@ function biliVideoExtractor(player) {
             audio.innerHTML = '';
         });
     }
-}
-
-function appendCSS(position) {
-    var css = document.createElement('style');
-    css.innerHTML = '.mybox {position: relative; width: fit-content; z-index: 99999999; ' + position + '}\
-    .mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
-    .mybox > div:hover {height: max-content;}\
-    .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
-    .mybox > div > a:hover {background-color: #26c;}';
-    document.head.appendChild(css);
 }
 
 function getMediaInfo(meta) {
