@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7
+// @version         1.8
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -35,7 +35,7 @@ mybox.appendChild(audio);
 mybox.className = 'mybox';
 
 var css = document.createElement('style');
-css.innerHTML = '.mybox {position: relative; top: -30px; left: 400px; width: fit-content; z-index: 99999999;}\
+css.innerHTML = '.mybox {position: relative; top: -30px; width: fit-content; z-index: 99999999;}\
 .mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
 .mybox > div:hover {height: max-content;}\
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
@@ -58,6 +58,7 @@ function biliVideoExtractor(player) {
                 var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
                 toolbar.appendChild(mybox);
                 toolbar.appendChild(css);
+                mybox.style.left = document.querySelector('div.ops').offsetWidth + 'px';
                 extract = false;
                 title = document.title.match(/^[^_]+/)[0];
                 document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
