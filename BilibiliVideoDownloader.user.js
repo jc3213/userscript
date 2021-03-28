@@ -35,7 +35,7 @@ mybox.appendChild(audio);
 mybox.className = 'mybox';
 
 var css = document.createElement('style');
-css.innerHTML = '.mybox {position: relative; top: -30px; left: 360px; width: fit-content; z-index: 99999999;}\
+css.innerHTML = '.mybox {position: relative; top: -30px; left: 400px; width: fit-content; z-index: 99999999;}\
 .mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
 .mybox > div:hover {height: max-content;}\
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
