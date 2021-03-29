@@ -187,7 +187,7 @@ function getPreviewURL(node, data, mouse) {
         data.image.src = img[0];
         return createPreview(data, mouse);
     }
-    var url = description.match(/https?:\/\/[^\*\r\n\)\]]+\.html?/g);
+    var url = description.match(/https?:\/\/[^\*\r\n\)\]]+/g);
     if (url) {
         var src = url[0];
         var host = src.split(/[\/:]+/)[1];
