@@ -58,13 +58,14 @@ function biliVideoExtractor(player) {
                 var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
                 toolbar.appendChild(mybox);
                 toolbar.appendChild(css);
-                extract = false;
                 title = document.title.match(/^[^_]+/)[0];
-                document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => {mybox.style.display = 'none';});
-                document.querySelector('button[aria-label="退出网页全屏"]').addEventListener('click', () => {mybox.style.display = 'block';});
+                document.querySelector('button[aria-label="网页全屏"]').addEventListener('click', () => { mybox.style.display = 'none'; });
+                document.querySelector('button[aria-label="退出网页全屏"]').addEventListener('click', () => { mybox.style.display = 'block'; });
+                if (!document.querySelector('div.bilibili-player-video-btn-widescreen').classList.contains('closed')) { document.querySelector('button[aria-label="宽屏模式"]').click(); }
                 thumb.appendChild(createMenuitem('下载封面', document.head.innerHTML.match(/"thumbnailUrl"[^"]+"([^"]+)"/)[1], title + '.jpg'));
                 dashPlayer.state.mpd.video.forEach(meta => video.appendChild(getMediaInfo(meta)));
                 dashPlayer.state.mpd.audio.forEach(meta => audio.appendChild(getMediaInfo(meta)));
+                extract = false;
             }
         });
         player.addEventListener('loadstart', () => {
