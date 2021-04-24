@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.24
+// @version      3.25
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -75,7 +75,7 @@ manager.addEventListener('click', (event) => {
     }
     manager.classList.toggle('manager-checked');
 });
-document.getElementById('head_nav').appendChild(manager);
+(document.getElementById('head_nav') || document.body).appendChild(manager);
 
 var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
@@ -113,6 +113,7 @@ container.querySelector('.manager-button:nth-child(4)').addEventListener('click'
     if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
         var books = []
         Object.entries(bookmark).forEach(item => books.push(exportBookmarkInfo(...item)));
+        saveBookmarkButton();
         navigator.clipboard.writeText(JSON.stringify(books));
         alert('情報のエックスポートは無事に成功しました！');
     }
@@ -173,6 +174,8 @@ function subscribeNcode(ncode, title) {
 }
 
 function exportBookmarkInfo(ncode, book) {
+    bookmark.last = novelist.now;
+    container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
     var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
     var filename = book.title + '.pdf';
     return {url, filename}
