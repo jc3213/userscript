@@ -174,7 +174,7 @@ function subscribeNcode(ncode, title) {
 }
 
 function exportBookmarkInfo(ncode, book) {
-    bookmark.last = novelist.now;
+    bookmark[ncode].last = novelist.now;
     container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
     var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
     var filename = book.title + '.pdf';
