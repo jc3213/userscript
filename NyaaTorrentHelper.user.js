@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.29
+// @version      4.31
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -44,6 +44,10 @@ var messages = {
     }
 };
 var i18n = messages[navigator.language] || messages['en-US'];
+
+if (document.body.innerText.includes('502 Bad Gateway')) {
+    setTimeout(() => location.reload(), 5000);
+}
 
 // Create UI
 var css= document.createElement('style');
@@ -171,7 +175,7 @@ function xmlNodeHandler(data, mouse, handler) {
         url: data.src,
         onload: (details) => {
             if (details.response.includes('502 Bad Gateway')) {
-                action[data.id] = false;;
+                xmlNodeHandler(data, mouse, handler);
             }
             else {
                 var node = document.createElement('div');
@@ -180,7 +184,7 @@ function xmlNodeHandler(data, mouse, handler) {
             }
         },
         onerror: (details) => {
-            action[data.id] = false;
+            xmlNodeHandler(data, mouse, handler);
         }
     });
 }
