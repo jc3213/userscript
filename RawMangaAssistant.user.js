@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.17
+// @version         5.18
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -32,11 +32,12 @@
 //                  lovehug.net
 // @webRequest      {"selector": "*.vidazoo.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
+// @webRequest      {"selector": "*protagcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.doubleclick.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*ledslevier.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*protagcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.aniview.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*defyraspypuke.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
 // komiraw.com / manga11.com / rawdevart.com / kissaway.net
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -431,23 +432,29 @@ function contextMenuHandler(event) {
 
 // Extract images data
 if (watching) {
-    removeAdsElement();
+    if (watching.ads) {
+        removeAdsElement();
+    }
     chapter = watching.chapter.constructor.name === 'RegExp' ? document.title.match(watching.chapter) : watching.chapter();
     title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
     if (chapter && title) {
         chapter = chapter[1];
         title = title[1].replace(/[\\\/:*?"<>|]/g, '');
-        images = document.querySelectorAll(watching.selector);
         checkAria2Availability();
-        appendShortcuts();
-        extractImage();
+        if (watching.shortcut) {
+            appendShortcuts();
+        }
+        images = document.querySelectorAll(watching.selector);
+        if (images.length > 0) {
+            extractImage();
+        }
+        else {
+            notification('extract', 'fatal');
+        }
     }
 }
 
 function removeAdsElement() {
-    if (!watching.ads) {
-        return;
-    }
     Array.isArray(watching.ads) ? watching.ads.forEach(item => removeElement(item)) : removeElement(watching.ads);
 
     function removeElement(selector) {
@@ -456,9 +463,6 @@ function removeAdsElement() {
 }
 
 function extractImage() {
-    if (images.length === 0) {
-        return notification('extract', 'fatal');
-    }
     warning = notification('extract', 'start');
     observer = setInterval(() => {
         if (images.length === urls.length + fail.length + logo.length) {
@@ -504,17 +508,15 @@ function extractImage() {
 
 // Add shortcut for chapter
 function appendShortcuts() {
-    if (!watching.shortcut) {
-        return;
-    }
     var button = Array.isArray(watching.shortcut) ? watching.shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(watching.shortcut);
     document.addEventListener('keydown', (event) => {
-        if (event.target.tagName === 'INPUT') {
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
             return;
         }
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
-        if (index !== -1) {
-            button[index].click();
+        var shortcut = button[index];
+        if (shortcut) {
+            shortcut.click();
         }
     });
 }
