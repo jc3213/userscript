@@ -45,7 +45,7 @@ var messages = {
 };
 var i18n = messages[navigator.language] || messages['en-US'];
 
-if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.body.innerText)) {
+if (['502 Bad Gateway', '429 Too Many Requests'].find(item => document.body.innerText.includes(item))) {
     setTimeout(() => location.reload(), 5000);
 }
 
