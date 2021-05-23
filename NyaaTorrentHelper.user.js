@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.31
+// @version      4.32
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -45,7 +45,7 @@ var messages = {
 };
 var i18n = messages[navigator.language] || messages['en-US'];
 
-if (['502 Bad Gateway', '429 Too Many Requests'].find(item => document.body.innerText.includes(item))) {
+if (['502', '429'].find(item => document.body.innerText.includes(item))) {
     setTimeout(() => location.reload(), 5000);
 }
 
@@ -190,13 +190,13 @@ function xmlNodeHandler(data, mouse, handler) {
 }
 function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
-    var img = description.match(/https?:\/\/[^\)\]]+\.(jpg|png)/g);
+    var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(description);
     if (img) {
         data.image = document.createElement('img');
         data.image.src = img[0];
         return createPreview(data, mouse);
     }
-    var url = description.match(/https?:\/\/[^\*\r\n\)\]]+/g);
+    var url = /https?:\/\/[^\*\r\n\)\]]+/g.exec(description);
     if (url) {
         var src = url[0];
         var host = src.split(/[\/:]+/)[1];
