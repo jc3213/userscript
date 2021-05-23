@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.19
+// @version         5.20
 // @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
 // @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
 // @author          jc3213
@@ -181,7 +181,7 @@ var mangas = {
     },
     'komiraw.com': {
         chapter: /^Chapter\s(\S+)\s/,
-        title: () => (document.querySelector('#boxtopchap > a').title.match(/^(.+)\s\|/)),
+        title: () => (/^(.+)\s\|/.exec(document.querySelector('#boxtopchap > a').title)),
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['iframe'],
         selector: 'div.chapter-c > img'
@@ -207,7 +207,7 @@ var mangas = {
         lazyload: 'data-original'
     },
     'lhscan.me': {
-        chapter: () => (document.querySelector('#chapter-heading').innerText.match(/Chapter\s(\S+)/)),
+        chapter: () => (/Chapter\s(\S+)/.exec(document.querySelector('#chapter-heading').innerText)),
         title: /^Read\s(.+)\s(?:Raw\s)?Raw/,
         selector: 'img.wp-manga-chapter-img'
     }
@@ -310,7 +310,7 @@ downMenu.querySelector('.assistantMenu:nth-child(2)').addEventListener('click', 
 downMenu.querySelector('.assistantMenu:nth-child(3)').addEventListener('click', () => {
     urls.forEach((url, index) => aria2RequestHandler({
         method: 'aria2.addUri',
-        options: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
+        options: [[url], {out: longDecimalNumber(index) + '.' + /(png|jpg|jpeg|webp)/.exec(url)[0], dir: folder, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
     }, (result) => {
         if (index === urls.length - 1) {
             notification('aria2', 'done');
@@ -329,7 +329,7 @@ function checkAria2Availability() {
                 notification('aria2', 'nokey');
             }
             else {
-                folder = details.response.match(/"dir":"([^"]+)"/)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
+                folder = /"dir":"([^"]+)"/.exec(details.response)[1] + '\\' + title + '\\' + longDecimalNumber(chapter);
                 downMenu.querySelector('.assistantMenu:nth-child(3)').style.display = 'block';
             }
         }
@@ -436,8 +436,8 @@ if (watching) {
     if (watching.ads) {
         removeAdsElement();
     }
-    chapter = watching.chapter.constructor.name === 'RegExp' ? document.title.match(watching.chapter) : watching.chapter();
-    title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
+    chapter = watching.chapter.constructor.name === 'RegExp' ? watching.chapter.exec(document.title) : watching.chapter();
+    title = watching.title.constructor.name === 'RegExp' ? watching.title.exec(document.title) : watching.title();
     if (chapter && title) {
         chapter = chapter[1];
         title = title[1].replace(/[\\\/:*?"<>|]/g, '');
