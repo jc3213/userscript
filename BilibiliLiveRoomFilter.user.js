@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.17
+// @version         2.18
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -103,7 +103,7 @@ ban_list.innerHTML = '<div class="fancytitle"><span class="fancyitem">直播间<
 <div class="fancybody"></div>';
 container.appendChild(ban_list);
 
-if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
+if (liveroom = /^\/(blackboard|\d+)/.exec(location.pathname)) {
     var id = liveroom[1];
     var player = document.querySelector('section.player-and-aside-area');
     if (player) {
@@ -134,7 +134,7 @@ else if (location.pathname === '/') {
         }
     });
 }
-else if (location.pathname.match(/\/(p|area|lol)\/?/)){
+else if (/\/(p|area|lol)\/?/.test(location.pathname)){
     var list = document.querySelector('ul.list');
     list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
     newNodeObserver(list, node => {
@@ -223,7 +223,7 @@ function saveBanlist() {
 }
 
 function batchAddList(list) {
-    list.match(/^(\d+)[\\\/\s.@#$^&]+([^\\\/\s.@#$^&]+)/mg).forEach(item => {
+    /^(\d+)[\\\/\s.@#$^&]+([^\\\/\s.@#$^&]+)/mg.exec(list).forEach(item => {
         var rule = item.split(/[\\\/\s.@#$^&]+/);
         addBanlist(rule[0], rule[1]);
     });
@@ -231,7 +231,7 @@ function batchAddList(list) {
 }
 
 function banLiveRoom(element) {
-    var id = element.querySelector('a').href.match(/\d+/)[0];
+    var id = /\d+/.exec(element.querySelector('a').href)[0];
     element.style.display = banned[id] ? 'none' : 'inline-block';
     return id;
 }
@@ -247,7 +247,7 @@ function addMenuToLiveRoom(element) {
     var id = banLiveRoom(element);
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
-    var preview = element.querySelector('div.cover-ctnr').style['background-image'].match(/https?:\/\/[^\@]+/)[0];
+    var preview = /https?:\/\/[^\@]+/.exec(element.querySelector('div.cover-ctnr').style['background-image'])[0];
 
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
