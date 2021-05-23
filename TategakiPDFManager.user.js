@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.25
+// @version      3.26
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -16,7 +16,7 @@
 // ==/UserScript==
 
 'use strict';
-var novelist = {ncode: location.pathname.match(/n\d+\w+/g), title: document.title, now: Date.now(), today: new Date().getFullYear() + new Date().getMonth() + new Date().getDate()};
+var novelist = {ncode: /n\d+\w+/g.exec(location.pathname), title: document.title, now: Date.now(), today: new Date().getFullYear() + new Date().getMonth() + new Date().getDate()};
 novelist.myncode = novelist.ncode = novelist.ncode.pop();
 var validate = {};
 var download = {};
