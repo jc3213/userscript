@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.32
+// @version      4.33
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -134,10 +134,10 @@ document.querySelectorAll('table > tbody > tr').forEach((element) => {
     var link = element.querySelectorAll('td:nth-child(3) > a');
     if (link.length === 2) {
         data.torrent = link[0].href;
-        data.magnet = link[1].href;
+        data.magnet = slimMagnetURI(link[1].href);
     }
     else {
-        data.magnet = link[0].href;
+        data.magnet = slimMagnetURI(link[0].href);
     }
     queue.push(data);
     a.addEventListener('contextmenu', (event) => {
@@ -146,6 +146,10 @@ document.querySelectorAll('table > tbody > tr').forEach((element) => {
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
 });
+
+function slimMagnetURI(magnet) {
+    return magnet.slice(0, magnet.indexOf('&'));
+}
 
 // Preview handler
 function getPreviewHandler(data, mouse) {
