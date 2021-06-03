@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4
+// @version      2.5
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -23,8 +23,8 @@ var offset = {};
 
 var css = document.createElement('style');
 css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 850px; height: 500px;} \
-.speedrun-menu {background-color: #000; width: 100%; text-align: right; user-select: none;}\
-.speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; text-align: center; vertical-align: center;}\
+.speedrun-menu {background-color: #52698A; width: 100%; text-align: right; user-select: none; height: 20px;}\
+.speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}';
 document.head.appendChild(css);
