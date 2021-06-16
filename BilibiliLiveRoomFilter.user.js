@@ -20,18 +20,17 @@ var liveroom;
 var css = document.createElement('style');
 css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .fancybox > * {width: 320px; height: 360px; overflow-y: auto; display: inline-block;}\
-.fancybox, .fancytable {border: 1px solid #23ade5;}\
-.fancylist {resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px;}\
-.fancytable td {padding: 5px; text-align: center}\
-.fancytable td:nth-child(1) {width: 120px;}\
-.fancytable td:nth-child(2) {width: 200px;}\
-.fancytable thead {background-color: #000; color: #fff;}\
-.fancytable tbody td:nth-child(2) {background-color: #ddd}\
+.fancybox, .fancybox table {border: 1px solid #23ade5;}\
+.fancybox textarea {resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px; margin-bottom: 5px;}\
+.fancybox td {padding: 5px; text-align: center}\
+.fancybox td:nth-child(1) {width: 120px;}\
+.fancybox td:nth-child(2) {width: 200px;}\
+.fancybox thead {background-color: #000; color: #fff;}\
+.fancybox tbody td:nth-child(2) {background-color: #ddd}\
 .fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
 .fancybutton:hover {filter: opacity(60%);}\
 .fancybutton:active {filter: opacity(30%);}\
-.fancyfooter {margin-top: 3px;}\
-.fancyfooter .fancybutton:nth-child(n+2) {margin-left: 5px;}\
+.fancybox .fancybutton:nth-child(n+2) {margin-left: 5px;}\
 .fancymenu {display: block; margin-bottom: 10px;}\
 .fancymenu .fancybutton:nth-child(n+2) {margin-left: 5px;}\
 div.room-info-down-row > span {margin-left: 5px}';
@@ -58,7 +57,7 @@ container.className = 'fancybox';
 container.style.display = 'none';
 
 var batch_box = document.createElement('div');
-batch_box.innerHTML = '<textarea class="fancylist"></textarea><div class="fancyfooter">\
+batch_box.innerHTML = '<textarea></textarea><div>\
 <span class="fancybutton">批量屏蔽</span>\
 <span class="fancybutton">导出列表</span>\
 <span class="fancybutton">导入列表</span>\
@@ -96,7 +95,6 @@ batch_box.querySelector('.fancybutton:nth-child(4)').addEventListener('click', (
 });
 
 var ban_list = document.createElement('table');
-ban_list.className = 'fancytable';
 ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 <tbody></tbody>';
 container.appendChild(ban_list);
