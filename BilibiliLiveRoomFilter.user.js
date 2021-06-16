@@ -44,12 +44,7 @@ manager.addEventListener('click', (event) => {
         Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
         show = true;
     }
-    if (container.style.display === 'none') {
-        container.style.display = 'block';
-    }
-    else {
-        container.style.display = 'none';
-    }
+    container.style.display =container.style.display === 'none' ? 'block' : 'none';
 });
 
 var container = document.createElement('div');
