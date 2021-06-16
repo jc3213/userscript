@@ -247,7 +247,8 @@ function addMenuToLiveRoom(element) {
     var id = banLiveRoom(element);
     var liver = element.querySelector('div.room-anchor > span').innerHTML;
     var name = element.querySelector('span.room-title').innerHTML;
-    var preview = /https?:\/\/[^\@]+/.exec(element.querySelector('div.cover-ctnr').style['background-image'])[0];
+    var preview = element.querySelector('div.cover-ctnr').style['background-image'];
+    var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
@@ -264,7 +265,7 @@ function addMenuToLiveRoom(element) {
         event.preventDefault();
         if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', preview.replace(/https?/, 'https'), true);
+            xhr.open('GET', url, true);
             xhr.responseType = 'blob';
             xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
             xhr.send();
