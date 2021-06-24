@@ -106,7 +106,6 @@ container.appendChild(popup);
 
 // Show filter result
 function getFilterResult(data) {
-console.log(data);
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
