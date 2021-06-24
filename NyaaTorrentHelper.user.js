@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.34
+// @version      4.35
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -106,12 +106,13 @@ container.appendChild(popup);
 
 // Show filter result
 function getFilterResult(data) {
+console.log(data);
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
     <span>' + i18n.preview + '</span>\
-    <a href="' + data.torrent + '" target="_blank">' + i18n.torrent + '</a>\
-    <a href="' + data.magnet + '" style="display: ' + (data.torrent ? 'block' : 'none') + '">' + i18n.magnet + '</a>\
+    <a href="' + data.torrent + '" target="_blank" style="display: ' + (data.torrent ? 'block' : 'none') + '">' + i18n.torrent + '</a>\
+    <a href="' + data.magnet + '">' + i18n.magnet + '</a>\
     <span>' + i18n.copy + '</span>';
     popup.appendChild(menu);
     menu.querySelector('span:nth-child(2)').addEventListener('click', (event) => {
