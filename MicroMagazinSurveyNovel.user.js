@@ -7,7 +7,7 @@
 // @match        *://micromagazine.co.jp/me/qu/*_thanks*.html
 // ==/UserScript==
 
-var book = document.getElementById('books') || document.getElementById('contents_c');
+var book = document.getElementById('books') ?? document.getElementById('contents_c');
 book.id = 'books';
 
 var css = document.createElement('link');
