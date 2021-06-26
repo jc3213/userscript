@@ -157,7 +157,7 @@ var messages = {
         }
     }
 };
-var i18n = messages[navigator.language] || messages['en-US'];
+var i18n = messages[navigator.language] ?? messages['en-US'];
 
 // Supported sites
 var mangas = {
@@ -479,7 +479,7 @@ function extractImage() {
         }
     }, 250);
     images.forEach((element, index) => {
-        var src = element.getAttribute(watching.lazyload) || element.getAttribute('src');
+        var src = element.getAttribute(watching.lazyload) ?? element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
         if (watching.logo && watching.logo.includes(url)) {
             logo.push(url);
@@ -523,7 +523,7 @@ function appendShortcuts() {
 
 // Notifications
 function notification(action, status, url) {
-    var warn = i18n[action][status] || i18n[action];
+    var warn = i18n[action][status] ?? i18n[action];
     var html = '⚠️' + warn.replace('%n%', '<i><u>' + images.length + '</u></i>');
     if (url) {
         html += '<p>' + url + '</p>';
