@@ -75,7 +75,7 @@ manager.addEventListener('click', (event) => {
     }
     manager.classList.toggle('manager-checked');
 });
-(document.getElementById('head_nav') || document.body).appendChild(manager);
+(document.getElementById('head_nav') ?? document.body).appendChild(manager);
 
 var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span class="manager-button">NCODE登録</span>\
@@ -101,7 +101,7 @@ container.querySelector('.manager-button:nth-child(1)').addEventListener('click'
         validateNcode(novelist.myncode);
     }
 });
-container.querySelector('input:nth-child(2)').addEventListener('change', (event) => {novelist.myncode = event.target.value || novelist.ncode;} );
+container.querySelector('input:nth-child(2)').addEventListener('change', (event) => {novelist.myncode = event.target.value ?? novelist.ncode;} );
 container.querySelector('.manager-button:nth-child(3)').addEventListener('click', () => {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         bookmarkSyncPreHandler(() => {
