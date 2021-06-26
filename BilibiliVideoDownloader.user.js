@@ -55,7 +55,7 @@ function biliVideoExtractor(player) {
     if (player) {
         player.addEventListener('play', () => {
             if (extract) {
-                var toolbar = document.querySelector('#toolbar_module') || document.querySelector('#arc_toolbar_report');
+                var toolbar = document.querySelector('#toolbar_module') ?? document.querySelector('#arc_toolbar_report');
                 toolbar.appendChild(mybox);
                 toolbar.appendChild(css);
                 title = /^[^_]+/.exec(document.title)[0];
