@@ -43,7 +43,7 @@ var messages = {
         copy: '复制'
     }
 };
-var i18n = messages[navigator.language] || messages['en-US'];
+var i18n = messages[navigator.language] ?? messages['en-US'];
 
 if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
     setTimeout(() => location.reload(), 5000);
