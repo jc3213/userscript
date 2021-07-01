@@ -261,11 +261,7 @@ function addMenuToLiveRoom(element) {
         }
         if (event.target.id === 'bililive_filter_thumb') {
             if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                xhr.responseType = 'blob';
-                xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
-                xhr.send();
+                fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
             }
         }
     });
