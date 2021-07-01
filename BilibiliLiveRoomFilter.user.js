@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.19
+// @version         2.20
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -41,7 +41,7 @@ manager.innerHTML = '管理屏蔽列表';
 manager.className = 'fancybutton';
 manager.addEventListener('click', (event) => {
     if (!show) {
-        Object.entries(banned).forEach(item => makeBanlist(item[0], item[1]));
+        Object.keys(banned).forEach(key => makeBanlist(key, banned[key]));
         show = true;
     }
     container.style.display =container.style.display === 'none' ? 'block' : 'none';
@@ -53,39 +53,43 @@ container.style.display = 'none';
 
 var batch_box = document.createElement('div');
 batch_box.innerHTML = '<textarea></textarea><div>\
-<span class="fancybutton">批量屏蔽</span>\
-<span class="fancybutton">导出列表</span>\
-<span class="fancybutton">导入列表</span>\
-<span class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="text/plain">';
+<span id="bililive_filter_batch" class="fancybutton">批量屏蔽</span>\
+<span id="bililive_filter_export" class="fancybutton">导出列表</span>\
+<span id="bililive_filter_import" class="fancybutton">导入列表</span>\
+<span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="text/plain">';
 container.appendChild(batch_box);
-batch_box.querySelector('.fancybutton:nth-child(1)').addEventListener('click', () => {
-    if (confirm('确定要屏蔽列表中的直播间吗？')) {
-        var batch = document.getElementById('batch_list');
-        batchAddList(batch.value);
-        saveBanlist();
-        batch.value = '';
+batch_box.addEventListener('click', (event) => {
+    if (event.target.id === 'bililive_filter_batch') {
+        if (confirm('确定要屏蔽列表中的直播间吗？')) {
+            var batch = document.getElementById('batch_list');
+            batchAddList(batch.value);
+            saveBanlist();
+            batch.value = '';
+        }
+    }
+    if (event.target.id === 'bililive_filter_export') {
+        if (confirm('确定要导出当前屏蔽列表吗？')) {
+            var list = Object.entries(banned).map(item => item[0] + ', ' + item[1]).join('\n');
+            blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
+        }
+    }
+    if (event.target.id === 'bililive_filter_import') {
+        batch_box.querySelector('input').click();
+    }
+    if (event.target.id === 'bililive_filter_clear') {
+        if (confirm('确定要清空当前屏蔽列表吗？')) {
+            ban_list.querySelector('tbody').innerHTML = '';
+            banned = {};
+            saveBanlist();
+        }
     }
 });
-batch_box.querySelector('.fancybutton:nth-child(2)').addEventListener('click', () => {
-    if (confirm('确定要导出当前屏蔽列表吗？')) {
-        var list = Object.entries(banned).map(item => item[0] + ', ' + item[1]).join('\n');
-        blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
-    }
-});
-batch_box.querySelector('.fancybutton:nth-child(3)').addEventListener('click', () => batch_box.querySelector('input').click() );
-batch_box.querySelector('input').addEventListener('change', (event) => {
+batch_box.addEventListener('change', (event) => {
     if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -4) + '】吗？')) {
         var reader = new FileReader();
         reader.readAsText(event.target.files[0]);
         reader.onload = () => batchAddList(reader.result);
         event.target.value = '';
-    }
-});
-batch_box.querySelector('.fancybutton:nth-child(4)').addEventListener('click', () => {
-    if (confirm('确定要清空当前屏蔽列表吗？')) {
-        ban_list.querySelector('tbody').innerHTML = '';
-        banned = {};
-        saveBanlist();
     }
 });
 
@@ -146,8 +150,8 @@ else if (/\/(p|area|lol)\/?/.test(location.pathname)){
 }
 
 function newNodeObserver(node, callback) {
-    new MutationObserver((list) => {
-        list.forEach(mutation => {
+    new MutationObserver(mutationList => {
+        mutationList.forEach(mutation => {
             var newNode = mutation.addedNodes[0];
             if (newNode) {
                 callback(newNode);
@@ -214,8 +218,8 @@ function saveBanlist() {
 }
 
 function batchAddList(list) {
-    /^(\d+)[\\\/\s.@#$^&]+([^\\\/\s.@#$^&]+)/mg.exec(list).forEach(item => {
-        var rule = item.split(/[\\\/\s.@#$^&]+/);
+    list.match(/^(\d+)[\\\/\s,.@#$^&]+([^\\\/\s.@#$^&]+)/mg).forEach(item => {
+        var rule = item.split(/[\\\/\s,.@#$^&]+/);
         addBanlist(rule[0], rule[1]);
     });
     saveBanlist();
