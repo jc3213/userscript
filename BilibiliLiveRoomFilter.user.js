@@ -218,9 +218,11 @@ function saveBanlist() {
 }
 
 function batchAddList(list) {
-    list.match(/^(\d+)[\\\/\s,.@#$^&]+([^\\\/\s.@#$^&]+)/mg).forEach(item => {
+    list.split('\n').forEach(item => {
         var rule = item.split(/[\\\/\s,.@#$^&]+/);
-        addBanlist(rule[0], rule[1]);
+        if (!isNaN(rule[0])) {
+            addBanlist(rule[0], rule[1]);
+        }
     });
     saveBanlist();
 }
@@ -247,23 +249,24 @@ function addMenuToLiveRoom(element) {
 
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
-    menu.innerHTML = '<span class="fancybutton">屏蔽直播间</span>\
-    <span class="fancybutton">下载封面</span>';
-    menu.querySelector('.fancybutton:nth-child(1)').addEventListener('click', (event) => {
+    menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
+    <span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
+    menu.addEventListener('click', (event) => {
         event.preventDefault();
-        if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-            addBanlist(id, liver);
-            saveBanlist();
+        if (event.target.id === 'bililive_filter_block') {
+            if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+                addBanlist(id, liver);
+                saveBanlist();
+            }
         }
-    });
-    menu.querySelector('.fancybutton:nth-child(2)').addEventListener('click', (event) => {
-        event.preventDefault();
-        if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.responseType = 'blob';
-            xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
-            xhr.send();
+        if (event.target.id === 'bililive_filter_thumb') {
+            if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
+                xhr.onload = () => blobToFile(xhr.response, id + '_' + name);
+                xhr.send();
+            }
         }
     });
 
