@@ -98,7 +98,7 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 <tbody></tbody>';
 container.appendChild(ban_list);
 
-if (liveroom = /^\/(blackboard|\d+)/.exec(location.pathname)) {
+if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
     var id = liveroom[1];
     var player = document.querySelector('section.player-and-aside-area');
     if (player) {
@@ -228,7 +228,7 @@ function batchAddList(list) {
 }
 
 function banLiveRoom(element) {
-    var id = /\d+/.exec(element.querySelector('a').href)[0];
+    var id = element.querySelector('a').href.match(/\d+/)[0];
     element.style.display = banned[id] ? 'none' : 'inline-block';
     return id;
 }
