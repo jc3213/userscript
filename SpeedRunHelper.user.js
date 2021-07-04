@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.5
+// @version      2.6
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -29,21 +29,19 @@ css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 850px
 .speedrun-item:active {filter: opacity(30%);}';
 document.head.appendChild(css);
 
-document.querySelectorAll('div[data-ad]').forEach(item => item.remove());
-document.querySelector('body > main > div > div:nth-child(5)').remove();
-
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
-    document.querySelectorAll('tr[data-target]').forEach(item => {
-        if (item.contains(event.target)) {
-            var src = item.getAttribute('data-target');
-            var id = src.split('/').pop();
-            viewSpeedrunRecord(id, src, event.clientY, event.clientX);
-        }
-    });
+    if (event.target.tagName === 'span') {
+        return;
+    }
+    var src = event.target.parentNode.getAttribute('data-target');
+    var id = src.slice(src.lastIndexOf('/') + 1);
+    var top = event.clientY;
+    var left = event.clientY;
+    viewSpeedrunRecord({id, src, top, left});
 });
 
-function viewSpeedrunRecord(id, src, top, left) {
+function viewSpeedrunRecord({id, src, top, left}) {
     if (document.getElementById('speedrun-' + id)) {
         document.getElementById('speedrun-' + id).remove();
     }
