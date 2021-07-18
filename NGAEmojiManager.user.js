@@ -1,6 +1,6 @@
 // ==UserScript==
-// @name            NGA Emoji Manager (Prototype)
-// @name:zh         NGA表情管理器（雏形）
+// @name            NGA Emoji Manager
+// @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
 // @version         1.0
 // @description     Add/Remove New Emoji to NGA Forum
