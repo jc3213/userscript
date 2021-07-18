@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name            NGA Emoji Manager (Prototype)
-// @name:zh         NGA表情管理器（雏形）
+// @name:zh         NGA表情包管理器（雏形）
 // @namespace       https://github.com/jc3213
 // @version         0.2
 // @description     Add/Remove New Emoji to NGA Forum
-// @description:zh  向NGA论坛添加/删除新的表情组合
+// @description:zh  向NGA论坛添加/删除新的表情包
 // @author          jc3213
 // @match           *://bbs.nga.cn/thread.php?*
 // @match           *://bbs.nga.cn/read.php?*
