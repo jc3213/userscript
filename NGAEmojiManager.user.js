@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name            NGA Emoji Manager (Prototype)
-// @name:zh         NGA表情包管理器（雏形）
+// @name:zh         NGA表情管理器（雏形）
 // @namespace       https://github.com/jc3213
-// @version         0.2
+// @version         0.3
 // @description     Add/Remove New Emoji to NGA Forum
-// @description:zh  向NGA论坛添加/删除新的表情包
+// @description:zh  向NGA论坛添加/删除新的表情组合
 // @author          jc3213
 // @match           *://bbs.nga.cn/thread.php?*
 // @match           *://bbs.nga.cn/read.php?*
@@ -79,7 +79,16 @@ function createEmojiUI() {
         emojiTab.appendChild(tab);
         var panel = document.createElement('div');
         emojiPanel.append(panel);
-        tab.addEventListener('click', () => addEmoji(name, package[name], panel));
+        tab.addEventListener('click', (event) => {
+            if (event.ctrlKey) {
+                if (confirm('确定要删除【'+ name + '】表情包吗？')) {
+                    removeEmoji(name);
+                }
+            }
+            else {
+                addEmoji(name, package[name], panel);
+            }
+        });
     });
 }
 
@@ -104,12 +113,18 @@ function addEmoji(name, emojis, panel) {
 
 function removeEmoji(name) {
     delete package[name];
+    emojiTab.querySelectorAll('button').forEach((tab, index) => {
+        if (tab.innerText === name) {
+            tab.remove();
+            emojiPanel.childNodes[index].remove();
+        }
+    });
 }
 
 new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {
         var newNode = mutation.addedNodes[0];
-        if (newNode && /commonwindow\d+/.test(newNode.id)) {
+        if (newNode && newNode.id.indexOf('commonwindow') !== -1) {
             emojiTab = newNode.querySelector('div > div.div2 > div > div');
             emojiPanel = newNode.querySelector('div > div.div2 > div > span');
             createEmojiUI();
