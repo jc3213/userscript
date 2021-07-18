@@ -56,21 +56,21 @@ function createEmojiUI(name) {
     tab.addEventListener('click', (event) => {
         if (event.ctrlKey) {
             if (confirm('确定要删除【'+ name + '】表情包吗？')) {
-                removeEmoji(name);
+                removeEmoji(tab, panel);
             }
         }
         else {
-            addEmoji(name, emojiPackage[name], panel);
+            addEmoji(name, panel);
         }
     });
 }
 
-function addEmoji(name, emojis, panel) {
+function addEmoji(name, panel) {
     emojiPanel.childNodes.forEach(ePanel => {
         ePanel.style.display = ePanel === panel ? 'block' : 'none';
     });
     if (!runOnce[name]) {
-        emojis.forEach(emoji => {
+        emojiPackage[name].forEach(emoji => {
             var img = document.createElement('img');
             img.src = 'https://img.nga.178.com/attachments/' + emoji;
             img.style.cssText = 'max-height: 150px; margin: 0px 5px 5px 0px;';
@@ -84,15 +84,11 @@ function addEmoji(name, emojis, panel) {
     }
 }
 
-function removeEmoji(name) {
-    emojiTab.querySelectorAll('button').forEach((tab, index) => {
-        if (tab.innerText === name) {
-            tab.remove();
-            emojiPanel.childNodes[index].remove();
-        }
-    });
-    delete emojiPackage[name];
+function removeEmoji(tab, panel) {
+    delete emojiPackage[tab.innerText];
     GM_setValue('emoji', emojiPackage);
+    tab.remove();
+    panel.remove();
 }
 
 new MutationObserver(mutationList => {
