@@ -2,9 +2,9 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.0.1
+// @version         1.1
 // @description     Add/Remove New Emoji to NGA Forum
-// @description:zh  向NGA论坛添加/删除新的表情组合
+// @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
 // @match           *://bbs.nga.cn/thread.php?*
 // @match           *://bbs.nga.cn/read.php?*
@@ -32,11 +32,11 @@ subscribe.addEventListener('change', (event) => {
         var reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => {
-            var json = JSON.parse(reader.result);
-            emojiPackage[json.name] = json.emoji;
+            var {name, emoji} = JSON.parse(reader.result);
+            emojiPackage[name] = emoji;
+            createEmojiUI(name);
             if (index === files.length - 1) {
                 GM_setValue('emoji', emojiPackage);
-                location.reload();
             }
         };
     });
@@ -46,27 +46,23 @@ manager.innerText = '添加新表情';
 manager.className = 'block_txt_big';
 manager.addEventListener('click', (event) => subscribe.click());
 
-function createEmojiUI() {
-console.log(emojiPackage);
-    Object.keys(emojiPackage).forEach(name => {
-        var tab = document.createElement('button');
-        tab.className = 'block_txt_big';
-        tab.innerText = name;
-        emojiTab.appendChild(tab);
-        var panel = document.createElement('div');
-        emojiPanel.append(panel);
-        tab.addEventListener('click', (event) => {
-            if (event.ctrlKey) {
-                if (confirm('确定要删除【'+ name + '】表情包吗？')) {
-                    removeEmoji(name);
-                }
+function createEmojiUI(name) {
+    var tab = document.createElement('button');
+    tab.className = 'block_txt_big';
+    tab.innerText = name;
+    manager.before(tab);
+    var panel = document.createElement('div');
+    emojiPanel.append(panel);
+    tab.addEventListener('click', (event) => {
+        if (event.ctrlKey) {
+            if (confirm('确定要删除【'+ name + '】表情包吗？')) {
+                removeEmoji(name);
             }
-            else {
-                addEmoji(name, emojiPackage[name], panel);
-            }
-        });
+        }
+        else {
+            addEmoji(name, emojiPackage[name], panel);
+        }
     });
-    emojiTab.appendChild(manager);
 }
 
 function addEmoji(name, emojis, panel) {
@@ -105,7 +101,8 @@ new MutationObserver(mutationList => {
         if (newNode && newNode.id.indexOf('commonwindow') !== -1) {
             emojiTab = newNode.querySelector('div > div.div2 > div > div');
             emojiPanel = newNode.querySelector('div > div.div2 > div > span');
-            createEmojiUI();
+            emojiTab.appendChild(manager);
+            Object.keys(emojiPackage).forEach(createEmojiUI);
         }
     });
 }).observe(document.body, {childList: true});
