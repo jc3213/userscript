@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.0
+// @version         1.0.1
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  向NGA论坛添加/删除新的表情组合
 // @author          jc3213
@@ -77,7 +77,7 @@ function addEmoji(name, emojis, panel) {
         emojis.forEach(emoji => {
             var img = document.createElement('img');
             img.src = 'https://img.nga.178.com/attachments/' + emoji;
-            img.style.cssText = 'height: 150px; margin: 0px 5px 5px 0px;';
+            img.style.cssText = 'max-height: 150px; margin: 0px 5px 5px 0px;';
             img.addEventListener('click', (event) => {
                 postfunc.addText('[img]' + emoji + '[/img]');
                 postfunc.selectSmilesw._.hide();
