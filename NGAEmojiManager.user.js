@@ -84,11 +84,14 @@ function createEmojiUI() {
 }
 
 function addEmoji(name, emojis, panel) {
-    panel.style.display = 'block';
+    emojiPanel.childNodes.forEach(ePanel => {
+        ePanel.style.display = ePanel === panel ? 'block' : 'none';
+    });
     if (!runOnce[name]) {
         emojis.forEach(emoji => {
             var img = document.createElement('img');
             img.src = 'https://img.nga.178.com/attachments/' + emoji;
+            img.style.cssText = 'height: 150px; margin: 0px 5px 5px 0px;';
             img.addEventListener('click', (event) => {
                 postfunc.addText('[img]' + emoji + '[/img]');
                 postfunc.selectSmilesw._.hide();
