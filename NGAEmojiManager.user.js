@@ -20,9 +20,9 @@
 // ==/UserScript==
 
 var emojiPackage = GM_getValue('emoji', {});
+var emojiRunOnce = {};
 var emojiTab;
 var emojiPanel;
-var runOnce = {};
 
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
@@ -56,7 +56,7 @@ function createEmojiUI(name) {
     tab.addEventListener('click', (event) => {
         if (event.ctrlKey && confirm('确定要删除【'+ name + '】表情包吗？')) {
             delete emojiPackage[name];
-            delete runOnce[name];
+            delete emojiRunOnce[name];
             GM_setValue('emoji', emojiPackage);
             tab.remove();
             panel.remove();
@@ -71,7 +71,7 @@ function addEmoji(name, panel) {
     emojiPanel.childNodes.forEach(ePanel => {
         ePanel.style.display = ePanel === panel ? 'block' : 'none';
     });
-    if (!runOnce[name]) {
+    if (!emojiRunOnce[name]) {
         emojiPackage[name].forEach(emoji => {
             var img = document.createElement('img');
             img.src = 'https://img.nga.178.com/attachments/' + emoji;
@@ -82,7 +82,7 @@ function addEmoji(name, panel) {
             });
             panel.appendChild(img);
         });
-        runOnce[name] = true;
+        emojiRunOnce[name] = true;
     }
 }
 
