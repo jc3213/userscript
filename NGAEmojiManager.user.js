@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager (Prototype)
 // @name:zh         NGA表情管理器（雏形）
 // @namespace       https://github.com/jc3213
-// @version         0.3
+// @version         1.0
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  向NGA论坛添加/删除新的表情组合
 // @author          jc3213
@@ -19,60 +19,36 @@
 // @grant           GM_getValue
 // ==/UserScript==
 
+var emojiPackage = GM_getValue('emoji', {});
 var emojiTab;
 var emojiPanel;
 var runOnce = {};
-var package = {
-    '神楽めあ(Asa)': [
-        './mon_202107/18/-zue37Q2o-gauqKoT1kS9f-6y.jpg',
-        './mon_202107/18/-zue37Q2o-4excKxToS6y-6y.jpg',
-        './mon_202107/18/-zue37Q2o-dpesKxT1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-uuiKsT1kSd4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-9pkwKjT1kSab-6y.jpg',
-        './mon_202107/18/-zue37Q2o-itqvKmToS77-6y.jpg',
-        './mon_202107/18/-zue37Q2o-6ui5KtT1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-fz14KlToS8o-6y.jpg',
-        './mon_202107/18/-zue37Q2o-6okkKvT1kS9w-6y.jpg',
-        './mon_202107/18/-zue37Q2o-qorK14T1kSbs-6y.jpg',
-        './mon_202107/18/-zue37Q2o-ar1vKxT1kSb3-6y.jpg',
-        './mon_202107/18/-zue37Q2o-2emiKmToS80-6y.jpg',
-        './mon_202107/18/-zue37Q2o-bqpwKqT1kSce-6y.jpg',
-        './mon_202107/18/-zue37Q2o-kwpjKiToS7c-6y.jpg',
-        './mon_202107/18/-zue37Q2o-8413K10T1kScd-6y.jpg',
-        './mon_202107/18/-zue37Q2o-h791KoToS7u-6y.jpg',
-        './mon_202107/18/-zue37Q2o-4ympK13T1kSc6-6y.jpg',
-        './mon_202107/18/-zue37Q2o-dw3pKlToS7c-6y.jpg',
-        './mon_202107/18/-zue37Q2o-lefKiToS6z-6y.jpg',
-        './mon_202107/18/-zue37Q2o-amtaKgToS6f-6y.jpg',
-        './mon_202107/18/-zue37Q2o-k9txKjToS6w-6y.jpg',
-        './mon_202107/18/-zue37Q2o-8lljKlT1kS9w-6y.jpg',
-        './mon_202107/18/-zue37Q2o-ie46K11T1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-9zldKnToS6k-6y.jpg',
-        './mon_202107/18/-zue37Q2o-j8ywKjToS70-6y.jpg',
-        './mon_202107/18/-zue37Q2o-6uppKwT1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-i2u7K1aT1kSb3-6y.jpg',
-        './mon_202107/18/-zue37Q2o-6fbyKkToS6y-6y.jpg',
-        './mon_202107/18/-zue37Q2o-g5meKjT1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-405rKwT1kSdk-6y.jpg',
-        './mon_202107/18/-zue37Q2o-cgzaKlToS8u-6y.jpg',
-        './mon_202107/18/-zue37Q2o-b71KrToS77-6y.jpg',
-        './mon_202107/18/-zue37Q2o-9mpzK12T1kSb4-6y.jpg',
-        './mon_202107/18/-zue37Q2o-ixnlKmToS7s-6y.jpg',
-        './mon_202107/18/-zue37Q2o-6kmyKvT1kSbf-6y.jpg',
-        './mon_202107/18/-zue37Q2o-2bgKwToS82-6y.jpg',
-        './mon_202107/18/-zue37Q2o-enfcKlT1kS9k-6y.jpg',
-        './mon_202107/18/-zue37Q2o-7zxwK1fT1kScp-6y.jpg',
-        './mon_202107/18/-zue37Q2o-hr0dKpToS8a-6y.jpg',
-        './mon_202107/18/-zue37Q2o-49wrKoToS77-6y.jpg',
-        './mon_202107/18/-zue37Q2o-dje2KmToS7b-6y.jpg',
-        './mon_202107/18/-zue37Q2o-26grKoT1kSa0-6y.jpg',
-        './mon_202107/18/-zue37Q2o-bnxiKjToS79-6y.jpg',
-        './mon_202107/18/-zue37Q2o-1bnK1bT1kSb4-6y.jpg'
-    ]
-};
+
+var subscribe = document.createElement('input');
+subscribe.type = 'file';
+subscribe.accept = 'application/json';
+subscribe.addEventListener('change', (event) => {
+    [...subscribe.files].forEach((file, index, files) => {
+        var reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            var json = JSON.parse(reader.result);
+            emojiPackage[json.name] = json.emoji;
+            if (index === files.length - 1) {
+                GM_setValue('emoji', emojiPackage);
+                location.reload();
+            }
+        };
+    });
+});
+var manager = document.createElement('button');
+manager.innerText = '添加新表情';
+manager.className = 'block_txt_big';
+manager.addEventListener('click', (event) => subscribe.click());
 
 function createEmojiUI() {
-    Object.keys(package).forEach(name => {
+console.log(emojiPackage);
+    Object.keys(emojiPackage).forEach(name => {
         var tab = document.createElement('button');
         tab.className = 'block_txt_big';
         tab.innerText = name;
@@ -86,10 +62,11 @@ function createEmojiUI() {
                 }
             }
             else {
-                addEmoji(name, package[name], panel);
+                addEmoji(name, emojiPackage[name], panel);
             }
         });
     });
+    emojiTab.appendChild(manager);
 }
 
 function addEmoji(name, emojis, panel) {
@@ -112,13 +89,14 @@ function addEmoji(name, emojis, panel) {
 }
 
 function removeEmoji(name) {
-    delete package[name];
     emojiTab.querySelectorAll('button').forEach((tab, index) => {
         if (tab.innerText === name) {
             tab.remove();
             emojiPanel.childNodes[index].remove();
         }
     });
+    delete emojiPackage[name];
+    GM_setValue('emoji', emojiPackage);
 }
 
 new MutationObserver(mutationList => {
