@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.21
+// @version         2.22
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -112,6 +112,20 @@ if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
                     banInsideLiveRoom(node);
                 }
            });
+        });
+    }
+    else {
+        newNodeObserver(document, node => {
+            if (player = node.querySelector('#player-ctnr > div > iframe')) {
+                player.addEventListener('load', (event) => {
+                    newNodeObserver(event.target.contentDocument, node => {
+                        if (node.id === 'head-info-vm') {
+                            node.appendChild(css);
+                            banInsideLiveRoom(node);
+                        }
+                    });
+                });
+            }
         });
     }
 }
