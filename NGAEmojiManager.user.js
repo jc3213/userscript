@@ -1,10 +1,8 @@
 // ==UserScript==
-// @name            NGA Emoji Manager
-// @name:zh         NGA表情管理器
+// @name            NGA表情管理器
 // @namespace       https://github.com/jc3213
 // @version         1.2
-// @description     Add/Remove New Emoji to NGA Forum
-// @description:zh  为NGA论坛添加/删除新表情
+// @description     为NGA论坛添加/删除新表情
 // @author          jc3213
 // @match           *://bbs.nga.cn/thread.php?*
 // @match           *://bbs.nga.cn/read.php?*
