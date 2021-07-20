@@ -1,20 +1,15 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.6
+// @version      2.7
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_webRequest
-// @webRequest   {"selector": "https://www.speedrun.com/assets/js/ads.js", "action": "cancel"}
-// @webRequest   {"selector": "*.amazon-adsystem.com/*", "action": "cancel"}
-// @webRequest   {"selector": "*.doubleclick.net/*", "action": "cancel"}
-// @webRequest   {"selector": "*lngtd.com/*", "action": "cancel"}
+// @webRequest   {"selector": "*://*.speedrun.com/a.js*", "action": "cancel"}
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
-// @webRequest   {"selector": "*adservice.google.com/*", "action": "cancel"}
-// @webRequest   {"selector": "*quantcast.mgr.consensu.org/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -30,23 +25,22 @@ css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 850px
 document.head.appendChild(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
-    event.preventDefault();
     if (event.target.tagName === 'span') {
         return;
     }
+    event.preventDefault();
     var src = event.target.parentNode.getAttribute('data-target');
     var id = src.slice(src.lastIndexOf('/') + 1);
-    var top = event.clientY;
-    var left = event.clientY;
-    viewSpeedrunRecord({id, src, top, left});
+    var css = 'top: 180px; left: 490px';
+    viewSpeedrunRecord({id, src, css});
 });
 
-function viewSpeedrunRecord({id, src, top, left}) {
+function viewSpeedrunRecord({id, src, css}) {
     if (document.getElementById('speedrun-' + id)) {
         document.getElementById('speedrun-' + id).remove();
     }
     if (logger[id]) {
-        createRecordWindow(id, logger[id], top, left);
+        createRecordWindow(id, logger[id], css);
     }
     else {
         GM_xmlhttpRequest({
@@ -55,23 +49,24 @@ function viewSpeedrunRecord({id, src, top, left}) {
             onload: (response) => {
                 var xml = document.createElement('div');
                 xml.innerHTML = response.responseText;
-                logger[id] = xml.querySelector('#centerbar').querySelector('iframe');
-                createRecordWindow(id, logger[id], top, left);
+                logger[id] = xml.querySelector('#centerbar iframe') ?? xml.querySelector('#centerbar center > a');
+                createRecordWindow(id, logger[id], css);
+                xml.remove();
             }
         });
     }
 }
 
-function createRecordWindow(id, content, top, left) {
-    if (typeof content === 'string') {
-        return open(content, '_blank');
+function createRecordWindow(id, content, css) {
+    if (content.tagName === 'A') {
+        return open(content.src, '_blank');
     }
 
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.draggable = 'true';
     container.className = 'speedrun-window';
-    container.style.cssText = 'top: ' + top / 2 + 'px; left: ' + left / 2 + 'px;';
+    container.style.cssText = css;
     container.innerHTML = '<div class="speedrun-menu"><span class="speedrun-item">✖</span></div>';
     container.appendChild(content);
     document.body.appendChild(container);
