@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.4
+// @version         1.5
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -23,13 +23,15 @@ var emojiPackage = GM_getValue('emoji', {});
 var emojiRunOnce = {};
 var emojiTab;
 var emojiPanel;
+var patch = GM_getValue('patch', 1);
 
-if (GM_info.script.version < 1.4) {
+if (patch === 1) {
     Object.keys(emojiPackage).forEach(key => {
         var emoji = emojiPackage[key];
         emojiPackage[key] = {emoji};
     });
     GM_setValue('emoji', emojiPackage);
+    GM_setValue('patch', 2);
 }
 
 var subscribe = document.createElement('input');
