@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.3
+// @version         1.4
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -24,12 +24,13 @@ var emojiRunOnce = {};
 var emojiTab;
 var emojiPanel;
 
-if (GM_info.script.version < 1.3) {
+if (GM_info.script.version < 1.4) {
     Object.keys(emojiPackage).forEach(key => {
         emojiPackage[key] = {emoji: emojiPackage[key]};
     });
     GM_setValue('emoji', emojiPackage);
 }
+
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
 subscribe.accept = 'application/json';
@@ -40,7 +41,7 @@ subscribe.addEventListener('change', (event) => {
         reader.onload = () => {
             var {name, author, emoji} = JSON.parse(reader.result);
             emojiPackage[name] = {author, emoji};
-            createEmojiUI(name, author);
+            createEmojiUI(name);
             if (index === files.length - 1) {
                 GM_setValue('emoji', emojiPackage);
             }
@@ -52,11 +53,11 @@ manager.innerText = '添加新表情';
 manager.className = 'block_txt_big';
 manager.addEventListener('click', (event) => subscribe.click());
 
-function createEmojiUI(name, author = 'https://ngabbs.com/read.php?tid=27660394&page=1#pid533428178Anchor') {
+function createEmojiUI(name) {
     var tab = document.createElement('button');
     tab.className = 'block_txt_big';
     tab.innerText = name;
-    tab.title = '制作者： ' + author;
+    tab.title = '制作者： ' + (emojiPackage[name].author ?? 'https://ngabbs.com/read.php?tid=27660394&page=1#pid533428178Anchor');
     manager.before(tab);
     var panel = document.createElement('div');
     emojiPanel.append(panel);
