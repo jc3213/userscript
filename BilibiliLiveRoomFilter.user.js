@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 'use strict';
-var banned = GM_getValue('banned', {});
+var banned = GM_getValue('banned', []);
 var show = false;
 var liveroom;
 
@@ -22,6 +22,7 @@ if (patch === 1) {
     var ___banlist = [];
     Object.keys(banned).forEach(id => ___banlist.push({id, liver: banned[id]}));
     banned = ___banlist;
+    GM_setValue('banned', banned);
     GM_setValue('patch', 2);
 }
 
