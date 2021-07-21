@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.35
+// @version      4.36
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -67,8 +67,8 @@ css.innerHTML = '.filter-button {background-color: #056b00; border: 1px solid bl
 document.head.appendChild(css);
 
 var container = document.createElement('div');
-container.style.cssText = 'position:fixed; top: 6px; left: calc(40% - 50px); z-index: 3213; padding: 1px;';
-document.body.appendChild(container);
+container.style.cssText = 'position: relative; top: 6px;';
+document.querySelector('#navbar').appendChild(container);
 
 var input = document.createElement('input');
 input.style.cssText = 'color: black; border: 1px solid black; padding: 5px; width: 180px; height: 38px;';
