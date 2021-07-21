@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.22
+// @version         2.23
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -56,21 +56,27 @@ batch_box.innerHTML = '<textarea></textarea><div>\
 <span id="bililive_filter_batch" class="fancybutton">批量屏蔽</span>\
 <span id="bililive_filter_export" class="fancybutton">导出列表</span>\
 <span id="bililive_filter_import" class="fancybutton">导入列表</span>\
-<span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="text/plain">';
+<span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="application/json">';
 container.appendChild(batch_box);
 batch_box.addEventListener('click', (event) => {
     if (event.target.id === 'bililive_filter_batch') {
         if (confirm('确定要屏蔽列表中的直播间吗？')) {
             var batch = document.getElementById('batch_list');
-            batchAddList(batch.value);
+            batch.value.split('\n').forEach(item => {
+                var rule = item.split(/[\\\/\s,.@#$^&]+/);
+                if (!isNaN(rule[0])) {
+                    addBanlist(rule[0], rule[1]);
+                }
+            });
             saveBanlist();
             batch.value = '';
         }
     }
     if (event.target.id === 'bililive_filter_export') {
         if (confirm('确定要导出当前屏蔽列表吗？')) {
-            var list = Object.entries(banned).map(item => item[0] + ', ' + item[1]).join('\n');
-            blobToFile(new Blob([list], {type: 'text/plain'}), 'bilibili直播间屏蔽列表');
+            var list = [];
+            Object.keys(banned).forEach(id => list.push({id, liver: banned[id]}));
+            blobToFile(new Blob([JSON.stringify(list)], {type: 'application/json'}), 'bilibili直播间屏蔽列表');
         }
     }
     if (event.target.id === 'bililive_filter_import') {
@@ -85,10 +91,14 @@ batch_box.addEventListener('click', (event) => {
     }
 });
 batch_box.addEventListener('change', (event) => {
-    if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -4) + '】吗？')) {
+    if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -5) + '】吗？')) {
         var reader = new FileReader();
         reader.readAsText(event.target.files[0]);
-        reader.onload = () => batchAddList(reader.result);
+        reader.onload = () => {
+            var list = JSON.parse(reader.result);
+            list.forEach(({id, liver}) => addBanlist(id, liver));
+            saveBanlist();
+        }
         event.target.value = '';
     }
 });
@@ -224,16 +234,6 @@ function saveBanlist() {
     if (list) {
         list.querySelectorAll('li').forEach(item => banLiveRoom(item));
     }
-}
-
-function batchAddList(list) {
-    list.split('\n').forEach(item => {
-        var rule = item.split(/[\\\/\s,.@#$^&]+/);
-        if (!isNaN(rule[0])) {
-            addBanlist(rule[0], rule[1]);
-        }
-    });
-    saveBanlist();
 }
 
 function banLiveRoom(element) {
