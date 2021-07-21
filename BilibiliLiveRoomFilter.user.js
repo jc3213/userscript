@@ -151,11 +151,9 @@ else if (/\/(p|area|lol)\/?/.test(location.pathname)){
         }
     });
     newNodeObserver(document.querySelector('div.wrapper'), node => {
-        if (node.tagName === 'DIV') {
-            if (node.className === 'wrap' || node.className === 'wrapper') {
-                node.querySelector('div.list-filter-bar').appendChild(manager);
-                node.querySelector('div.list-filter-bar').after(container);
-            }
+        if (node.tagName === 'DIV' && node.className === 'wrap' || node.className === 'wrapper') {
+            node.querySelector('div.list-filter-bar').appendChild(manager);
+            node.querySelector('div.list-filter-bar').after(container);
         }
     });
     document.querySelector('div.list-filter-bar').appendChild(manager);
