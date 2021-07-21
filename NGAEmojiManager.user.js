@@ -26,7 +26,8 @@ var emojiPanel;
 
 if (GM_info.script.version < 1.4) {
     Object.keys(emojiPackage).forEach(key => {
-        emojiPackage[key] = {emoji: emojiPackage[key]};
+        var emoji = emojiPackage[key];
+        emojiPackage[key] = {emoji};
     });
     GM_setValue('emoji', emojiPackage);
 }
