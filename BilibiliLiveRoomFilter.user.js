@@ -54,8 +54,8 @@ container.style.display = 'none';
 var batch_box = document.createElement('div');
 batch_box.innerHTML = '<textarea></textarea><div>\
 <span id="bililive_filter_batch" class="fancybutton">批量屏蔽</span>\
-<span id="bililive_filter_export" class="fancybutton">导出列表</span>\
 <span id="bililive_filter_import" class="fancybutton">导入列表</span>\
+<span id="bililive_filter_export" class="fancybutton">导出列表</span>\
 <span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="application/json">';
 container.appendChild(batch_box);
 batch_box.addEventListener('click', (event) => {
