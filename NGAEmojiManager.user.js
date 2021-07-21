@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.2
+// @version         1.3
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -24,6 +24,12 @@ var emojiRunOnce = {};
 var emojiTab;
 var emojiPanel;
 
+if (GM_info.script.version < 1.3) {
+    Object.keys(emojiPackage).forEach(key => {
+        emojiPackage[key] = {emoji: emojiPackage[key]};
+    });
+    GM_setValue('emoji', emojiPackage);
+}
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
 subscribe.accept = 'application/json';
@@ -32,9 +38,9 @@ subscribe.addEventListener('change', (event) => {
         var reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => {
-            var {name, emoji} = JSON.parse(reader.result);
-            emojiPackage[name] = emoji;
-            createEmojiUI(name);
+            var {name, author, emoji} = JSON.parse(reader.result);
+            emojiPackage[name] = {author, emoji};
+            createEmojiUI(name, author);
             if (index === files.length - 1) {
                 GM_setValue('emoji', emojiPackage);
             }
@@ -46,10 +52,11 @@ manager.innerText = '添加新表情';
 manager.className = 'block_txt_big';
 manager.addEventListener('click', (event) => subscribe.click());
 
-function createEmojiUI(name) {
+function createEmojiUI(name, author = 'https://ngabbs.com/read.php?tid=27660394&page=1#pid533428178Anchor') {
     var tab = document.createElement('button');
     tab.className = 'block_txt_big';
     tab.innerText = name;
+    tab.title = '制作者： ' + author;
     manager.before(tab);
     var panel = document.createElement('div');
     emojiPanel.append(panel);
@@ -72,7 +79,7 @@ function addEmoji(name, panel) {
         ePanel.style.display = ePanel === panel ? 'block' : 'none';
     });
     if (!emojiRunOnce[name]) {
-        emojiPackage[name].forEach(emoji => {
+        emojiPackage[name].emoji.forEach(emoji => {
             var img = document.createElement('img');
             img.src = 'https://img.nga.178.com/attachments/' + emoji;
             img.style.cssText = 'max-height: 150px; margin: 0px 5px 5px 0px;';
