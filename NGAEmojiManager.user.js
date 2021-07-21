@@ -58,7 +58,7 @@ function createEmojiUI(name) {
     var tab = document.createElement('button');
     tab.className = 'block_txt_big';
     tab.innerText = name;
-    tab.title = '制作者： ' + (emojiPackage[name].author ?? 'https://ngabbs.com/read.php?tid=27660394&page=1#pid533428178Anchor');
+    tab.title = '制作者： ' + emojiPackage[name].author;
     manager.before(tab);
     var panel = document.createElement('div');
     emojiPanel.append(panel);
