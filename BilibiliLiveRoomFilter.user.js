@@ -59,35 +59,29 @@ batch_box.innerHTML = '<textarea></textarea><div>\
 <span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="application/json">';
 container.appendChild(batch_box);
 batch_box.addEventListener('click', (event) => {
-    if (event.target.id === 'bililive_filter_batch') {
-        if (confirm('确定要屏蔽列表中的直播间吗？')) {
-            var batch = document.getElementById('batch_list');
-            batch.value.split('\n').forEach(item => {
-                var rule = item.split(/[\\\/\s,.@#$^&]+/);
-                if (!isNaN(rule[0])) {
-                    addBanlist(rule[0], rule[1]);
-                }
-            });
-            saveBanlist();
-            batch.value = '';
-        }
+    if (event.target.id === 'bililive_filter_batch' && confirm('确定要屏蔽列表中的直播间吗？')) {
+        var batch = document.getElementById('batch_list');
+        batch.value.split('\n').forEach(item => {
+            var rule = item.split(/[\\\/\s,.@#$^&]+/);
+            if (!isNaN(rule[0])) {
+                addBanlist(rule[0], rule[1]);
+            }
+        });
+        saveBanlist();
+        batch.value = '';
     }
-    if (event.target.id === 'bililive_filter_export') {
-        if (confirm('确定要导出当前屏蔽列表吗？')) {
-            var list = [];
-            Object.keys(banned).forEach(id => list.push({id, liver: banned[id]}));
-            blobToFile(new Blob([JSON.stringify(list)], {type: 'application/json'}), 'bilibili直播间屏蔽列表');
-        }
+    if (event.target.id === 'bililive_filter_export' && confirm('确定要导出当前屏蔽列表吗？')) {
+        var list = [];
+        Object.keys(banned).forEach(id => list.push({id, liver: banned[id]}));
+        blobToFile(new Blob([JSON.stringify(list)], {type: 'application/json'}), 'bilibili直播间屏蔽列表');
     }
     if (event.target.id === 'bililive_filter_import') {
         batch_box.querySelector('input').click();
     }
-    if (event.target.id === 'bililive_filter_clear') {
-        if (confirm('确定要清空当前屏蔽列表吗？')) {
-            ban_list.querySelector('tbody').innerHTML = '';
-            banned = {};
-            saveBanlist();
-        }
+    if (event.target.id === 'bililive_filter_clear' && confirm('确定要清空当前屏蔽列表吗？')) {
+        ban_list.querySelector('tbody').innerHTML = '';
+        banned = {};
+        saveBanlist();
     }
 });
 batch_box.addEventListener('change', (event) => {
@@ -193,10 +187,8 @@ function banInsideLiveRoom(domPlayer) {
         }
     });
     domPlayer.querySelector('a.room-owner-username').after(block);
-    if (banned[id]) {
-        if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
-            open(area, '_self');
-        }
+    if (banned[id] && !confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
+        open(area, '_self');
     }
 }
 
@@ -259,19 +251,15 @@ function addMenuToLiveRoom(element) {
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
     menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
-    <span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
+<span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
     menu.addEventListener('click', (event) => {
         event.preventDefault();
-        if (event.target.id === 'bililive_filter_block') {
-            if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-                addBanlist(id, liver);
-                saveBanlist();
-            }
+        if (event.target.id === 'bililive_filter_block' && confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+            addBanlist(id, liver);
+            saveBanlist();
         }
-        if (event.target.id === 'bililive_filter_thumb') {
-            if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
-                fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
-            }
+        if (event.target.id === 'bililive_filter_thumb' && confirm('确定要下载直播《' + name + '》的封面吗？')) {
+            fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
         }
     });
 
