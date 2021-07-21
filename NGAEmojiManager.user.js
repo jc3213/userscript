@@ -68,7 +68,7 @@ function createEmojiUI({name, author, emoji}, index) {
     var panel = emojiPanel.childNodes[index + emojiOrigin];
     if (panel) {
         panel.innerHTML = '';
-        addEmoji(name, emoji, panel);
+        addEmoji(emoji, panel);
     }
     else {
         var tab = document.createElement('button');
@@ -91,7 +91,7 @@ function createEmojiUI({name, author, emoji}, index) {
                     ePanel.style.display = ePanel === panel ? 'block' : 'none';
                 });
                 if (!emojiRunOnce[name]) {
-                    addEmoji(name, emoji, panel);
+                    addEmoji(emoji, panel);
                     emojiRunOnce[name] = true;
                 }
             }
@@ -99,11 +99,11 @@ function createEmojiUI({name, author, emoji}, index) {
     }
 }
 
-function addEmoji(name, emoji, panel) {
+function addEmoji(emoji, panel) {
     emoji.forEach(emoji => {
         var img = document.createElement('img');
         img.src = 'https://img.nga.178.com/attachments/' + emoji;
-        img.style.cssText = 'max-height: 150px; margin: 0px 5px 5px 0px;';
+        img.style.cssText = 'max-height: 100px; margin: 0px 5px 5px 0px;';
         img.addEventListener('click', (event) => {
             postfunc.addText('[img]' + emoji + '[/img]');
             postfunc.selectSmilesw._.hide();
