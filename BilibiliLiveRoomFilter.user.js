@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.25
+// @version         2.24
 // @description     Filtering Bilibili liveroom with built-in manager
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
 // @author          jc3213
@@ -109,9 +109,43 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 <tbody></tbody>';
 container.appendChild(ban_list);
 
-if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
-    var id = liveroom[1];
-    var player;
+if (location.pathname === '/') {
+    newNodeObserver(document.querySelector('#app'), node => {
+        if (node.tagName === 'DIV' && node.classList.contains('area-detail-ctnr')) {
+            node.querySelectorAll('div.room-card-wrapper').forEach(item => {
+                addMenuToLiveRoom(item);
+            });
+        }
+    });
+}
+else if (location.pathname === '/p/eden/area-tags' || location.pathname === '/lol' || location.pathname.startsWith('/area/')) {
+    var list = document.querySelector('ul.list');
+    list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
+    newNodeObserver(list, node => {
+        if (node.tagName === 'LI' && node.className === '') {
+            addMenuToLiveRoom(node);
+        }
+    });
+    newNodeObserver(document.querySelector('div.wrapper'), node => {
+        if (node.tagName === 'DIV' && node.className === 'wrap' || node.className === 'wrapper') {
+            node.querySelector('div.list-filter-bar').appendChild(manager);
+            node.querySelector('div.list-filter-bar').after(container);
+        }
+    });
+    document.querySelector('div.list-filter-bar').appendChild(manager);
+    document.querySelector('div.list-filter-bar').after(container);
+}
+else if (location.pathname === '/all') {
+    return;
+}
+else if (!isNaN(location.pathname.slice(1))) {
+    banInSideLiveRoom(location.pathname.slice(1));
+}
+else {
+    console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
+}
+
+function banInSideLiveRoom(id, player) {
     if (player = document.querySelector('section.player-and-aside-area')) {
         banInsideLiveRoom(player);
     }
@@ -139,32 +173,6 @@ if (liveroom = location.pathname.match(/^\/(blackboard|\d+)/)) {
             }
         });
     }
-}
-else if (location.pathname === '/') {
-    newNodeObserver(document.querySelector('#app'), node => {
-        if (node.tagName === 'DIV' && node.classList.contains('area-detail-ctnr')) {
-            node.querySelectorAll('div.room-card-wrapper').forEach(item => {
-                addMenuToLiveRoom(item);
-            });
-        }
-    });
-}
-else if (/\/(p|area|lol)\/?/.test(location.pathname)){
-    var list = document.querySelector('ul.list');
-    list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
-    newNodeObserver(list, node => {
-        if (node.tagName === 'LI' && node.className === '') {
-            addMenuToLiveRoom(node);
-        }
-    });
-    newNodeObserver(document.querySelector('div.wrapper'), node => {
-        if (node.tagName === 'DIV' && node.className === 'wrap' || node.className === 'wrapper') {
-            node.querySelector('div.list-filter-bar').appendChild(manager);
-            node.querySelector('div.list-filter-bar').after(container);
-        }
-    });
-    document.querySelector('div.list-filter-bar').appendChild(manager);
-    document.querySelector('div.list-filter-bar').after(container);
 }
 
 function newNodeObserver(node, callback) {
@@ -235,7 +243,7 @@ function saveBanlist() {
 }
 
 function banLiveRoom(element) {
-    var id = element.querySelector('a').href.match(/\d+/)[0];
+    var id = element.querySelector('a').pathname.slice(1);
     element.style.display = banned.find(rule => rule.id === id) ? 'none' : 'inline-block';
     return id;
 }
