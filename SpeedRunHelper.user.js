@@ -26,9 +26,9 @@ document.head.appendChild(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
-    var click = event.target.tagName === 'SPAN' ? event.target.parentNode.parentNode.parentNode.parentNode :
+    var cell = event.target.tagName === 'SPAN' ? event.target.parentNode.parentNode.parentNode.parentNode :
                 event.target.tagName !== 'TD' ? event.target.parentNode : event.target;
-    var src = click.parentNode.getAttribute('data-target');
+    var src = cell.parentNode.getAttribute('data-target');
     var id = src.slice(src.lastIndexOf('/') + 1);
     var css = 'top: 180px; left: 490px';
     viewSpeedrunRecord({id, src, css});
