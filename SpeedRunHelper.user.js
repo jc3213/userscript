@@ -25,11 +25,10 @@ css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 850px
 document.head.appendChild(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
-    if (event.target.tagName === 'span') {
-        return;
-    }
     event.preventDefault();
-    var src = event.target.parentNode.getAttribute('data-target');
+    var click = event.target.tagName === 'SPAN' ? event.target.parentNode.parentNode.parentNode.parentNode :
+                event.target.tagName !== 'TD' ? event.target.parentNode : event.target;
+    var src = click.parentNode.getAttribute('data-target');
     var id = src.slice(src.lastIndexOf('/') + 1);
     var css = 'top: 180px; left: 490px';
     viewSpeedrunRecord({id, src, css});
