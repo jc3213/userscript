@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.7
+// @version      2.8
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -17,7 +17,7 @@ var logger = {};
 var offset = {};
 
 var css = document.createElement('style');
-css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 850px; height: 500px;} \
+css.innerHTML = '.speedrun-window {position: fixed; z-index: 99999; width: 1280px; height: 740px;} \
 .speedrun-menu {background-color: #52698A; width: 100%; text-align: right; user-select: none; height: 20px;}\
 .speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top;}\
 .speedrun-item:hover {filter: opacity(60%);}\
@@ -35,9 +35,9 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event
 
 function viewSpeedrunRecord({id, src, css}) {
     if (document.getElementById('speedrun-' + id)) {
-        document.getElementById('speedrun-' + id).remove();
+        document.getElementById('speedrun-' + id).style.cssText = css;
     }
-    if (logger[id]) {
+    else if (logger[id]) {
         createRecordWindow(id, logger[id], css);
     }
     else {
@@ -48,6 +48,7 @@ function viewSpeedrunRecord({id, src, css}) {
                 var xml = document.createElement('div');
                 xml.innerHTML = response.responseText;
                 logger[id] = xml.querySelector('#centerbar iframe') ?? xml.querySelector('#centerbar center > a');
+                logger[id].style.cssText = 'width: 1280px; height: 720px;';
                 createRecordWindow(id, logger[id], css);
                 xml.remove();
             }
