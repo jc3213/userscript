@@ -2,13 +2,14 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.24
-// @description     Filtering Bilibili liveroom with built-in manager
-// @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出列表等……
+// @version         2.25
+// @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
+// @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @grant           GM_deleteValue
 // @noframes
 // ==/UserScript==
 
@@ -17,14 +18,8 @@ var banned = GM_getValue('banned', []);
 var show = false;
 var liveroom;
 
-var patch = GM_getValue('patch', 2);
-if (patch === 2) {
-    var ___banlist = [];
-    Object.keys(banned).forEach(id => ___banlist.push({id, liver: banned[id]}));
-    banned = ___banlist;
-    GM_setValue('banned', banned);
-    GM_setValue('patch', 3);
-}
+//patch
+GM_deleteValue('patch');
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
