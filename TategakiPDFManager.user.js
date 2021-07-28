@@ -26,13 +26,6 @@ var show = false;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', novelist.today);
 
-if (bookmark.constructor.name === 'Object') {
-    var temp = [];
-    Object.keys(bookmark).forEach(ncode => temp.push({...bookmark[ncode], ncode}));
-    bookmark = temp;
-    GM_setValue('bookmark', bookmark);
-}
-
 // UI作成関連
 var css = document.createElement('style');
 css.innerHTML = '.manager-button {background-color: #fff; text-align: center; vertical-align: middle; padding: 5px; border: 1px outset #000 ; user-select: none ; z-index: 3213; display: inline-block; cursor: pointer; font-weight: bold;}\
