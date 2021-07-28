@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.6
+// @version         1.7
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -17,6 +17,7 @@
 // @match           *://nga.178.com/post.php?*
 // @grant           GM_setValue
 // @grant           GM_getValue
+// @grant           GM_deleteValue
 // ==/UserScript==
 
 var emojiPackage = GM_getValue('emoji', []);
@@ -25,20 +26,8 @@ var emojiTab;
 var emojiPanel;
 var emojiOrigin;
 
-var patch = GM_getValue('patch', 1);
-var ___package = [];
-if (patch === 1) {
-    Object.keys(emojiPackage).forEach(name => ___package.push({name, emoji: emojiPackage[name]}));
-    emojiPackage = ___package;
-    GM_setValue('emoji', emojiPackage);
-    GM_setValue('patch', 3);
-}
-else if (patch === 2) {
-    Object.keys(emojiPackage).forEach(name => ___package.push({name, emoji: emojiPackage[name].emoji, author: emojiPackage[name].author}));
-    emojiPackage = ___package;
-    GM_setValue('emoji', emojiPackage);
-    GM_setValue('patch', 3);
-}
+//patch
+GM_deleteValue('patch')
 
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
@@ -59,6 +48,7 @@ subscribe.addEventListener('change', (event) => {
         };
     });
 });
+
 var manager = document.createElement('button');
 manager.innerText = '添加新表情';
 manager.className = 'block_txt_big';
@@ -79,7 +69,7 @@ function createEmojiUI({name, author, emoji}, index) {
         panel = document.createElement('div');
         emojiPanel.append(panel);
         tab.addEventListener('click', (event) => {
-            if (event.ctrlKey && confirm('确定要删除【'+ name + '】表情包吗？')) {
+            if (event.ctrlKey && confirm('确定要删除表情包【'+ name + '】吗？')) {
                 emojiPackage.splice(index, 1);
                 delete emojiRunOnce[name];
                 GM_setValue('emoji', emojiPackage);
@@ -99,8 +89,8 @@ function createEmojiUI({name, author, emoji}, index) {
     }
 }
 
-function addEmoji(emoji, panel) {
-    emoji.forEach(emoji => {
+function addEmoji(package, panel) {
+    package.forEach(emoji => {
         var img = document.createElement('img');
         img.src = 'https://img.nga.178.com/attachments/' + emoji;
         img.style.cssText = 'max-height: 100px; margin: 0px 5px 5px 0px;';
@@ -115,7 +105,7 @@ function addEmoji(emoji, panel) {
 new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {
         var newNode = mutation.addedNodes[0];
-        if (newNode && newNode.id.indexOf('commonwindow') !== -1) {
+        if (newNode && newNode.id.startsWith('commonwindow')) {
             emojiTab = newNode.querySelector('div > div.div2 > div > div');
             emojiPanel = newNode.querySelector('div > div.div2 > div > span');
             emojiOrigin = emojiPanel.childNodes.length;
