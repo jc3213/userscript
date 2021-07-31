@@ -2,20 +2,17 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.22
-// @description     Assistant for raw manga online (LoveHug, MangaSum, Komiraw and etc.)
-// @description:zh  漫画生肉网站 (LoveHug, MangaSum, Komiraw 等) 助手脚本
+// @version         5.24
+// @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
+// @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
-// @match           *://lovehug.net/*
+// @match           *://*.mangatoro.com/*
+// @match           *://hakaraw.com/*
 // @match           *://kissaway.net/*
-// @match           *://mangasum.com/*
-// @match           *://mangant.com/*
+// @match           *://rawdevart.com/*
 // @match           *://manga1000.com/*
 // @match           *://manga1001.com/*
-// @match           *://komiraw.com/*
-// @match           *://manga11.com/*
-// @match           *://rawdevart.com/*
-// @match           *://lhscan.me/*
+// @match           *://lovehug.net/*
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -30,6 +27,27 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
+//                  hakaraw.com / rawdevart.com / kissaway.net
+// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
+//                  hakaraw.com
+// @webRequest      {"selector": "*gristleupanaya.com/*", "action": "cancel"}
+//                  rawdevart.com
+// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
+//                  manga1000.com / manga1001.com / kissaway.net
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
+//                  manga1000.com / manga1001.com
+// @webRequest      {"selector": "https://static.manga10000.com/popup1000.js", "action": "cancel"}
+// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.kahiliwintun.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*livezombymil.com/*", "action": "cancel"}
+//                  kissaway.net
+// @webRequest      {"selector": "*flexnoseassist.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*ampdaisbras.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*braggingreorganizeunderworld.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*eatsidebicep.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
 //                  lovehug.net
 // @webRequest      {"selector": "*.netcatx.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.aniview.com/*", "action": "cancel"}
@@ -38,24 +56,6 @@
 // @webRequest      {"selector": "*spolecznosci.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*protagcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*vattingbalak.com/*", "action": "cancel"}
-// komiraw.com / manga11.com / rawdevart.com / kissaway.net
-// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-//                  manga1000.com / manga1001.com
-// @webRequest      {"selector": "*manga1000.com/atba.js", "action": "cancel"}
-// @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-//                  rawdevart.com
-// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-//                  kissaway.net
-// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*eyefuneve.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*cogleapad.com/*", "action": "cancel"}
-//                  lhscan.me
-// @webRequest      {"selector": "*in-page-push.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*upgulpinon.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*extenttheirsdelinquent.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -78,9 +78,10 @@ var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth
 var offset = {};
 var warning;
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
+var aria2Headers = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent:' + navigator.userAgent];
 
 // i18n strings and labels
-var messages = {
+var message = {
     'en-US': {
         save: {
             label: 'Download',
@@ -157,64 +158,75 @@ var messages = {
         }
     }
 };
-var i18n = messages[navigator.language] ?? messages['en-US'];
+var i18n = message[navigator.language] ?? message['en-US'];
 
 // Supported sites
-var mangas = {
+var manga = {
+    'ja.mangatoro.com': {
+        chapter: /chapter-(\d+)/,
+        title: () => {
+            var result = /^(.+)\sChapter\s(\d+)\sNext/.exec(document.title);
+            return {title: result[1], chapter: result[2]};
+        },
+        selector: 'div.page-chapter > img',
+        lazyload: 'data-original'
+    },
+    'hakaraw.com': {
+        chapter: /^Chapter\s(\S+)\s/,
+        title: () => {
+            var result = /^(.+)\(.+Chapter\s(\d+)/.exec(document.querySelector('a.chapter-title').title);
+            return {title: result[1], chapter: result[2]};
+        },
+        shortcut: ['#prev_chap', '#next_chap'],
+        ads: ['iframe'],
+        selector: 'div.chapter-c > img',
+        lazyload: 'data-src'
+    },
+    'kissaway.net': {
+        chapter: /Chapter\s(\S+)/,
+        title: () => {
+            var result = /^(.+)\s–\s(Raw)?[^\d]+(\d+)/.exec(document.title);
+            return {title: result[1], chapter: result[3]};
+        },
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
+        ads: ['div.float-ck'],
+        selector: 'img.chapter-img',
+        lazyload: 'data-original'
+    },
+    'rawdevart.com': {
+        chapter: /^Chapter\s(\S+)/,
+        title: () => {
+            var result = /^Chapter\s(.+)\s\|\s(.+)\sRaw\s\|/.exec(document.title);
+            return {title: result[2], chapter: result[1]};
+        },
+        selector: '#img-container > div.mb-3 > img',
+        lazyload: 'data-src'
+    },
+    'manga1000.com': {
+        chapter: /【第(\S+)話】/,
+        title: () => {
+            var result = /^(.+)\s-\s(Raw\s)?Chapter\s(\d+)/.exec(document.title);
+            return {title: result[1], chapter: result[3]};
+        },
+        shortcut: 'div.linkchap > a',
+        selector: 'img.aligncenter'
+    },
     'lovehug.net': {
         chapter: /chap\s(\S+)\s/,
-        title: /Read\s(.+)\s(?:-\sRAW\s)?chap/,
+        title: () => {
+            var result = /^Chapter\s(.+)\s\|\s(.+)\sRaw\s\|/.exec(document.title);
+            return {title: result[2], chapter: result[1]};
+        },
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
         lazyload: 'data-srcset',
         fallback: ['/uploads/lazy_loading.gif.pagespeed.ce.l2uogikTCA.gif'],
         logo: ['https://s4.ihlv1.xyz/images/20210124/LoveHug_600cfd96e98ff.jpg'],
         ads: ['div.col-lg-4.col-sm-4 > center', 'h5', 'div.container > center']
-    },
-    'mangasum.com': {
-        chapter: /Chapter\s(\S+)/,
-        title: /^(.+)\s-/,
-        selector: 'div.page-chapter > img',
-        fallback: ['https://st.mangasum.com/Data/logos/logo.png'],
-        lazyload: 'data-original'
-    },
-    'komiraw.com': {
-        chapter: /^Chapter\s(\S+)\s/,
-        title: () => (/^(.+)\s\|/.exec(document.querySelector('#boxtopchap > a').title)),
-        shortcut: ['#prev_chap', '#next_chap'],
-        ads: ['iframe'],
-        selector: 'div.chapter-c > img'
-    },
-    'rawdevart.com': {
-        chapter: /^Chapter\s(\S+)/,
-        title: /\|\s(.+)\s\|/,
-        selector: '#img-container > div.mb-3 > img',
-        lazyload: 'data-src'
-    },
-    'manga1000.com': {
-        chapter: /【第(\S+)話】/,
-        title: /^(.+)\s–\sRaw/,
-        shortcut: 'div.linkchap > a',
-        selector: 'img.aligncenter'
-    },
-    'kissaway.net': {
-        chapter: /Chapter\s(\S+)/,
-        title: /^(.+)\s-\s(?:Raw\s)?Chapter/,
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['div.float-ck'],
-        selector: 'img.chapter-img',
-        lazyload: 'data-original'
-    },
-    'lhscan.me': {
-        chapter: () => (/Chapter\s(\S+)/.exec(document.querySelector('#chapter-heading').innerText)),
-        title: /^Read\s(.+)\s(?:Raw\s)?Raw/,
-        selector: 'img.wp-manga-chapter-img'
     }
 };
-mangas['mangant.com'] = mangas['mangasum.com'];
-mangas['manga1001.com'] = mangas['manga1000.com'];
-mangas['manga11.com'] = mangas['komiraw.com'];
-watching = mangas[location.host];
+manga['manga1001.com'] = manga['manga1000.com'];
+watching = manga[location.host];
 
 function longDecimalNumber(number, length = 3) {
     number = number.toString();
@@ -311,7 +323,7 @@ downMenu.addEventListener('click', (event) => {
     if (event.target.id === 'raw_assistant_aria2download') {
         urls.forEach((url, index) => aria2RequestHandler({
             method: 'aria2.addUri',
-            params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: Object.entries(headers).map(cookie => cookie.join(': '))}]
+            params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]
         }).then(result => {
             if (index === urls.length - 1) {
                 notification('aria2', 'done');
@@ -435,11 +447,10 @@ if (watching) {
     if (watching.ads) {
         removeAdsElement();
     }
-    chapter = watching.chapter.constructor.name === 'RegExp' ? document.title.match(watching.chapter) : watching.chapter();
-    title = watching.title.constructor.name === 'RegExp' ? document.title.match(watching.title) : watching.title();
-    if (chapter && title) {
-        chapter = chapter[1];
-        title = title[1].replace(/[\\\/:*?"<>|]/g, '');
+    if (watching.chapter.test(document.title)) {
+        var result = watching.title();
+        chapter = result.chapter;
+        title = result.title
         checkAria2Availability();
         if (watching.shortcut) {
             appendShortcuts();
