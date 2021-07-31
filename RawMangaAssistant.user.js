@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.24
+// @version         5.25
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -163,29 +163,18 @@ var i18n = message[navigator.language] ?? message['en-US'];
 // Supported sites
 var manga = {
     'ja.mangatoro.com': {
-        chapter: /chapter-(\d+)/,
+        chapter: /\/chapter-\d+/,
         title: () => {
-            var result = /^(.+)\sChapter\s(\d+)\sNext/.exec(document.title);
+            var result = /^(.+)\sChapter\s(.+)\sNext/.exec(document.title);
             return {title: result[1], chapter: result[2]};
         },
         selector: 'div.page-chapter > img',
         lazyload: 'data-original'
     },
-    'hakaraw.com': {
-        chapter: /^Chapter\s(\S+)\s/,
-        title: () => {
-            var result = /^(.+)\(.+Chapter\s(\d+)/.exec(document.querySelector('a.chapter-title').title);
-            return {title: result[1], chapter: result[2]};
-        },
-        shortcut: ['#prev_chap', '#next_chap'],
-        ads: ['iframe'],
-        selector: 'div.chapter-c > img',
-        lazyload: 'data-src'
-    },
     'kissaway.net': {
-        chapter: /Chapter\s(\S+)/,
+        chapter: /chapter-\d+/,
         title: () => {
-            var result = /^(.+)\s–\s(Raw)?[^\d]+(\d+)/.exec(document.title);
+            var result = /^(.+)\s-\s(Raw\s)?Chapter\s(.+)\s-\s/.exec(document.title);
             return {title: result[1], chapter: result[3]};
         },
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
@@ -193,13 +182,24 @@ var manga = {
         selector: 'img.chapter-img',
         lazyload: 'data-original'
     },
+    'hakaraw.com': {
+        chapter: /\/chapter-\d+/,
+        title: () => {
+            var result = /^(.+)\(.+Chapter\s(.+)/.exec(document.querySelector('a.chapter-title').title);
+            return {title: result[1], chapter: result[2]};
+        },
+        shortcut: ['#prev_chap', '#next_chap'],
+        ads: ['iframe'],
+        selector: 'div.chapter-c > img',
+        lazyload: 'data-src'
+    },
     'rawdevart.com': {
-        chapter: /^Chapter\s(\S+)/,
+        chapter: /\/chapter-\d+/,
         title: () => {
             var result = /^Chapter\s(.+)\s\|\s(.+)\sRaw\s\|/.exec(document.title);
             return {title: result[2], chapter: result[1]};
         },
-        selector: '#img-container > div.mb-3 > img',
+        selector: '#img-container > div > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
@@ -447,7 +447,7 @@ if (watching) {
     if (watching.ads) {
         removeAdsElement();
     }
-    if (watching.chapter.test(document.title)) {
+    if (watching.chapter.test(location.pathname)) {
         var result = watching.title();
         chapter = result.chapter;
         title = result.title
