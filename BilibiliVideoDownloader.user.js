@@ -9,8 +9,6 @@
 // @match           *://www.bilibili.com/video/*
 // ==/UserScript==
 
-var title = /^[^_]+/.exec(document.title)[0];
-var extract = true;
 var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
@@ -23,12 +21,17 @@ var format = {
     '64': {label: '720P 高清', ext: '.720.mp4'},
     '32': {label: '480P 清晰', ext: '.480.mp4'},
     '16': {label: '360P 流畅', ext: '.360.mp4'},
-    '15': {label: '360P 流畅', ext: '.360LQ.mp4'}
+    '15': {label: '360P 流畅', ext: '.360LQ.mp4'},
+    'avc1': '视频编码: H.264',
+    'hev1': '视频编码: HEVC',
+    'mp4a': '音频编码: AAC'
 };
+var name;
 var control;
 var toolbar;
 var playurl;
 var player;
+var extract = true;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -57,31 +60,30 @@ var observer = setInterval(() => {
 }, 500);
 
 function biliVideoBreakPoint() {
-    player.addEventListener('playing', () => {
-        if (extract) {
-            if (location.pathname.startsWith('/video/')) {
-                title = __INITIAL_STATE__.videoData.title;
-                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
-                biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
-                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
-            }
-            else {
-                title = __INITIAL_STATE__.h1Title;
-                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
-                biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
-                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
-            }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-            extract = false;
-        }
-    });
-    player.addEventListener('loadstart', () => {
-        extract = true;
+    player.addEventListener('canplay', () => {
         thumb.innerHTML = '';
         video.innerHTML = '';
         audio.innerHTML = '';
+        if (location.pathname.startsWith('/video/')) {
+            name = __INITIAL_STATE__.videoData.title;
+            biliVideoThumbnail(__INITIAL_STATE__.videoData.pic);
+            biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
+            biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
+        }
+        else {
+            name = __INITIAL_STATE__.h1Title;
+            biliVideoThumbnail(__INITIAL_STATE__.epInfo.cover);
+            biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
+            biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
+        }
+        name = name.replace(/[\/\\\?\|\<\>:"']/g, '');
     });
     clearInterval(observer);
+}
+
+function biliVideoThumbnail(url) {
+    var menu = createMenuitem('视频封面', url, name + url.slice(url.lastIndexOf('.')));
+    thumb.appendChild(menu);
 }
 
 function biliVideoExtractor(param, key) {
@@ -90,7 +92,7 @@ function biliVideoExtractor(param, key) {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
             var {label, ext} = format[meta.id];
             var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
-            var item = createMenuitem(label, meta.baseUrl, codec, title + '.' + codec + ext);
+            var item = createMenuitem(label, meta.baseUrl, name + '.' + codec + ext, codec);
             menu.appendChild(item);
         });
     })
@@ -109,10 +111,10 @@ function biliVideoUIWrapper(full, wide, active) {
     }, 500);
 }
 
-function createMenuitem(label, url, codec, filename) {
+function createMenuitem(label, url, filename, codec) {
     var item = document.createElement('a');
     item.href = url;
-    item.title = codec === 'avc1' ? '视频编码: H.264' : codec === 'hev1' ? '视频编码: HEVC' : codec === 'mp4a' ? '音频编码: AAC' : codec !== null ? '未知编码: ' + codec : '';
+    item.title = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
     item.target = '_self';
     item.innerText = label;
     item.download = filename;
