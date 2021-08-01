@@ -60,23 +60,29 @@ var observer = setInterval(() => {
 }, 500);
 
 function biliVideoBreakPoint() {
-    player.addEventListener('canplay', () => {
+    player.addEventListener('playing', () => {
+        if (extract) {
+            if (location.pathname.startsWith('/video/')) {
+                title = __INITIAL_STATE__.videoData.title;
+                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
+                biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
+                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
+            }
+            else {
+                title = __INITIAL_STATE__.h1Title;
+                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
+                biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
+                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
+            }
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+            extract = false;
+        }
+    });
+    player.addEventListener('loadstart', () => {
+        extract = true;
         thumb.innerHTML = '';
         video.innerHTML = '';
         audio.innerHTML = '';
-        if (location.pathname.startsWith('/video/')) {
-            name = __INITIAL_STATE__.videoData.title;
-            biliVideoThumbnail(__INITIAL_STATE__.videoData.pic);
-            biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
-            biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
-        }
-        else {
-            name = __INITIAL_STATE__.h1Title;
-            biliVideoThumbnail(__INITIAL_STATE__.epInfo.cover);
-            biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
-            biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
-        }
-        name = name.replace(/[\/\\\?\|\<\>:"']/g, '');
     });
     clearInterval(observer);
 }
