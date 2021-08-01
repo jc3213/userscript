@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.13
+// @version         1.14
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -26,7 +26,7 @@ var format = {
     'hev1': '视频编码: HEVC',
     'mp4a': '音频编码: AAC'
 };
-var name;
+var title;
 var control;
 var toolbar;
 var playurl;
@@ -63,18 +63,18 @@ function biliVideoBreakPoint() {
     player.addEventListener('playing', () => {
         if (extract) {
             if (location.pathname.startsWith('/video/')) {
-                name = __INITIAL_STATE__.videoData.title;
+                title = __INITIAL_STATE__.videoData.title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
                 biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
                 biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
             }
             else {
-                name = __INITIAL_STATE__.h1Title;
+                title = __INITIAL_STATE__.h1Title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
                 biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
                 biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
             }
-            name = name.replace(/[\/\\\?\|\<\>:"']/g, '');
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
             extract = false;
         }
     });
@@ -88,7 +88,7 @@ function biliVideoBreakPoint() {
 }
 
 function biliVideoThumbnail(url) {
-    var menu = createMenuitem('视频封面', url, name + url.slice(url.lastIndexOf('.')));
+    var menu = createMenuitem('视频封面', url, title + url.slice(url.lastIndexOf('.')));
     thumb.appendChild(menu);
 }
 
