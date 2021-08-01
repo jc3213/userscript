@@ -52,25 +52,23 @@ var observer = setInterval(() => {
         player = document.querySelector('video');
         toolbar.appendChild(mybox);
         toolbar.appendChild(css);
-        biliVideoExtractor();
+        biliVideoBreakPoint();
     }
 }, 500);
 
-function biliVideoExtractor() {
+function biliVideoBreakPoint() {
     player.addEventListener('playing', () => {
         if (extract) {
             if (location.pathname.startsWith('/video/')) {
                 title = __INITIAL_STATE__.videoData.title;
-                playurl = 'https://api.bilibili.com/x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid + '&fnval=80';
-                fetch(playurl, {credentials: 'include'}).then(response => response.json()).then(json => getMediaInfo(json.data.dash));
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
+                biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
                 biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
             }
             else {
                 title = __INITIAL_STATE__.h1Title;
-                playurl = 'https://api.bilibili.com/pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id + '&fnval=80';
-                fetch(playurl, {credentials: 'include'}).then(response => response.json()).then(json => getMediaInfo(json.result.dash));
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
+                biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
                 biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
             }
             extract = false;
@@ -85,14 +83,16 @@ function biliVideoExtractor() {
     clearInterval(observer);
 }
 
-function getMediaInfo(json) {
-    [...json.video, ...json.audio].forEach(meta => {
-        var menu = meta.mimeType.startsWith('video') ? video : audio;
-        var {label, ext} = format[meta.id];
-        var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
-        var item = createMenuitem(label, meta.baseUrl, codec, title + '.' + codec + ext);
-        menu.appendChild(item);
-    });
+function biliVideoExtractor(param, key) {
+    fetch('https://api.bilibili.com/' + param + '&fnval=80', {credentials: 'include'}).then(response => response.json()).then(json => {
+        [...json[key].dash.video, ...json[key].dash.audio].forEach(meta => {
+            var menu = meta.mimeType.startsWith('video') ? video : audio;
+            var {label, ext} = format[meta.id];
+            var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
+            var item = createMenuitem(label, meta.baseUrl, codec, title + '.' + codec + ext);
+            menu.appendChild(item);
+        });
+    })
 }
 
 function biliVideoUIWrapper(full, wide, active) {
