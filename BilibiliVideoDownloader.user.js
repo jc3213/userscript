@@ -63,18 +63,18 @@ function biliVideoBreakPoint() {
     player.addEventListener('playing', () => {
         if (extract) {
             if (location.pathname.startsWith('/video/')) {
-                title = __INITIAL_STATE__.videoData.title;
+                name = __INITIAL_STATE__.videoData.title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
                 biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
                 biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
             }
             else {
-                title = __INITIAL_STATE__.h1Title;
+                name = __INITIAL_STATE__.h1Title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
                 biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
                 biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
             }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+            name = name.replace(/[\/\\\?\|\<\>:"']/g, '');
             extract = false;
         }
     });
