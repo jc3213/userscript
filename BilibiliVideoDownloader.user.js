@@ -2,12 +2,11 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9
+// @version         1.10
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @grant           GM_webRequest
 // ==/UserScript==
 
 var title = /^[^_]+/.exec(document.title)[0];
@@ -57,15 +56,15 @@ var observer = setInterval(() => {
 function biliVideoExtractor() {
     document.querySelector('video').addEventListener('playing', () => {
         if (extract) {
-            if (location.pathname.startsWith('/bangumi/')) {
+            if (location.pathname.startsWith('/video/')) {
+                title = __INITIAL_STATE__.videoData.title;
+                fetch('https://api.bilibili.com/x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid + '&fnval=80').then(response => response.json()).then(json => getMediaInfo(json.data.dash));
+                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
+            }
+            else {
                 title = __INITIAL_STATE__.h1Title;
                 fetch('https://api.bilibili.com/pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id + '&fnval=80').then(response => response.json()).then(json => getMediaInfo(json.result.dash));
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
-            }
-            else if (location.pathname.startsWith('/video/')) {
-                title = __INITIAL_STATE__.videoData.title;
-                getMediaInfo(dashPlayer.state.mpd);
-                thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
             }
             extract = false;
             biliVideoUIWrapper();
