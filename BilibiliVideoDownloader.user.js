@@ -89,7 +89,7 @@ function getMediaInfo(json) {
     [...json.video, ...json.audio].forEach(meta => {
         var menu = meta.mimeType.startsWith('video') ? video : audio;
         var {label, ext} = format[meta.id];
-        var codec = meta.codecs.slice(0, 4);
+        var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
         var item = createMenuitem(label, meta.baseUrl, codec, title + '.' + codec + ext);
         menu.appendChild(item);
     });
@@ -111,7 +111,7 @@ function biliVideoUIWrapper(full, wide, active) {
 function createMenuitem(label, url, codec, filename) {
     var item = document.createElement('a');
     item.href = url;
-    item.title = codec === 'avc1' ? '编码: H.264' : codec === 'hev1' ? '编码: HEVC' : codec === 'mp4a' ? 'AAC' : codec !== null ? '未知编码' : '';
+    item.title = codec === 'avc1' ? '视频编码: H.264' : codec === 'hev1' ? '视频编码: HEVC' : codec === 'mp4a' ? '音频编码: AAC' : codec !== null ? '未知编码: ' + codec : '';
     item.target = '_self';
     item.innerText = label;
     item.download = filename;
