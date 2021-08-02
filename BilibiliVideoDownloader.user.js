@@ -60,7 +60,7 @@ var observer = setInterval(() => {
 }, 500);
 
 function biliVideoBreakPoint() {
-    player.addEventListener('playing', () => {
+    player.addEventListener('play', () => {
         if (extract) {
             if (location.pathname.startsWith('/video/')) {
                 title = __INITIAL_STATE__.videoData.title;
