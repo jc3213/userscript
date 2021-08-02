@@ -16,6 +16,7 @@
 var banned = GM_getValue('banned', []);
 var show = false;
 var liveroom;
+var player;
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
@@ -130,13 +131,6 @@ else if (location.pathname === '/all') {
     return;
 }
 else if (!isNaN(location.pathname.slice(1))) {
-    banCheckLiveRoom(location.pathname.slice(1));
-}
-else {
-    console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
-}
-
-function banCheckLiveRoom(id, player) {
     if (player = document.querySelector('section.player-and-aside-area')) {
         banInsideLiveRoom(player);
     }
@@ -152,6 +146,9 @@ function banCheckLiveRoom(id, player) {
             }
         });
     }
+}
+else {
+    console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
 }
 
 function livePlayerInFrame(iframe) {
