@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.14
+// @version         1.15
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -31,7 +31,7 @@ var control;
 var toolbar;
 var playurl;
 var player;
-var extract = true;
+var extract;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -60,8 +60,9 @@ var observer = setInterval(() => {
 }, 500);
 
 function biliVideoBreakPoint() {
+    player.autoplay = true;
     player.addEventListener('play', () => {
-        if (extract) {
+        if (!extract) {
             if (location.pathname.startsWith('/video/')) {
                 title = __INITIAL_STATE__.videoData.title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
@@ -75,11 +76,11 @@ function biliVideoBreakPoint() {
                 biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
             }
             title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-            extract = false;
+            extract = true;
         }
     });
     player.addEventListener('loadstart', () => {
-        extract = true;
+        extract = false;
         thumb.innerHTML = '';
         video.innerHTML = '';
         audio.innerHTML = '';
@@ -98,7 +99,7 @@ function biliVideoExtractor(param, key) {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
             var {label, ext} = format[meta.id];
             var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
-            var item = createMenuitem(label, meta.baseUrl, name + '.' + codec + ext, codec);
+            var item = createMenuitem(label, meta.baseUrl, title + '.' + codec + ext, codec);
             menu.appendChild(item);
         });
     })
