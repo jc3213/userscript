@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.15
+// @version         1.16
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -27,10 +27,8 @@ var format = {
     'mp4a': '音频编码: AAC'
 };
 var title;
-var control;
-var toolbar;
-var playurl;
 var player;
+var playurl;
 var extract;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
@@ -49,12 +47,8 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a:hover {background-color: #26c;}';
 
 var observer = setInterval(() => {
-    control = document.querySelector('div.bilibili-player-video-control-wrap') ?? document.querySelector('div.bpx-player-control-wrap');
-    toolbar = document.querySelector('#toolbar_module') ?? document.querySelector('#arc_toolbar_report');
-    if (control && toolbar) {
-        player = document.querySelector('video');
-        toolbar.appendChild(mybox);
-        toolbar.appendChild(css);
+    player = document.querySelector('video');
+    if (player) {
         biliVideoBreakPoint();
     }
 }, 500);
@@ -67,13 +61,13 @@ function biliVideoBreakPoint() {
                 title = __INITIAL_STATE__.videoData.title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.videoData.pic, null, title + '.jpg'));
                 biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
-                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
+                biliVideoUIWrapper('#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
             }
             else {
                 title = __INITIAL_STATE__.h1Title;
                 thumb.appendChild(createMenuitem('视频封面', __INITIAL_STATE__.epInfo.cover, null, title + '.jpg'));
                 biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
-                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
+                biliVideoUIWrapper('#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
             }
             title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
             extract = true;
@@ -105,11 +99,14 @@ function biliVideoExtractor(param, key) {
     })
 }
 
-function biliVideoUIWrapper(full, wide, active) {
+function biliVideoUIWrapper(toolbar, full, wide, active) {
     var observer = setInterval(() => {
-        var full_btn = control.querySelector(full);
-        var wide_btn = control.querySelector(wide);
+        var toolbar_pane = document.querySelector(toolbar);
+        var full_btn = document.querySelector(full);
+        var wide_btn = document.querySelector(wide);
         if (full_btn && wide_btn) {
+            toolbar_pane.appendChild(mybox);
+            toolbar_pane.appendChild(css);
             full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(active) ? 'none' : 'block'; });
             wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
             if (!wide_btn.classList.contains(active)) { wide_btn.click(); }
