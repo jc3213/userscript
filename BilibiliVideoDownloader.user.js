@@ -50,6 +50,7 @@ var observer = setInterval(() => {
     player = document.querySelector('video');
     if (player) {
         biliVideoBreakPoint();
+        clearInterval(observer);
     }
 }, 500);
 
@@ -79,7 +80,6 @@ function biliVideoBreakPoint() {
         video.innerHTML = '';
         audio.innerHTML = '';
     });
-    clearInterval(observer);
 }
 
 function biliVideoThumbnail(url) {
