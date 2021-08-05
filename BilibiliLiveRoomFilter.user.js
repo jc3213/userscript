@@ -15,8 +15,6 @@
 'use strict';
 var banned = GM_getValue('banned', []);
 var show = false;
-var liveroom;
-var player;
 
 var css = document.createElement('style');
 css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
@@ -101,7 +99,8 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 <tbody></tbody>';
 container.appendChild(ban_list);
 
-if (location.pathname === '/') {
+var area = location.pathname.slice(1);
+if (area === '') {
     newNodeObserver(document.querySelector('#app'), node => {
         if (node.tagName === 'DIV' && node.classList.contains('area-detail-ctnr')) {
             node.querySelectorAll('div.room-card-wrapper').forEach(item => {
@@ -110,7 +109,7 @@ if (location.pathname === '/') {
         }
     });
 }
-else if (location.pathname === '/p/eden/area-tags' || location.pathname === '/lol' || location.pathname.startsWith('/area/')) {
+else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
     var list = document.querySelector('ul.list');
     list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
     newNodeObserver(list, node => {
@@ -127,39 +126,36 @@ else if (location.pathname === '/p/eden/area-tags' || location.pathname === '/lo
     document.querySelector('div.list-filter-bar').appendChild(manager);
     document.querySelector('div.list-filter-bar').after(container);
 }
-else if (location.pathname === '/all') {
+else if (area === 'all') {
     return;
 }
-else if (!isNaN(location.pathname.slice(1))) {
-    if (player = document.querySelector('section.player-and-aside-area')) {
-        banInsideLiveRoom(player);
-    }
-    else if (player = document.querySelector('iframe')) {
-        livePlayerInFrame(player);
+else if (!isNaN(area)) {
+    var player = document.querySelector('section.player-and-aside-area');
+    var findPlayer = true;
+    if (player) {
+        banInsideLiveRoom(player, area);
     }
     else {
-        newNodeObserver(document, node => {
-            if (node.tagName === 'DIV') {
-                if (player = node.querySelector('iframe')) {
-                    livePlayerInFrame(player);
-                }
-            }
-        });
+        livePlayerInFrame(document.querySelector('#player-ctnr'), area);
     }
 }
 else {
     console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
 }
 
-function livePlayerInFrame(iframe) {
-    iframe.addEventListener('load', (event) => {
-        newNodeObserver(event.target.contentDocument, node => {
-            if (node.id === 'head-info-vm') {
+function livePlayerInFrame(player, id) {
+    var observer = setInterval(() => {
+        var iDoc = player.querySelector('iframe').contentDocument;
+        if (iDoc) {
+            var liver = iDoc.querySelector('div.room-info-down-row');
+            if (liver) {
+                var node = iDoc.querySelector('#head-info-vm');
+                clearInterval(observer);
                 node.appendChild(css);
-                banInsideLiveRoom(node);
+                banInsideLiveRoom(node, id);
             }
-        });
-    });
+        }
+    }, 500);
 }
 
 function newNodeObserver(node, callback) {
@@ -173,8 +169,8 @@ function newNodeObserver(node, callback) {
     }).observe(node, {childList: true, subtree: true});
 }
 
-function banInsideLiveRoom(domPlayer) {
-    var liver = domPlayer.querySelector('a.room-owner-username').innerHTML;
+function banInsideLiveRoom(domPlayer, id) {
+    var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
@@ -244,8 +240,8 @@ function blobToFile(blob, name) {
 
 function addMenuToLiveRoom(element) {
     var id = banLiveRoom(element);
-    var liver = element.querySelector('div.room-anchor > span').innerHTML;
-    var name = element.querySelector('span.room-title').innerHTML;
+    var liver = element.querySelector('div.room-anchor > span').innerText;
+    var name = element.querySelector('span.room-title').innerText;
     var preview = element.querySelector('div.cover-ctnr').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
