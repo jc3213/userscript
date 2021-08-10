@@ -89,8 +89,8 @@ function biliVideoUIWrapper() {
         if (player) { biliVideoBreakPoint(); }
         if (toolbar_pane && full_btn && wide_btn) {
             clearInterval(observer);
-            toolbar_pane.appendChild(mybox);
-            toolbar_pane.appendChild(css);
+            toolbar.appendChild(mybox);
+            toolbar.appendChild(css);
             full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(state.override.active) ? 'none' : 'block'; });
             wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
             if (!wide_btn.classList.contains(state.override.active)) { wide_btn.click(); }
