@@ -30,12 +30,14 @@ var state = location.pathname.startsWith('/video/') ? {
     title: {root: 'videoData', name: 'title'},
     thumb: {root: 'videoData', name: 'pic'},
     play: {param: ['x/player/playurl?cid=', {root: 'videoData', name: 'cid'}, '&avid=', {root: 'videoData', name: 'aid'}], key: 'data'},
-    ui : {toolbar: '#arc_toolbar_report', full: 'div.bilibili-player-video-web-fullscreen', wide: 'div.bilibili-player-video-btn-widescreen', active: 'closed'}
+    toolbar: '#arc_toolbar_report',
+    override: {full: 'div.bilibili-player-video-web-fullscreen', wide: 'div.bilibili-player-video-btn-widescreen', active: 'closed'}
 } : {
     title: {name: 'h1Title'},
     thumb: {root: 'epInfo', name: 'cover'},
     play: {param: ['pgc/player/web/playurl?ep_id=', {root: 'epInfo', name: 'id'}], key: 'result'},
-    ui : {toolbar: '#toolbar_module', full: 'div.squirtle-video-pagefullscreen', wide: 'div.squirtle-video-widescreen', active: 'active'}
+    toolbar: '#toolbar_module',
+    override: {full: 'div.squirtle-video-pagefullscreen', wide: 'div.squirtle-video-widescreen', active: 'active'}
 };
 var title;
 var player;
@@ -56,7 +58,7 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-biliVideoUIWrapper(state.ui);
+biliVideoUIWrapper();
 
 function biliVideoBreakPoint() {
     player.autoplay = 'true';
@@ -70,27 +72,28 @@ function biliVideoBreakPoint() {
         }
     });
     player.addEventListener('loadstart', () => {
-        extract = true;
         thumb.innerHTML = '';
         video.innerHTML = '';
         audio.innerHTML = '';
+        biliVideoUIWrapper();
     });
 }
 
-function biliVideoUIWrapper({toolbar, full, wide, active}) {
+function biliVideoUIWrapper() {
     var observer = setInterval(() => {
-        var toolbar_pane = document.querySelector(toolbar);
-        var full_btn = document.querySelector(full);
-        var wide_btn = document.querySelector(wide);
+        var toolbar = document.querySelector(state.toolbar);
+        var full_btn = document.querySelector(state.override.full);
+        var wide_btn = document.querySelector(state.override.wide);
         player = document.querySelector('video');
+        extract = true;
         if (player) { biliVideoBreakPoint(); }
         if (toolbar_pane && full_btn && wide_btn) {
             clearInterval(observer);
             toolbar_pane.appendChild(mybox);
             toolbar_pane.appendChild(css);
-            full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(active) ? 'none' : 'block'; });
+            full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(state.override.active) ? 'none' : 'block'; });
             wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
-            if (!wide_btn.classList.contains(active)) { wide_btn.click(); }
+            if (!wide_btn.classList.contains(state.override.active)) { wide_btn.click(); }
         }
     }, 500);
 }
