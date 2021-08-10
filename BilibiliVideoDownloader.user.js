@@ -82,18 +82,18 @@ function biliVideoBreakPoint() {
 function biliVideoUIWrapper() {
     var observer = setInterval(() => {
         var toolbar = document.querySelector(state.toolbar);
-        var full_btn = document.querySelector(state.override.full);
-        var wide_btn = document.querySelector(state.override.wide);
+        var full = document.querySelector(state.override.full);
+        var wide = document.querySelector(state.override.wide);
         player = document.querySelector('video');
         extract = true;
         if (player) { biliVideoBreakPoint(); }
-        if (toolbar_pane && full_btn && wide_btn) {
+        if (toolbar && full && wide) {
             clearInterval(observer);
             toolbar.appendChild(mybox);
             toolbar.appendChild(css);
-            full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(state.override.active) ? 'none' : 'block'; });
-            wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
-            if (!wide_btn.classList.contains(state.override.active)) { wide_btn.click(); }
+            full.addEventListener('click', () => { mybox.style.display = full.classList.contains(state.override.active) ? 'none' : 'block'; });
+            wide.addEventListener('click', () => { mybox.style.display = 'block'; });
+            if (!wide.classList.contains(state.override.active)) { wide.click(); }
         }
     }, 500);
 }
