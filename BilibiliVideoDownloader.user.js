@@ -67,15 +67,16 @@ function biliVideoBreakPoint() {
             extract = false;
             title = state.title.root ? __INITIAL_STATE__[state.title.root][state.title.name] : __INITIAL_STATE__[state.title.name];
             title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+            biliVideoUIWrapper();
             biliVideoThumbnail(__INITIAL_STATE__[state.thumb.root][state.thumb.name]);
             biliVideoExtractor(state.play.param.map(arg => typeof arg === 'object' ? __INITIAL_STATE__[arg.root][arg.name] : arg).join(''), state.play.key);
         }
     });
     player.addEventListener('loadstart', () => {
+        extract = true;
         thumb.innerHTML = '';
         video.innerHTML = '';
         audio.innerHTML = '';
-        biliVideoUIWrapper();
     });
 }
 
@@ -85,7 +86,6 @@ function biliVideoUIWrapper() {
         var full = document.querySelector(state.override.full);
         var wide = document.querySelector(state.override.wide);
         player = document.querySelector('video');
-        extract = true;
         if (player) { biliVideoBreakPoint(); }
         if (toolbar && full && wide) {
             clearInterval(observer);
