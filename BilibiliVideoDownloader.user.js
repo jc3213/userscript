@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.18
+// @version         1.19
 // @description     Download videos that you are watching from Bilibili (No Bangumi Support)
 // @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
 // @author          jc3213
@@ -26,10 +26,20 @@ var format = {
     'hev1': '视频编码: HEVC',
     'mp4a': '音频编码: AAC'
 };
+var state = location.pathname.startsWith('/video/') ? {
+    title: {root: 'videoData', name: 'title'},
+    thumb: {root: 'videoData', name: 'pic'},
+    play: {param: ['x/player/playurl?cid=', {root: 'videoData', name: 'cid'}, '&avid=', {root: 'videoData', name: 'aid'}], key: 'data'},
+    ui : {toolbar: '#arc_toolbar_report', full: 'div.bilibili-player-video-web-fullscreen', wide: 'div.bilibili-player-video-btn-widescreen', active: 'closed'}
+} : {
+    title: {name: 'h1Title'},
+    thumb: {root: 'epInfo', name: 'cover'},
+    play: {param: ['pgc/player/web/playurl?ep_id=', {root: 'epInfo', name: 'id'}], key: 'result'},
+    ui : {toolbar: '#toolbar_module', full: 'div.squirtle-video-pagefullscreen', wide: 'div.squirtle-video-widescreen', active: 'active'}
+};
 var title;
 var player;
 var extract = true;
-var watch = location.pathname.startsWith('/video/');
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -46,31 +56,17 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-setInterval(() => {
-    player = document.querySelector('video');
-    if (player) {
-        biliVideoBreakPoint();
-    }
-}, 500);
+biliVideoUIWrapper(state.ui);
 
 function biliVideoBreakPoint() {
     player.autoplay = 'true';
-    player.addEventListener('progress', () => {
+    player.addEventListener('playing', () => {
         if (extract) {
-            if (watch) {
-                title = __INITIAL_STATE__.videoData.title;
-                biliVideoThumbnail(__INITIAL_STATE__.videoData.pic);
-                biliVideoExtractor('x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, 'data');
-                biliVideoUIWrapper('#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen' , 'closed');
-            }
-            else {
-                title = __INITIAL_STATE__.h1Title;
-                biliVideoThumbnail(__INITIAL_STATE__.epInfo.cover);
-                biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
-                biliVideoUIWrapper('#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen' , 'active');
-            }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
             extract = false;
+            title = state.title.root ? __INITIAL_STATE__[state.title.root][state.title.name] : __INITIAL_STATE__[state.title.name];
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+            biliVideoThumbnail(__INITIAL_STATE__[state.thumb.root][state.thumb.name]);
+            biliVideoExtractor(state.play.param.map(arg => typeof arg === 'object' ? __INITIAL_STATE__[arg.root][arg.name] : arg).join(''), state.play.key);
         }
     });
     player.addEventListener('loadstart', () => {
@@ -81,15 +77,22 @@ function biliVideoBreakPoint() {
     });
 }
 
-function biliVideoUIWrapper(toolbar, full, wide, active) {
-    var toolbar_pane = document.querySelector(toolbar);
-    var full_btn = document.querySelector(full);
-    var wide_btn = document.querySelector(wide);
-    toolbar_pane.appendChild(mybox);
-    toolbar_pane.appendChild(css);
-    full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(active) ? 'none' : 'block'; });
-    wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
-    if (!wide_btn.classList.contains(active)) { wide_btn.click(); }
+function biliVideoUIWrapper({toolbar, full, wide, active}) {
+    var observer = setInterval(() => {
+        var toolbar_pane = document.querySelector(toolbar);
+        var full_btn = document.querySelector(full);
+        var wide_btn = document.querySelector(wide);
+        player = document.querySelector('video');
+        if (player) { biliVideoBreakPoint(); }
+        if (toolbar_pane && full_btn && wide_btn) {
+            clearInterval(observer);
+            toolbar_pane.appendChild(mybox);
+            toolbar_pane.appendChild(css);
+            full_btn.addEventListener('click', () => { mybox.style.display = full_btn.classList.contains(active) ? 'none' : 'block'; });
+            wide_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
+            if (!wide_btn.classList.contains(active)) { wide_btn.click(); }
+        }
+    }, 500);
 }
 
 function biliVideoThumbnail(url) {
