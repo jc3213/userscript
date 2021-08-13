@@ -48,8 +48,8 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event
         var src = row.getAttribute('data-target');
         if (src) {
             var id = src.slice(src.lastIndexOf('/') + 1);
-            var cell = row.className === 'height-minimal' ? [1, 2, 3] : [0, 1, 2];
-            var title = getSpeedRunTitle(row.childNodes, ...cell);
+            var cell = row.classList.contains('height-minimal') ? [1, 2, 3] : [0, 1, 2];
+            var title = getSpeedRunTitle(row.querySelectorAll('td'), ...cell);
             viewSpeedrunRecord({id, src, title});
         }
     }
