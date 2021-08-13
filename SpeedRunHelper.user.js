@@ -51,7 +51,7 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event
             var cells = row.querySelectorAll('td');
             var record = row.classList.contains('center-sm') ? {rank: 1, time: 2} : row.classList.contains('height-minimal') ? {rank: 1, player: 2, time: 3} : {rank: 0, player: 1, time: 2};
             var player = record.player ? cells[record.player].innerText : document.querySelector('.profile-username').innerText;
-            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerText + '</span> <span>Player : ' + player + '</span> <span>Record : ' + cells[record.time].innerText + '</span>'
+            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerText + '</span> <span>Player : ' + player + '</span> <span>Time : ' + cells[record.time].innerText + '</span>'
             viewSpeedrunRecord({id, src, title});
         }
     }
