@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.10
+// @version      2.11
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -26,12 +26,16 @@ document.body.appendChild(maximum);
 
 var css = document.createElement('style');
 css.innerHTML = '.speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999;}\
-.speedrun-window iframe{height: calc(100% - 20px); width: 100%;}\
+.speedrun-window iframe {height: calc(100% - 20px); width: 100%;}\
 .speedrun-minimum {position: fixed; bottom: 0px; left: 0px; height: 20px; width: 100%; z-index: 99999;}\
 .speedrun-minimum > * {position: static; width: 200px; margin-right: 5px; display: inline-block;}\
 .speedrun-maximum {position: fixed; top: 0px; left: 0px; width: 100%; height: 100vh; z-index: 99999; display: none;}\
 .speedrun-maximum > * {position: static; width: 100%; height: 100%;}\
-.speedrun-menu {background-color: #52698A; width: 100%; text-align: right; user-select: none; height: 20px;}\
+.speedrun-top {background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
+.speedrun-top * {display: inline-block;}\
+.speedrun-title {width: 85%;}\
+.speedrun-title * {width: 33%;}\
+.speedrun-menu {text-align: right; user-select: none; width: 15%;}\
 .speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 5px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}';
@@ -39,21 +43,30 @@ document.head.appendChild(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
     event.preventDefault();
-    var cell = [...document.querySelectorAll('tr')].find(record => record.contains(event.target));
-    var src = cell.getAttribute('data-target');
-    var id = src.slice(src.lastIndexOf('/') + 1);
-    var name = cell.querySelector('td:nth-child(3)').innerText;
-    viewSpeedrunRecord({id, src, name});
+    var row = [...document.querySelectorAll('tr')].find(record => record.contains(event.target));
+    if (row) {
+        var src = row.getAttribute('data-target');
+        if (src) {
+            var id = src.slice(src.lastIndexOf('/') + 1);
+            var cell = row.className === 'height-minimal' ? [1, 2, 3] : [0, 1, 2];
+            var title = getSpeedRunTitle(row.childNodes, ...cell);
+            viewSpeedrunRecord({id, src, title});
+        }
+    }
 });
 
-function viewSpeedrunRecord({id, src, name}) {
+function getSpeedRunTitle(cells, rank, player, record) {
+    return '<div class="speedrun-title"><span>Rank : ' + cells[rank].innerText + '</span> <span>Player : ' + cells[player].innerText + '</span> <span>Record : ' + cells[record].innerText + '</span>';
+}
+
+function viewSpeedrunRecord({id, src, title}) {
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
         view.style.top = view.top;
         view.style.left = view.left;
     }
     else if (logger[id]) {
-        createRecordWindow(id, logger[id], name);
+        createRecordWindow(id, logger[id], title);
     }
     else {
         GM_xmlhttpRequest({
@@ -63,14 +76,14 @@ function viewSpeedrunRecord({id, src, name}) {
                 var xml = document.createElement('div');
                 xml.innerHTML = response.responseText;
                 logger[id] = xml.querySelector('#centerbar iframe') ?? xml.querySelector('#centerbar center > a');
-                createRecordWindow(id, logger[id], name);
+                createRecordWindow(id, logger[id], title);
                 xml.remove();
             }
         });
     }
 }
 
-function createRecordWindow(id, content, name) {
+function createRecordWindow(id, content, title) {
     if (content.tagName === 'A') {
         return open(content.href, '_blank');
     }
@@ -79,7 +92,8 @@ function createRecordWindow(id, content, name) {
     container.id = 'speedrun-' + id;
     container.draggable = 'true';
     container.className = 'speedrun-window';
-    container.innerHTML = '<div class="speedrun-menu">' + name + '<span id="speedrun-minimum" class="speedrun-item">📌</span>\
+    container.innerHTML = '<div class="speedrun-top">' + title + '</div>\
+<div class="speedrun-menu"><span id="speedrun-minimum" class="speedrun-item">📌</span>\
 <span id="speedrun-maximum" class="speedrun-item">📽️</span>\
 <span id="speedrun-restore" class="speedrun-item" style="display: none;">🔳</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
@@ -87,7 +101,7 @@ function createRecordWindow(id, content, name) {
     content.style.cssText = 'height: calc(100% - 20px); width: 100%;';
     container.appendChild(content);
     var index = [...document.querySelectorAll('[id^="speedrun-"]')].findIndex(view => view === container);
-    container.top = container.style.top = (screen.availHeight - 740) / 2 + index * 20 + 'px';
+    container.top = container.style.top = 130 + index * 20 + 'px';
     container.left = container.style.left = (screen.availWidth - 1280) / 2 + index * 20 + 'px';
     container.addEventListener('click', (event) => {
         if (event.target.id === 'speedrun-minimum') {
