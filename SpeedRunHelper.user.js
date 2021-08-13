@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.11
+// @version      2.12
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -48,16 +48,14 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event
         var src = row.getAttribute('data-target');
         if (src) {
             var id = src.slice(src.lastIndexOf('/') + 1);
-            var cell = row.classList.contains('height-minimal') ? [1, 2, 3] : [0, 1, 2];
-            var title = getSpeedRunTitle(row.querySelectorAll('td'), ...cell);
+            var cells = row.querySelectorAll('td');
+            var record = row.classList.contains('center-sm') ? {rank: 1, time: 2} : row.classList.contains('height-minimal') ? {rank: 1, player: 2, time: 3} : {rank: 0, player: 1, time: 2};
+            var player = record.player ? cells[record.player].innerText : document.querySelector('.profile-username').innerText;
+            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerText + '</span> <span>Player : ' + player + '</span> <span>Record : ' + cells[record.time].innerText + '</span>'
             viewSpeedrunRecord({id, src, title});
         }
     }
 });
-
-function getSpeedRunTitle(cells, rank, player, record) {
-    return '<div class="speedrun-title"><span>Rank : ' + cells[rank].innerText + '</span> <span>Player : ' + cells[player].innerText + '</span> <span>Record : ' + cells[record].innerText + '</span>';
-}
 
 function viewSpeedrunRecord({id, src, title}) {
     var view = document.querySelector('#speedrun-' + id);
