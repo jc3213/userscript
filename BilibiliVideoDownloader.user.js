@@ -56,7 +56,7 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-biliVideoUIWrapper(tool.override);
+biliVideoUIWrapper(worker.override);
 
 function biliVideoBreakPoint() {
     player.autoplay = 'true';
