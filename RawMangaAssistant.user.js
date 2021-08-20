@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.25
+// @version         5.26
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -304,9 +304,10 @@ downMenu.addEventListener('click', (event) => {
                 responseType: 'blob',
                 headers: headers,
                 onload: (details) => {
+                    var blob = details.response;
                     var a = document.createElement('a');
-                    a.href = URL.createObjectURL(details.response);
-                    a.download = longDecimalNumber(index);
+                    a.href = URL.createObjectURL(blob);
+                    a.download = longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1);
                     a.click();
                     if (index === images.length - 1) {
                         notification('save', 'done');
