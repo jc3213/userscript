@@ -1,13 +1,11 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.36
+// @version      4.37
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
-// @grant        GM_xmlhttpRequest
-// @connect      *
 // ==/UserScript==
 
 'use strict';
@@ -16,11 +14,6 @@ var filter = false;
 var keyword = [];
 var queue = [];
 var action = {};
-var hosts = {
-    'hentai-covers.site': '#image-viewer-container > img',
-    'e-hentai.org': '#gd1 > div',
-    'www.dlsite.com': 'li.slider_item.active > img'
-}
 
 // i18n Strings
 var messages = {
@@ -163,9 +156,6 @@ function getPreviewHandler(data, mouse) {
     else if (data.new) {
         openWebPreview(data);
     }
-    else if (data.sel) {
-        xmlNodeHandler(data, mouse, getWebPreview);
-    }
     else if (data.none) {
         noValidPreview(data);
     }
@@ -173,25 +163,22 @@ function getPreviewHandler(data, mouse) {
         xmlNodeHandler(data, mouse, getPreviewURL);
     }
 }
+
 function xmlNodeHandler(data, mouse, handler) {
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: data.src,
-        onload: (details) => {
-            if (details.response.includes('502 Bad Gateway')) {
-                xmlNodeHandler(data, mouse, handler);
-            }
-            else {
-                var node = document.createElement('div');
-                node.innerHTML = details.response;
-                handler(node, data, mouse);
-            }
-        },
-        onerror: (details) => {
+    fetch(data.src).then(response => response.text()).then(result => {
+        if (result.includes('502 Bad Gateway')) {
             xmlNodeHandler(data, mouse, handler);
         }
+        else {
+            var node = document.createElement('div');
+            node.innerHTML = result;
+            handler(node, data, mouse);
+        }
+    }).catch(error => {
+        xmlNodeHandler(data, mouse, handler);
     });
 }
+
 function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
     var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(description);
@@ -205,18 +192,14 @@ function getPreviewURL(node, data, mouse) {
         var src = url[0];
         var host = src.split(/[\/:]+/)[1];
         data.src = src;
-        if (data.sel = hosts[host]) {
-            xmlNodeHandler(data, mouse, getWebPreview);
-        }
-        else {
-            data.new = true;
-            openWebPreview(data);
-        }
+        data.new = true;
+        openWebPreview(data);
         return;
     }
     data.none = true;
     noValidPreview(data);
 }
+
 function getWebPreview(node, data, mouse) {
     data.image = node.querySelector(data.sel);
     if (data.image) {
@@ -227,12 +210,12 @@ function getWebPreview(node, data, mouse) {
         action[data.id] = false;
     }
 }
+
 function openWebPreview(data) {
-    if (confirm(data.name + '\n' + data.src + '\nNot Supported!\nOpen in New Tab?')) {
-        open(data.src, '_blank');
-    }
+    open(data.src, '_blank');
     action[data.id] = false;
 }
+
 function noValidPreview(data) {
     alert(data.name + '\nNo Preview!');
     action[data.id] = false;
