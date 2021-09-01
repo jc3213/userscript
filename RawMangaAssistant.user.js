@@ -209,7 +209,6 @@ var manga = {
             return {title: result[1], chapter: result[3]};
         },
         shortcut: ['a.prev', 'a.next'],
-        ads: ['div.float-ck'],
         selector: 'img.chapter-img',
         lazyload: 'data-src'
     }
