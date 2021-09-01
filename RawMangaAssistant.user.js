@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.27
+// @version         5.28
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -29,18 +29,19 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 //                  hakaraw.com / rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
+//                  manga1000.com / manga1001.com / hakaraw.com
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  hakaraw.com
-// @webRequest      {"selector": "*gristleupanaya.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.samariaalipeds.com/*", "action": "cancel"}
+// @webRequest      {"selector": "cherishexpertise.com/*", "action": "cancel"}
+// @webRequest      {"selector": ".wpadmngr.com/*", "action": "cancel"}
 //                  rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-//                  manga1000.com / manga1001.com / kissaway.net
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
 // @webRequest      {"selector": "https://static.manga10000.com/popup1000.js", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.kahiliwintun.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*livezombymil.com/*", "action": "cancel"}
 //                  klmanga.com
 // @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
@@ -54,8 +55,6 @@
 var urls = [];
 var fail = [];
 var logo = [];
-var title;
-var chapter;
 var folder;
 var observer;
 var images;
@@ -165,7 +164,7 @@ var manga = {
     'hakaraw.com': {
         chapter: /\/chapter-\d+/,
         title: () => {
-            var result = /^(.+)\(.+Chapter\s([^\s]+)/.exec(document.querySelector('a.chapter-title').title);
+            var result = /^(.+)\sRAW.+Chapter\s([^\s]+)/.exec(document.querySelector('a.chapter-title').title);
             return {title: result[1], chapter: result[2]};
         },
         shortcut: ['#prev_chap', '#next_chap'],
@@ -325,9 +324,10 @@ downMenu.addEventListener('click', (event) => {
 });
 
 function checkAria2Availability() {
+    var {title, chapter} = watching.title();
     aria2RequestHandler({method: 'aria2.getGlobalOption'})
     .then(result => {
-        folder = result['dir'] + '\\' + title + '\\' + longDecimalNumber(chapter);
+        folder = result['dir'] + '\\' + title.replace(/[:\/\\\?\>\<]/g, '_') + '\\' + longDecimalNumber(chapter);
         downMenu.querySelector('#raw_assistant_aria2download').style.display = 'block';
     }).catch(error => notification('aria2', 'norpc'));
 }
@@ -437,9 +437,6 @@ if (watching) {
         removeAdsElement();
     }
     if (watching.chapter.test(location.pathname)) {
-        var result = watching.title();
-        chapter = result.chapter;
-        title = result.title
         checkAria2Availability();
         if (watching.shortcut) {
             appendShortcuts();
