@@ -64,8 +64,9 @@ var options = {
     secret: GM_getValue('secret', ''),
     menu: GM_getValue('menu', 'on')
 };
-var position = GM_getValue('position', {top: innerHeight * 0.3, left: innerWidth * 0.15});
+var visual = {height: document.documentElement.clientHeight, width: document.documentElement.clientWidth};
 var offset = {};
+var position = GM_getValue('position', {top: visual.height * 0.3, left: visual.width * 0.15});
 var warning;
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
 var aria2Headers = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent:' + navigator.userAgent];
@@ -258,8 +259,8 @@ button.addEventListener('dragstart', (event) => {
     offset.left = event.clientX
 });
 button.addEventListener('dragend', (event) => {
-    var maxHeight = document.documentElement.clientHeight - button.offsetHeight;
-    var maxWidth = document.documentElement.clientWidth - button.offsetWidth;
+    var maxHeight = visual.height - button.offsetHeight;
+    var maxWidth = visual.width - button.offsetWidth;
     position.top += event.clientY - offset.top;
     position.left += event.clientX - offset.left;
     position.top = position.top < 0 ? 0 : position.top;
@@ -549,6 +550,6 @@ function notification(action, status, url) {
 function align_notification() {
     document.querySelectorAll('#assistant_caution').forEach((element, index) => {
         element.style.top = index * (element.offsetHeight + 5) + 10 + 'px';
-        element.style.left = (innerWidth - element.offsetWidth) / 2 + 'px';
+        element.style.left = (visual.width - element.offsetWidth) / 2 + 'px';
     });
 }
