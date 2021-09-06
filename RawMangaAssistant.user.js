@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.28
+// @version         5.29
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -253,13 +253,19 @@ container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left
 document.body.appendChild(container);
 
 // Draggable button and menu
-document.addEventListener('dragstart', (event) => {
+button.addEventListener('dragstart', (event) => {
     offset.top = event.clientY;
     offset.left = event.clientX
 });
-document.addEventListener('dragend', (event) => {
+button.addEventListener('dragend', (event) => {
+    var maxHeight = document.documentElement.clientHeight - button.offsetHeight;
+    var maxWidth = document.documentElement.clientWidth - button.offsetWidth;
     position.top += event.clientY - offset.top;
     position.left += event.clientX - offset.left;
+    position.top = position.top < 0 ? 0 : position.top;
+    position.top = position.top > maxHeight ? maxHeight : position.top;
+    position.left = position.left < 0 ? 0 : position.left;
+    position.left = position.left > maxWidth ? maxWidth : position.left;
     button.style.top = position.top + 'px';
     button.style.left = position.left + 'px';
     container.style.top = button.offsetTop + 'px';
