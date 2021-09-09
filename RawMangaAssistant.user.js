@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.29
+// @version         5.30
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -44,7 +44,9 @@
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*livezombymil.com/*", "action": "cancel"}
 //                  klmanga.com
-// @webRequest      {"selector": "*.your-notice.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.greeter.me/*", "action": "cancel"}
+// @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
 //                  www.rawscan.net
 // @webRequest      {"selector": "*.cstwpush.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*cobwebcomprehension.com/*", "action": "cancel"}
@@ -180,7 +182,7 @@ var manga = {
             return {title: result[1], chapter: result[3]};
         },
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['div.float-ck'],
+        ads: ['#id-custom_banner', 'div.float-ck'],
         selector: 'img.chapter-img',
         lazyload: 'data-aload'
     },
@@ -274,7 +276,7 @@ button.addEventListener('dragend', (event) => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', (event) => {
-    if (button.contains(event.target) || aria2Menu.contains(event.target) || event.target.id === 'raw_assistant_aria2option') {
+    if (button.contains(event.target) || aria2Menu.contains(event.target) || event.target.id === 'aria2option') {
         return;
     }
     container.style.display = 'none';
@@ -282,52 +284,50 @@ document.addEventListener('click', (event) => {
 
 // Primary menus
 var downMenu = document.createElement('div');
-downMenu.innerHTML = '<div id="raw_assistant_download" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
-<div id="raw_assistant_clipboard" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div id="raw_assistant_aria2download" class="assistantMenu" style="display: none;"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
-<div id="raw_assistant_aria2option" class="assistantMenu" id="aria2Option"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
+downMenu.innerHTML = '<div id="download" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
+<div id="clipboard" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
+<div id="aria2download" class="assistantMenu" style="display: none;"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
+<div id="aria2option" class="assistantMenu" id="aria2Option"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
-downMenu.addEventListener('click', (event) => {
-    if (event.target.id === 'raw_assistant_download') {
-        urls.forEach((url, index) => {
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: url,
-                responseType: 'blob',
-                headers: headers,
-                onload: (details) => {
-                    var blob = details.response;
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1);
-                    a.click();
-                    if (index === images.length - 1) {
-                        notification('save', 'done');
-                    }
+downMenu.querySelector('#download').addEventListener('click', (event) => {
+    urls.forEach((url, index) => {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: url,
+            responseType: 'blob',
+            headers: headers,
+            onload: (details) => {
+                var blob = details.response;
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1);
+                a.click();
+                if (index === images.length - 1) {
+                    notification('save', 'done');
                 }
-            });
-        });
-    }
-    if (event.target.id === 'raw_assistant_clipboard') {
-        navigator.clipboard.writeText(urls.join('\n'));
-        notification('copy', 'done');
-    }
-    // Aria2 Menuitems
-    if (event.target.id === 'raw_assistant_aria2download') {
-        urls.forEach((url, index) => aria2RequestHandler({
-            method: 'aria2.addUri',
-            params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]
-        }).then(result => {
-            if (index === urls.length - 1) {
-                notification('aria2', 'done');
             }
-        }));
-    }
-    if (event.target.id === 'raw_assistant_aria2option') {
-        aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + (position.top + 82) + 'px;';
-    }
+        });
+    });
+})
+downMenu.querySelector('#clipboard').addEventListener('click', (event) => {
+    navigator.clipboard.writeText(urls.join('\n'));
+    notification('copy', 'done');
+});
+// Aria2 Menuitems
+downMenu.querySelector('#aria2download').addEventListener('click', (event) => {
+    urls.forEach((url, index) => aria2RequestHandler({
+        method: 'aria2.addUri',
+        params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]
+    }).then(result => {
+        if (index === urls.length - 1) {
+            notification('aria2', 'done');
+        }
+    }));
+});
+downMenu.querySelector('#aria2option').addEventListener('click', (event) => {
+    aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + (position.top + 82) + 'px;';
 });
 
 function checkAria2Availability() {
@@ -335,7 +335,7 @@ function checkAria2Availability() {
     aria2RequestHandler({method: 'aria2.getGlobalOption'})
     .then(result => {
         folder = result['dir'] + '\\' + title.replace(/[:\/\\\?\>\<]/g, '_') + '\\' + longDecimalNumber(chapter);
-        downMenu.querySelector('#raw_assistant_aria2download').style.display = 'block';
+        downMenu.querySelector('#aria2download').style.display = 'block';
     }).catch(error => notification('aria2', 'norpc'));
 }
 function aria2RequestHandler({method, params = []}) {
@@ -359,34 +359,30 @@ function aria2RequestHandler({method, params = []}) {
 
 // Aria2 Sub Menus
 var aria2Menu = document.createElement('form');
-aria2Menu.innerHTML = '<div><input id="raw_assistant_aria2uri" class="assistantMenu menuAria2Item" name="server" value="' + options.server + '">\
-<input id="raw_assistant_aria2token" class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
-<div><span id="raw_assistant_aria2submit" class="assistantMenu">' + i18n.submit +'</span>\
-<span id="raw_assistant_aria2cancel" class="assistantMenu">' + i18n.cancel +'</span></div>';
 aria2Menu.className = 'aria2Container';
 aria2Menu.style.cssText = 'display: none;';
-container.appendChild(aria2Menu);
-aria2Menu.addEventListener('click', (event) => {
-    if (event.target.id === 'raw_assistant_aria2submit') {
-        options.server = aria2Menu.querySelector('#raw_assistant_aria2uri').value;
-        options.secret = aria2Menu.querySelector('#raw_assistant_aria2token').value;
-        GM_setValue('server', options.server);
-        GM_setValue('secret', options.secret);
-        checkAria2Availability();
-    }
-    if (event.target.id === 'raw_assistant_aria2cancel') {
-        aria2Menu.style.display = 'none';
-    }
+aria2Menu.innerHTML = '<div><input id="aria2uri" class="assistantMenu menuAria2Item" name="server" value="' + options.server + '">\
+<input id="aria2token" class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
+<div><span id="aria2submit" class="assistantMenu">' + i18n.submit +'</span>\
+<span id="aria2cancel" class="assistantMenu">' + i18n.cancel +'</span></div>';
+aria2Menu.querySelector('#aria2submit').addEventListener('click', (event) => {
+    options.server = aria2Menu.querySelector('#aria2uri').value;
+    options.secret = aria2Menu.querySelector('#aria2token').value;
+    GM_setValue('server', options.server);
+    GM_setValue('secret', options.secret);
+    checkAria2Availability();
 });
+aria2Menu.querySelector('#aria2cancel').addEventListener('click', (event) => {
+    aria2Menu.style.display = 'none';
+});
+container.appendChild(aria2Menu);
 
 // Secondary menus
 var clickMenu = document.createElement('div');
-clickMenu.innerHTML = '<div class="assistantMenu"><span id="raw_assistant_scrolltop" class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
 clickMenu.className = 'menuContainer';
-clickMenu.addEventListener('click', (event) => {
-    if (event.target.id === 'raw_assistant_scrolltop') {
-        document.documentElement.scrollTop = 0;
-    }
+clickMenu.innerHTML = '<div id="scrolltop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
+clickMenu.querySelector('#scrolltop').addEventListener('click', (event) => {
+    document.documentElement.scrollTop = 0;
 });
 container.appendChild(clickMenu);
 
