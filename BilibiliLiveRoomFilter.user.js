@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.28
+// @version         2.29
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -101,16 +101,7 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 container.appendChild(ban_list);
 
 var area = location.pathname.slice(1);
-if (area === '') {
-    newNodeObserver(document.querySelector('#app'), node => {
-        if (node.tagName === 'DIV' && node.classList.contains('area-detail-ctnr')) {
-            node.querySelectorAll('div.room-card-wrapper').forEach(item => {
-                addMenuToLiveRoom(item);
-            });
-        }
-    });
-}
-else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
+if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
     var list = document.querySelector('#area-tag-list > div:nth-child(2)');
     list.querySelectorAll('a').forEach(item => addMenuToLiveRoom(item));
     setTimeout(() => {
@@ -124,7 +115,7 @@ else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/
         }
     });
 }
-else if (area === 'all') {
+else if (area === '' || area === 'all') {
     return;
 }
 else if (!isNaN(area)) {
