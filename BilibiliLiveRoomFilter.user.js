@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.27
+// @version         2.28
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -30,8 +30,9 @@ css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 99
 .fancybutton:hover {filter: opacity(60%);}\
 .fancybutton:active {filter: opacity(30%);}\
 .fancybox .fancybutton:nth-child(n+2) {margin-left: 5px;}\
-.fancymenu {display: block; margin-bottom: 10px;}\
-.fancymenu .fancybutton:nth-child(n+2) {margin-left: 5px;}\
+.fancymenu {display: none; margin-top: 10px;}\
+.fancymenu * {display: inline-block; width: 38%;}\
+.fancymenu *:nth-child(1) {margin: 0px 5px;}\
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
@@ -59,7 +60,7 @@ batch_box.innerHTML = '<textarea></textarea><div>\
 container.appendChild(batch_box);
 batch_box.addEventListener('click', (event) => {
     if (event.target.id === 'bililive_filter_batch' && confirm('确定要屏蔽列表中的直播间吗？')) {
-        var batch = document.getElementById('batch_list');
+        var batch = document.querySelector('textarea');
         batch.value.split('\n').forEach(item => {
             var rule = item.split(/[\\\/\s,.@#$^&]+/);
             if (!isNaN(rule[0])) {
@@ -218,7 +219,7 @@ function removeBanlist(id) {
 function saveBanlist() {
     GM_setValue('banned', banned);
     if (list) {
-        list.querySelectorAll('li').forEach(item => banLiveRoom(item));
+        list.querySelectorAll('a').forEach(banLiveRoom);
     }
 }
 
@@ -242,9 +243,8 @@ function addMenuToLiveRoom(element) {
     var name = element.querySelector('div.Item_2GEmdhg6').innerText;
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
-console.log(id, url, name, liver)
-return; // 下面的功能未修复
-    var menu = document.createElement('span');
+
+    var menu = document.createElement('div');
     menu.className = 'fancymenu';
     menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
 <span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
@@ -258,5 +258,7 @@ return; // 下面的功能未修复
             fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
         }
     });
-    element.prepend(menu);
+    element.querySelector('div.Item_2A9JA1Uf').appendChild(menu);
+    element.addEventListener('mouseover', event => {menu.style.display = 'block';});
+    element.addEventListener('mouseout', event => {menu.style.display = 'none';})
 }
