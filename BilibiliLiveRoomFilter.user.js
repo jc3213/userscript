@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.26
+// @version         2.27
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -110,21 +110,18 @@ if (area === '') {
     });
 }
 else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    var list = document.querySelector('ul.list');
-    list.querySelectorAll('li').forEach(item => addMenuToLiveRoom(item));
+    var list = document.querySelector('#area-tag-list > div:nth-child(2)');
+    list.querySelectorAll('a').forEach(item => addMenuToLiveRoom(item));
+    setTimeout(() => {
+        document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').appendChild(manager);
+        document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').after(container);
+        container.style.top = document.querySelector('#area-tag-list > div:nth-child(1)').offsetTop + 30 + 'px';
+    }, 1000);
     newNodeObserver(list, node => {
-        if (node.tagName === 'LI' && node.className === '') {
+        if (node.tagName === 'A') {
             addMenuToLiveRoom(node);
         }
     });
-    newNodeObserver(document.querySelector('div.wrapper'), node => {
-        if (node.tagName === 'DIV' && node.className === 'wrap' || node.className === 'wrapper') {
-            node.querySelector('div.list-filter-bar').appendChild(manager);
-            node.querySelector('div.list-filter-bar').after(container);
-        }
-    });
-    document.querySelector('div.list-filter-bar').appendChild(manager);
-    document.querySelector('div.list-filter-bar').after(container);
 }
 else if (area === 'all') {
     return;
@@ -226,7 +223,8 @@ function saveBanlist() {
 }
 
 function banLiveRoom(element) {
-    var id = element.querySelector('a').pathname.slice(1);
+    var url = element.href;
+    var id = url.slice(url.lastIndexOf('/') + 1, url.indexOf('?'));
     element.style.display = banned.find(rule => rule.id === id) ? 'none' : 'inline-block';
     return id;
 }
@@ -240,11 +238,12 @@ function blobToFile(blob, name) {
 
 function addMenuToLiveRoom(element) {
     var id = banLiveRoom(element);
-    var liver = element.querySelector('div.room-anchor > span').innerText;
-    var name = element.querySelector('span.room-title').innerText;
-    var preview = element.querySelector('div.cover-ctnr').style['background-image'];
+    var liver = element.querySelector('div.Item_QAOnosoB').innerText;
+    var name = element.querySelector('div.Item_2GEmdhg6').innerText;
+    var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
-
+console.log(id, url, name, liver)
+return; // 下面的功能未修复
     var menu = document.createElement('span');
     menu.className = 'fancymenu';
     menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
@@ -259,10 +258,5 @@ function addMenuToLiveRoom(element) {
             fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
         }
     });
-
-    newNodeObserver(element, node => {
-        if (node.tagName === 'DIV' && node.classList.contains('hover-panel-wrapper')) {
-            node.prepend(menu);
-        }
-    });
+    element.prepend(menu);
 }
