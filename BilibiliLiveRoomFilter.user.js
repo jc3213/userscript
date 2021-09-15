@@ -101,7 +101,10 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 container.appendChild(ban_list);
 
 var area = location.pathname.slice(1);
-if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
+if (area === '' || area === 'all') {
+    return;
+}
+else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
     var list = document.querySelector('#area-tag-list > div:nth-child(2)');
     list.querySelectorAll('a').forEach(item => addMenuToLiveRoom(item));
     setTimeout(() => {
@@ -114,9 +117,6 @@ if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
             addMenuToLiveRoom(node);
         }
     });
-}
-else if (area === '' || area === 'all') {
-    return;
 }
 else if (!isNaN(area)) {
     var player = document.querySelector('section.player-and-aside-area');
