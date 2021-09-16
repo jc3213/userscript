@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.31
+// @version         2.32
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -20,7 +20,7 @@ var css = document.createElement('style');
 css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .fancybox > * {width: 320px; height: 360px; overflow-y: auto; display: inline-block;}\
 .fancybox, .fancybox table {border: 1px solid #23ade5;}\
-.fancybox textarea {resize: none; height: calc(100% - 40px); width: calc(100% - 8px); font-size: 14px; padding: 3px; margin-bottom: 5px;}\
+.fancybox textarea {resize: none; height: calc(100% - 30px); width: 100%; font-size: 14px; padding: 3px; margin-bottom: 5px;}\
 .fancybox td {padding: 5px; text-align: center}\
 .fancybox td:nth-child(1) {width: 120px;}\
 .fancybox td:nth-child(2) {width: 200px;}\
@@ -31,8 +31,7 @@ css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 99
 .fancybutton:active {filter: opacity(30%);}\
 .fancybox .fancybutton:nth-child(n+2) {margin-left: 5px;}\
 .fancymenu {display: none; margin-top: 10px;}\
-.fancymenu * {display: inline-block; width: 38%;}\
-.fancymenu *:nth-child(1) {margin: 0px 5px;}\
+.fancymenu * {display: inline-block; width: 38%; margin-left: 10px;}\
 div.room-info-down-row > span {margin-left: 5px}';
 document.head.appendChild(css);
 
@@ -101,17 +100,14 @@ ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
 container.appendChild(ban_list);
 
 var area = location.pathname.slice(1);
-if (area === '' || area === 'all') {
+if (area === '') {
     return;
 }
 else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    setTimeout(() => {
-        document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').appendChild(manager);
-        document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').after(container);
-        document.querySelectorAll('div.index_3Uym8ODI').forEach(addMenuToLiveRoom);
-        container.style.top = document.querySelector('#area-tag-list > div:nth-child(1)').offsetTop + 30 + 'px';
-    }, 1000);
-    newNodeObserver(document.querySelector('#area-tag-list > div:nth-child(2)'), addMenuToLiveRoom);
+    applyFilterToArea({menu: '#area-tag-list > div:nth-child(1) > div:nth-child(1)', room: 'div.index_3Uym8ODI', list: ['#area-tag-list > div:nth-child(2)']});
+}
+else if (area === 'all') {
+    applyFilterToArea({menu: '#all-area-card-list > div:nth-child(1) > div:nth-child(1)', room: 'div.index_3Uym8ODI', list: ['#all-area-card-list > div:nth-child(2)']});
 }
 else if (!isNaN(area)) {
     var player = document.querySelector('section.player-and-aside-area');
@@ -140,6 +136,16 @@ function livePlayerInFrame(player, id) {
             }
         }
     }, 500);
+}
+
+function applyFilterToArea({menu, room, list}) {
+    setTimeout(() => {
+        document.querySelector(menu).appendChild(manager);
+        document.querySelector(menu).after(container);
+        container.style.top = document.querySelector(menu).offsetTop + 30 + 'px';
+        document.querySelectorAll(room).forEach(addMenuToLiveRoom);
+        list.forEach(item => newNodeObserver(document.querySelector(item), addMenuToLiveRoom));
+    }, 1000);
 }
 
 function newNodeObserver(node, callback) {
