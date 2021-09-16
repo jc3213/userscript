@@ -111,11 +111,7 @@ else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/
         document.querySelectorAll('div.index_3Uym8ODI').forEach(addMenuToLiveRoom);
         container.style.top = document.querySelector('#area-tag-list > div:nth-child(1)').offsetTop + 30 + 'px';
     }, 1000);
-    newNodeObserver(document.querySelector('#area-tag-list > div:nth-child(2)'), node => {
-        if (node.className === 'index_3Uym8ODI') {
-            addMenuToLiveRoom(node);
-        }
-    });
+    newNodeObserver(document.querySelector('#area-tag-list > div:nth-child(2)'), addMenuToLiveRoom);
 }
 else if (!isNaN(area)) {
     var player = document.querySelector('section.player-and-aside-area');
@@ -154,7 +150,7 @@ function newNodeObserver(node, callback) {
                 callback(newNode);
             }
         });
-    }).observe(node, {childList: true, subtree: true});
+    }).observe(node, {childList: true});
 }
 
 function banInsideLiveRoom(domPlayer, id) {
@@ -208,9 +204,7 @@ function removeBanlist(id) {
 
 function saveBanlist() {
     GM_setValue('banned', banned);
-    if (list) {
-        list.querySelectorAll('a').forEach(banLiveRoom);
-    }
+    document.querySelectorAll('div.index_3Uym8ODI').forEach(banLiveRoom);
 }
 
 function blobToFile(blob, name) {
