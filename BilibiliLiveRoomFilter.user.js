@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.29
+// @version         2.30
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -105,15 +105,14 @@ if (area === '' || area === 'all') {
     return;
 }
 else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    var list = document.querySelector('#area-tag-list > div:nth-child(2)');
-    list.querySelectorAll('a').forEach(item => addMenuToLiveRoom(item));
     setTimeout(() => {
         document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').appendChild(manager);
         document.querySelector('#area-tag-list > div:nth-child(1) > div:nth-child(1)').after(container);
+        document.querySelectorAll('div.index_3Uym8ODI').forEach(addMenuToLiveRoom);
         container.style.top = document.querySelector('#area-tag-list > div:nth-child(1)').offsetTop + 30 + 'px';
     }, 1000);
-    newNodeObserver(list, node => {
-        if (node.tagName === 'A') {
+    newNodeObserver(document.querySelector('#area-tag-list > div:nth-child(2)'), node => {
+        if (node.className === 'index_3Uym8ODI') {
             addMenuToLiveRoom(node);
         }
     });
@@ -214,13 +213,6 @@ function saveBanlist() {
     }
 }
 
-function banLiveRoom(element) {
-    var url = element.href;
-    var id = url.slice(url.lastIndexOf('/') + 1, url.indexOf('?'));
-    element.style.display = banned.find(rule => rule.id === id) ? 'none' : 'inline-block';
-    return id;
-}
-
 function blobToFile(blob, name) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -228,7 +220,17 @@ function blobToFile(blob, name) {
     a.click();
 }
 
+function banLiveRoom(element) {
+    var url = element.querySelector('a').href;
+    var id = url.slice(url.lastIndexOf('/') + 1, url.indexOf('?'));
+    element.style.display = banned.find(rule => rule.id === id) ? 'none' : 'inline-block';
+    return id;
+}
+
 function addMenuToLiveRoom(element) {
+    if (element.querySelector('div.fancymenu')) {
+        return;
+    }
     var id = banLiveRoom(element);
     var liver = element.querySelector('div.Item_QAOnosoB').innerText;
     var name = element.querySelector('div.Item_2GEmdhg6').innerText;
