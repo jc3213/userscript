@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.30
+// @version         5.31
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -178,8 +178,8 @@ var manga = {
     'klmanga.com': {
         chapter: /chapter-\d+/,
         title: () => {
-            var result = /^(.+)\s-\s(Raw\s)?Chapter\s([^\s]+)\s-\s/.exec(document.title);
-            return {title: result[1], chapter: result[3]};
+            var result = /^(.+)(\s-)?(\sRaw)?\sChapter\s([^\s]+)\s-\s/.exec(document.title);
+            return {title: result[1], chapter: result.pop()};
         },
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         ads: ['#id-custom_banner', 'div.float-ck'],
