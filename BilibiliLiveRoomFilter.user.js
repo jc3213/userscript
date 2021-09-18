@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.32
+// @version         2.33
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -32,7 +32,7 @@ css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 99
 .fancybox .fancybutton:nth-child(n+2) {margin-left: 5px;}\
 .fancymenu {display: none; margin-top: 10px;}\
 .fancymenu * {display: inline-block; width: 38%; margin-left: 10px;}\
-div.room-info-down-row > span {margin-left: 5px}';
+.fancyroom {margin-right: 130px;}';
 document.head.appendChild(css);
 
 var manager = document.createElement('span');
@@ -164,7 +164,7 @@ function banInsideLiveRoom(domPlayer, id) {
     var area = domPlayer.querySelector('a.area-link').href;
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
-    block.className = 'fancybutton';
+    block.className = 'fancybutton fancyroom';
     block.addEventListener('click', (event) => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
@@ -172,7 +172,7 @@ function banInsideLiveRoom(domPlayer, id) {
             open(area, '_self');
         }
     });
-    domPlayer.querySelector('a.room-owner-username').after(block);
+    domPlayer.querySelector('div.follow-ctnr').before(block);
     if (banned.find(rule => rule.id === id) && !confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
         open(area, '_self');
     }
