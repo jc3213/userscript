@@ -1,12 +1,10 @@
 (function() {
     this.__metalink4 = {
         make: (url, filename) => {
-            var file = metaFile({url, filename});
+            var file = typeof url === 'object' ?
+                Array.isArray(json) ? json.map(metaFile).join('') : metaFile(json)
+            : metaFile({url, filename});
             return metaMaker(file);
-        },
-        fromJSON: (json) => {
-            var files = Array.isArray(json) ? json.map(metaFile).join('') : metaFile(json);
-            return metaMaker(files);
         },
         save: (meta) => {
             var blob = new Blob([meta], {type: 'application/metalink+xml; charset=utf-8'});
