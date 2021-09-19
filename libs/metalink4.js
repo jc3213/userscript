@@ -13,7 +13,7 @@
     }
 
     function metaFile({url, filename}) {
-        return '<file name=' + filename + '"><url>' + url + '</url></file>';
+        return '<file name="' + filename + '"><url>' + url + '</url></file>';
     }
 
     function metaMaker(files) {
