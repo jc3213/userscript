@@ -102,7 +102,8 @@ container.addEventListener('click', () => {
     if (event.target.id === 'mgr-btn-json' && confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
         saveBookmarkButton();
         var json = bookmark.map(book => ({url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', filename: book.title + '.pdf'}));
-        __metalink4.save(__metalink4.make(json));
+        var meta = __metalink4.make(json);
+        navigator.clipboard.writeText(meta);
         alert('情報のエックスポートは無事に成功しました！');
     }
     if (event.target.id === 'mgr-btn-save') {
