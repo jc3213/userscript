@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.28
+// @version      4.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -100,7 +101,8 @@ container.addEventListener('click', () => {
     }
     if (event.target.id === 'mgr-btn-json' && confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
         saveBookmarkButton();
-        navigator.clipboard.writeText(JSON.stringify(bookmark.map(exportBookmarkInfo)));
+        var json = bookmark.map(book => ({url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', filename: book.title + '.pdf'}));
+        __metalink4.save(__metalink4.make(json));
         alert('情報のエックスポートは無事に成功しました！');
     }
     if (event.target.id === 'mgr-btn-save') {
