@@ -2,8 +2,8 @@
     this.__metalink4 = {
         make: (url, filename) => {
             var file = typeof url === 'object' ?
-                Array.isArray(json) ? json.map(metaFile).join('') : metaFile(json)
-            : metaFile({url, filename});
+                Array.isArray(url) ? url.map(metaFile).join('') : metaFile(url)
+            : filename ? metaFile({url, filename}) : null;
             return metaMaker(file);
         },
         save: (meta) => {
@@ -17,7 +17,7 @@
     }
 
     function metaFile({url, filename}) {
-        return '<file name="' + filename + '"><url>' + url + '</url></file>';
+        return '<file' + (filename ? ' name="' + filename + '"' : '') + '><url>' + url + '</url></file>';
     }
 
     function metaMaker(files) {
