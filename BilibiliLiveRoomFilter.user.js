@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.34
+// @version         2.35
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -114,23 +114,26 @@ else if (!isNaN(area)) {
         banInsideLiveRoom(player, area);
     }
     else {
-        livePlayerInFrame(document.querySelector('#player-ctnr'), area);
+        livePlayerInFrame(area);
     }
 }
 else {
     console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
 }
 
-function livePlayerInFrame(player, id) {
+function livePlayerInFrame(id) {
     var observer = setInterval(() => {
-        var iDoc = player.querySelector('iframe').contentDocument;
-        if (iDoc) {
-            var liver = iDoc.querySelector('div.room-info-down-row');
-            if (liver) {
-                var node = iDoc.querySelector('#head-info-vm');
-                clearInterval(observer);
-                node.appendChild(css);
-                banInsideLiveRoom(node, id);
+        var iframe = document.querySelector('#player-ctnr > div > iframe');
+        if (iframe) {
+            var node = iframe.contentDocument;
+            if (node) {
+                var player = node.querySelector('#head-info-vm > div > div');
+                if (player) {
+                    clearInterval(observer);
+                    player.appendChild(css);
+                    console.log(player);
+                    banInsideLiveRoom(player, id);
+                }
             }
         }
     }, 500);
