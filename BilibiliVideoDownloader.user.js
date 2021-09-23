@@ -2,10 +2,11 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.21
-// @description     Download videos that you are watching from Bilibili (No Bangumi Support)
-// @description:zh  从哔哩哔哩下载你正在收看的视频（不支持番剧）
+// @version         2.0
+// @description     Download videos from Bilibili (No Bangumi)
+// @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/ob5erver2.js
 // @match           *://www.bilibili.com/video/*
 // ==/UserScript==
 
@@ -37,8 +38,6 @@ var worker = location.pathname.startsWith('/video/') ? {
     play: {param: ['pgc/player/web/playurl?ep_id=', {root: 'epInfo', name: 'id'}], key: 'result'},
     override: {toolbar: '#toolbar_module', full: 'div.squirtle-video-pagefullscreen', wide: 'div.squirtle-video-widescreen', active: 'active'}
 };
-var title;
-var player;
 var extract = true;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
@@ -58,7 +57,7 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 
 biliVideoUIWrapper(worker.override);
 
-function biliVideoBreakPoint() {
+function biliVideoBreakPoint(player) {
     player.autoplay = 'true';
     player.addEventListener('playing', () => {
         if (extract) {
@@ -78,35 +77,25 @@ function biliVideoBreakPoint() {
 }
 
 function biliVideoUIWrapper({toolbar, full, wide, active}) {
-    var observer = setInterval(() => {
-        player = document.querySelector('video');
-        var panel = document.querySelector(toolbar);
-        var f_btn = document.querySelector(full);
-        var w_btn = document.querySelector(wide);
-        if (player) { biliVideoBreakPoint(); }
-        if (panel && f_btn && w_btn) {
-            clearInterval(observer);
-            panel.appendChild(mybox);
-            panel.appendChild(css);
-            f_btn.addEventListener('click', () => { mybox.style.display = f_btn.classList.contains(active) ? 'none' : 'block'; });
-            w_btn.addEventListener('click', () => { mybox.style.display = 'block'; });
-            if (!w_btn.classList.contains(active)) { w_btn.click(); }
-        }
-    }, 500);
+    __ob5erver2.node({selector: ['video', toolbar, full, wide], multi: true}, ([player, toolbar, full, wide]) => {
+        biliVideoBreakPoint(player);
+        toolbar.appendChild(mybox);
+        toolbar.appendChild(css);
+        full.addEventListener('click', () => { mybox.style.display = full.classList.contains(active) ? 'none' : 'block'; });
+        wide.addEventListener('click', () => { mybox.style.display = 'block'; });
+        if (!wide.classList.contains(active)) { wide.click(); }
+    });
 }
 
 function biliVideoTitle(state, {root, name}) {
-    title = root ? state[root][name] : state[name];
-    title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-    var multi = document.querySelector('#multi_page');
-    if (multi) {
-        title += ' - ' + multi.querySelector('li.on > a').title;
-    }
+    var title = root ? state[root][name] : state[name];
+    mybox.title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+    __ob5erver2.node({selector: '#multi_page li.on'}, watch => { mybox.title += ' - ' + watch.childNodes[0].title; });
 }
 
 function biliVideoThumbnail(state, {root, name}) {
     var url = state[root][name];
-    var menu = createMenuitem('视频封面', url, title + url.slice(url.lastIndexOf('.')));
+    var menu = createMenuitem('视频封面', url, url.slice(url.lastIndexOf('.')));
     thumb.appendChild(menu);
 }
 
@@ -117,19 +106,22 @@ function biliVideoExtractor(state, {param, key}) {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
             var {label, ext} = format[meta.id];
             var codec = meta.codecs.slice(0, meta.codecs.indexOf('.'));
-            var item = createMenuitem(label, meta.baseUrl, title + '.' + codec + ext, codec);
+            var item = createMenuitem(label, meta.baseUrl, '.' + codec + ext, codec);
             menu.appendChild(item);
         });
     })
 }
 
-function createMenuitem(label, url, filename, codec) {
+function createMenuitem(label, url, ext, codec) {
     var item = document.createElement('a');
     item.href = url;
     item.title = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
     item.target = '_self';
     item.innerText = label;
-    item.download = filename;
+    item.addEventListener('mouseenter', function mouseOver() {
+        item.download = mybox.title + ext;
+        item.removeEventListener('mouseenter', mouseOver);
+    });
     item.addEventListener('click', (event) => {
         if (event.ctrlKey) {
             event.preventDefault();
