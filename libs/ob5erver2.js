@@ -29,7 +29,13 @@
                     catch(error) { return; }
                 }
                 else if (multi) {
-                    var nodes = selector.filter(node => document.querySelector(node) !== undefined);
+                    nodes = [];
+                    selector.map(sel => {
+                        var node = document.querySelector(sel);
+                        if (node) {
+                            nodes.push(node);
+                        }
+                    });
                     if (nodes.length !== selector.length) {
                         return;
                     }
