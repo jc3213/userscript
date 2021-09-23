@@ -24,7 +24,7 @@
             var observer = setInterval(() => {
                 if (iframe) {
                     try {
-                        nodes = [document.querySelector(iframe).contentDocument.querySelector(selector)];
+                        nodes = document.querySelector(iframe).contentDocument.querySelector(selector);
                     }
                     catch(error) { return; }
                 }
@@ -41,11 +41,11 @@
                     }
                 }
                 else {
-                    nodes = [document.querySelector(selector)];
+                    nodes = document.querySelector(selector);
                 }
                 if (nodes) {
                     clearInterval(observer);
-                    callback(...nodes);
+                    Array.isArray(nodes) ? callback(...nodes) : callback(nodes);
                 }
             });
         }
