@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.0
+// @version         2.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -31,12 +31,12 @@ var worker = location.pathname.startsWith('/video/') ? {
     title: {root: 'videoData', name: 'title'},
     thumb: {root: 'videoData', name: 'pic'},
     play: {param: ['x/player/playurl?cid=', {root: 'videoData', name: 'cid'}, '&avid=', {root: 'videoData', name: 'aid'}], key: 'data'},
-    override: {toolbar: '#arc_toolbar_report', full: 'div.bilibili-player-video-web-fullscreen', wide: 'div.bilibili-player-video-btn-widescreen', active: 'closed'}
+    override: {selector: ['#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen'], active: 'closed'}
 } : {
     title: {name: 'h1Title'},
     thumb: {root: 'epInfo', name: 'cover'},
     play: {param: ['pgc/player/web/playurl?ep_id=', {root: 'epInfo', name: 'id'}], key: 'result'},
-    override: {toolbar: '#toolbar_module', full: 'div.squirtle-video-pagefullscreen', wide: 'div.squirtle-video-widescreen', active: 'active'}
+    override: {selector: ['#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen'], active: 'active'}
 };
 var extract = true;
 var mybox = document.createElement('div')
@@ -76,8 +76,8 @@ function biliVideoBreakPoint(player) {
     });
 }
 
-function biliVideoUIWrapper({toolbar, full, wide, active}) {
-    __ob5erver2.node({selector: ['video', toolbar, full, wide], multi: true}, ([player, toolbar, full, wide]) => {
+function biliVideoUIWrapper({selector, active}) {
+    __ob5erver2.node({selector: ['video', ...selector], multi: true}, (player, toolbar, full, wide) => {
         biliVideoBreakPoint(player);
         toolbar.appendChild(mybox);
         toolbar.appendChild(css);
