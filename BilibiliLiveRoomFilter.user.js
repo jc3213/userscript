@@ -2,12 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.0
+// @version         3.1
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/observer2.js
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/ob5erver2.js
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -123,7 +123,7 @@ else {
 }
 
 function livePlayerInFrame(id) {
-    __node_observer.iframe('#player-ctnr iframe', '#head-info-vm > div > div.rows-ctnr', player => {
+    __ob5erver2.node({iframe: '#player-ctnr iframe', selector: '#head-info-vm > div > div.rows-ctnr'}, player => {
         player.appendChild(css);
         banInsideLiveRoom(player, id);
     });
@@ -135,7 +135,7 @@ function applyFilterToArea({menu, room, list}) {
         document.querySelector(menu).after(container);
         container.style.top = document.querySelector(menu).offsetTop + 30 + 'px';
         document.querySelectorAll(room).forEach(addMenuToLiveRoom);
-        list.forEach(item => __mutation_observer.node(document.querySelector(item), false, addMenuToLiveRoom));
+        list.forEach(item => __ob5erver2.mutation.new(document.querySelector(item), false, addMenuToLiveRoom));
     }, 1000);
 }
 
