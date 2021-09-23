@@ -20,8 +20,13 @@
             }
         },
         node: ({selector, multi, iframe}, callback) => {
+            var timer = 0;
             var nodes;
             var observer = setInterval(() => {
+                timer ++;
+                if (timer === 50) {
+                    clearInterval(observer);
+                }
                 if (iframe) {
                     try {
                         nodes = document.querySelector(iframe).contentDocument.querySelector(selector);
@@ -47,7 +52,7 @@
                     clearInterval(observer);
                     Array.isArray(nodes) ? callback(...nodes) : callback(nodes);
                 }
-            });
+            }, 50);
         }
     };
 })();
