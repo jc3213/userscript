@@ -19,16 +19,16 @@
                 }).observe(node, {attributes: true, subtree});
             }
         },
-        node: (selector, callback) => {
+        node: ({selector, multi, iframe}, callback) => {
             var nodes;
             var observer = setInterval(() => {
-                if (typeof selector === 'object') {
+                if (iframe) {
                     try {
-                        nodes = document.querySelector(selector.iframe).contentDocument.querySelector(selector.node);
+                        nodes = document.querySelector(iframe).contentDocument.querySelector(selector);
                     }
                     catch(error) { return; }
                 }
-                else if (Array.isArray(selector)) {
+                else if (multi) {
                     var nodes = selector.filter(node => document.querySelector(node) !== undefined);
                     if (nodes.length !== selector.length) {
                         return;
