@@ -19,30 +19,35 @@
         }
     };
 
-    this.__node_observer = {
-        init: 0,
-        node: (selector, callback) => {
-            this.__node_observer.init = setInterval(() => {
-                var node = document.querySelector(selector);
-                if (node) {
-                    clearInterval(this.__node_observer.init);
-                    callback(node);
+    this.__node_observer = (selector, callback) => {
+        nodeObserver(() => {
+            try {
+                if (typeof selector === 'object') {
+                    return document.querySelector(selector.iframe).contentDocument.querySelector(selector.node);
                 }
-            })
-        },
-        iframe: (selector1, selector2, callback) => {
-            this.__node_observer.node(selector1, iframe => {
-                this.__node_observer.init = setInterval(() => {
-                    var doc = iframe.contentDocument;
-                    if (doc) {
-                        var node = doc.querySelector(selector2);
-                        if (node) {
-                            clearInterval(this.__node_observer.init);
-                            callback(node, iframe);
-                        }
+                else if (Array.isArray(selector)) {
+                    var nodes = selector.filter(node => document.querySelector(node) !== undefined);
+                    if (nodes.length === selector.length) {
+                        return nodes;
                     }
-                });
-            });
-        }
+                }
+                else {
+                    return document.querySelector(selector);
+                }
+            }
+            catch(error) {
+                return null;
+            }
+        }, callback);
     };
+
+    function nodeObserver(callback1, callback2) {
+        var observer = setInterval(() => {
+            var node = callback1();
+            if (node) {
+                clearInterval(observer);
+                callback2(node);
+            }
+        });
+    }
 })();
