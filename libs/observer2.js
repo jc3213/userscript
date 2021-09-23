@@ -25,8 +25,8 @@
             this.__node_observer.init = setInterval(() => {
                 var node = document.querySelector(selector);
                 if (node) {
-                    callback(node);
                     clearInterval(this.__node_observer.init);
+                    callback(node);
                 }
             })
         },
@@ -37,8 +37,8 @@
                     if (doc) {
                         var node = doc.querySelector(selector2);
                         if (node) {
-                            callback(node);
                             clearInterval(this.__node_observer.init);
+                            callback(node, iframe);
                         }
                     }
                 });
