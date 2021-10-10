@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.31
+// @version         5.32
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -32,9 +32,9 @@
 //                  manga1000.com / manga1001.com / hakaraw.com
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  hakaraw.com
-// @webRequest      {"selector": "*.samariaalipeds.com/*", "action": "cancel"}
-// @webRequest      {"selector": "cherishexpertise.com/*", "action": "cancel"}
-// @webRequest      {"selector": ".wpadmngr.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*parringepigene.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*velawhagru.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*2fe5885777.b370db8cb7.com/*", "action": "cancel"}
 //                  rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
@@ -171,7 +171,7 @@ var manga = {
             return {title: result[1], chapter: result[2]};
         },
         shortcut: ['#prev_chap', '#next_chap'],
-        ads: ['iframe'],
+        ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]'],
         selector: 'div.chapter-c > img',
         lazyload: 'data-src'
     },
@@ -236,7 +236,7 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .aria2Container span.assistantMenu {border: 1px outset darkviolet; width: fit-content; display: block; height: 38px; margin: 1px; padding: 8px 10px;}\
 .menuAria2Item {width: 240px !important; height: 38px; border: 1px ridge darkblue; overflow: hidden; word-break: break-word; user-select: none; margin: 1px;}\
 .menuAria2Item:focus {background-color: darkblue !important; color: white;}';
-document.head.appendChild(css);
+document.body.appendChild(css);
 
 var button = document.createElement('span');
 button.id = 'assistant_button';
@@ -436,6 +436,7 @@ function contextMenuHandler(event) {
 
 // Extract images data
 if (watching) {
+    document.body.removeAttribute('id');
     if (watching.ads) {
         removeAdsElement();
     }
