@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」縦書きPDF書庫
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.0
+// @version      4.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -70,7 +70,7 @@ manager.addEventListener('click', (event) => {
 (document.getElementById('head_nav') ?? document.body).appendChild(manager);
 
 var container = document.createElement('div');
-container.innerHTML = '<div id="mgr-btn-subscribe" class="manager-menu"><span class="manager-button">NCODE登録</span>\
+container.innerHTML = '<div class="manager-menu"><span id="mgr-btn-subscribe" class="manager-button">NCODE登録</span>\
 <input style="padding: 5px;">\
 <span id="mgr-btn-update" class="manager-button">NCODE一括更新</span>\
 <span id="mgr-btn-json" class="manager-button">NCODEをエックスポート</span>\
@@ -82,7 +82,7 @@ container.className = 'manager-container';
 container.style.cssText = 'display: none;';
 document.body.appendChild(container);
 container.addEventListener('change', (event) => {novelist.myncode = event.target.value ?? novelist.ncode;});
-container.addEventListener('click', () => {
+container.addEventListener('click', (event) => {
     if (event.target.id === 'mgr-btn-subscribe') {
         var book = bookmark.find(book => book.ncode === novelist.myncode);
         if (book) {
