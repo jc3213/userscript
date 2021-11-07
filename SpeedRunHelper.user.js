@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.12
+// @version      2.14
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @grant        GM_xmlhttpRequest
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*://*.speedrun.com/a.js*", "action": "cancel"}
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
@@ -67,16 +66,12 @@ function viewSpeedrunRecord({id, src, title}) {
         createRecordWindow(id, logger[id], title);
     }
     else {
-        GM_xmlhttpRequest({
-            url: src,
-            method: 'GET',
-            onload: (response) => {
-                var xml = document.createElement('div');
-                xml.innerHTML = response.responseText;
-                logger[id] = xml.querySelector('#centerbar iframe') ?? xml.querySelector('#centerbar center > a');
-                createRecordWindow(id, logger[id], title);
-                xml.remove();
-            }
+        fetch(src).then(response => response.text()).then(htmlText => {
+            var xml = document.createElement('div');
+            xml.innerHTML = htmlText;
+            logger[id] = xml.querySelector('#centerwidget iframe') ?? xml.querySelector('#centerwidget p > a');
+            createRecordWindow(id, logger[id], title);
+            xml.remove();
         });
     }
 }
