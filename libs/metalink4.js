@@ -1,9 +1,9 @@
 (function() {
     this.__metalink4 = {
         save: (i, f, filename) => {
-            var blob = new Blob([
-                i.constructor.name === 'Blob' ? i : i.constructor.name === 'Object ? metaFile(url) : i.constructor.name === 'Array' ? i.map(metaFile).join('') : metaFile({url: i, filename: f})
-            ], {type: 'application/metalink+xml; charset=utf-8'});
+            var blob = i.constructor.name === 'Blob' ? i : new Blob([metaMaker(
+                 i.constructor.name === 'Object' ? metaFile(i) : i.constructor.name === 'Array' ? i.map(metaFile).join('') : metaFile({url: i, filename: f})
+            )], {type: 'application/metalink+xml; charset=utf-8'});
             var saver = document.createElement('a');
             saver.href = URL.createObjectURL(blob);
             saver.download = (filename ?? 'new_metalink') + '-' + new Date().toLocaleString('ja').replace(/[\/\s:]/g, '_') + '.meta4';
