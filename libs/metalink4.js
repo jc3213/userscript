@@ -1,16 +1,12 @@
 (function() {
     this.__metalink4 = {
-        make: (url, filename) => {
-            var file = typeof url === 'object' ?
-                Array.isArray(url) ? url.map(metaFile).join('') : metaFile(url)
-            : filename ? metaFile({url, filename}) : null;
-            return metaMaker(file);
-        },
-        save: (meta) => {
-            var blob = new Blob([meta], {type: 'application/metalink+xml; charset=utf-8'});
+        save: (i, f, filename) => {
+            var blob = new Blob([
+                i.constructor.name === 'Blob' ? i : i.constructor.name === 'Object ? metaFile(url) : i.constructor.name === 'Array' ? i.map(metaFile).join('') : metaFile({url: i, filename: f})
+            ], {type: 'application/metalink+xml; charset=utf-8'});
             var saver = document.createElement('a');
             saver.href = URL.createObjectURL(blob);
-            saver.download = 'new_metalink-' + new Date().toLocaleString('ja').replace(/[\/\s:]/g, '_') + '.meta4';
+            saver.download = (filename ?? 'new_metalink') + '-' + new Date().toLocaleString('ja').replace(/[\/\s:]/g, '_') + '.meta4';
             saver.click();
             saver.remove();
         }
