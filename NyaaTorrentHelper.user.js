@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.37
+// @version      4.38
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -112,26 +112,27 @@ function getFilterResult(data) {
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
     menu.querySelector('span:nth-child(5)').addEventListener('click', (event) => {
-        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + '\n\n' + (data.image ? i18n.preview + ':\n' + data.image.src + '\n\n' : '') + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.image.src : data.new ? data.src : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
     });
 }
 
 // Extract data
 document.querySelectorAll('table > tbody > tr').forEach((element) => {
-    var data = {};
     var a = element.querySelectorAll('td:nth-child(2) > a');
     a = a.length === 2 ? a[1] : a[0];
-    data.id = a.href.split('/').pop();
-    data.name = a.innerHTML;
-    data.src = a.href;
+    var id = a.href.split('/').pop();
+    var name = a.innerHTML;
+    var src = a.href;
+    var size = element.querySelector('td:nth-child(4)').innerText;
     var link = element.querySelectorAll('td:nth-child(3) > a');
     if (link.length === 2) {
-        data.torrent = link[0].href;
-        data.magnet = slimMagnetURI(link[1].href);
+        var torrent = link[0].href;
+        var magnet = slimMagnetURI(link[1].href);
     }
     else {
-        data.magnet = slimMagnetURI(link[0].href);
+        magnet = slimMagnetURI(link[0].href);
     }
+    var data = {id, name, src, size, torrent, magnet};
     queue.push(data);
     a.addEventListener('contextmenu', (event) => {
         event.preventDefault();
