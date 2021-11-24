@@ -2,7 +2,7 @@
 // @name         カクヨム「」助手
 // @namespace    https://github.com/jc3213/userscript
 // @version      0.1
-// @description  カクヨム「」のリーディング体験をより良くするツールです
+// @description  カクヨム「」のリーディング体験をより良くするためのツールです
 // @author       jc3213
 // @match        https://kakuyomu.jp/works/*/episodes/*
 // ==/UserScript==
