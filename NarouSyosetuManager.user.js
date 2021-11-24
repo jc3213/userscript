@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         「小説家になろう」縦書きPDF書庫
+// @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.2
-// @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
+// @version      4.3
+// @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
