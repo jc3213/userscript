@@ -1,5 +1,5 @@
 (function() {
-    this.saveAsMetalink = (i, f, n) => fileSaver(i.constructor.name === 'Blob' ? i : n ? makeBlob(i, f) : __b(i), n ? n : f ? f : 'new_metalink');
+    this.saveAsMetalink = (i, f, n) => fileSaver(i.constructor.name === 'Blob' ? i : n ? makeBlob(i, f) : makeBlob(i), n ? n : f ? f : 'new_metalink');
 
     function fileSaver(b, n) {
         var saver = document.createElement('a');
