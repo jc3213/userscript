@@ -14,6 +14,6 @@
     }
 
     function makeBlob(i, f) {
-        return new Blob(['<?xml version="1.0" encoding="UTF-8"?><metalink xmlns="urn:ietf:params:xml:ns:metalink">', (f ? metalink(i, f) : i.constructor.name === 'Array' ? i.map(e => metalink(e.url, e.filename)).join('') : metalink(i.url, i.filename)), '</metalink>'], {type: 'application/metalink+xml; charset=utf-8'});
+        return new Blob(['<?xml version="1.0" encoding="UTF-8"?><metalink xmlns="urn:ietf:params:xml:ns:metalink">', ...(f ? [metalink(i, f)] : i.constructor.name === 'Array' ? i.map(e => metalink(e.url, e.filename)) : [metalink(i.url, i.filename)]), '</metalink>'], {type: 'application/metalink+xml; charset=utf-8'});
     }
 })();
