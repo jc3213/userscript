@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.38
+// @version      4.39
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
+// @grant        GM_xmlhttpRequest
+// @connect      *
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
 // ==/UserScript==
@@ -37,6 +39,10 @@ var messages = {
     }
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
+
+var preview = {
+    'hentai-covers.site': '#image-viewer-container > img'
+}
 
 if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
     setTimeout(() => location.reload(), 5000);
@@ -166,17 +172,20 @@ function getPreviewHandler(data, mouse) {
 }
 
 function xmlNodeHandler(data, mouse, handler) {
-    fetch(data.src).then(response => response.text()).then(result => {
-        if (result.includes('502 Bad Gateway')) {
-            xmlNodeHandler(data, mouse, handler);
-        }
-        else {
-            var node = document.createElement('div');
-            node.innerHTML = result;
-            handler(node, data, mouse);
-        }
-    }).catch(error => {
-        xmlNodeHandler(data, mouse, handler);
+    GM_xmlhttpRequest({
+        method: 'GET',
+        url: data.src,
+        onload: (details) => {
+            if (details.response.includes('502 Bad Gateway')) {
+                setTimeout(() => xmlNodeHandler(data, mouse, handler), 3000);
+            }
+            else {
+                var node = document.createElement('div');
+                node.innerHTML = details.response;
+                handler(node, data, mouse);
+            }
+        },
+        onerror: () => setTimeout(() => xmlNodeHandler(data, mouse, handler), 3000)
     });
 }
 
@@ -193,8 +202,13 @@ function getPreviewURL(node, data, mouse) {
         var src = url[0];
         var host = src.split(/[\/:]+/)[1];
         data.src = src;
-        data.new = true;
-        openWebPreview(data);
+        if (data.sel = preview[host]) {
+            xmlNodeHandler(data, mouse, getWebPreview);
+        }
+        else {
+            data.new = true;
+            openWebPreview(data);
+        }
         return;
     }
     data.none = true;
