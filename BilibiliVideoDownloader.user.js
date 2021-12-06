@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.2
+// @version         2.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -27,17 +27,7 @@ var format = {
     'hev1': '视频编码: HEVC',
     'mp4a': '音频编码: AAC'
 };
-var worker = location.pathname.startsWith('/video/') ? {
-    title: {root: 'videoData', name: 'title'},
-    thumb: {root: 'videoData', name: 'pic'},
-    play: {param: ['x/player/playurl?cid=', {root: 'videoData', name: 'cid'}, '&avid=', {root: 'videoData', name: 'aid'}], key: 'data'},
-    override: {selector: ['#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen'], active: 'closed'}
-} : {
-    title: {name: 'h1Title'},
-    thumb: {root: 'epInfo', name: 'cover'},
-    play: {param: ['pgc/player/web/playurl?ep_id=', {root: 'epInfo', name: 'id'}], key: 'result'},
-    override: {selector: ['#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen'], active: 'active'}
-};
+
 var extract = true;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
@@ -55,17 +45,27 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-biliVideoUIWrapper(worker.override);
-
-function biliVideoBreakPoint(player) {
+__ob5erver2.node('video', player => {
     player.autoplay = 'true';
     player.addEventListener('playing', () => {
         if (extract) {
+            if (location.pathname.startsWith('/video/')) {
+                var title = __INITIAL_STATE__.videoData.title;
+                var thumb = __INITIAL_STATE__.videoData.pic;
+                var video = {param: 'x/player/playurl?cid=' + __INITIAL_STATE__.videoData.cid + '&avid=' + __INITIAL_STATE__.videoData.aid, key: 'data'};
+                var override = {selector: ['#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen'], active: 'closed'};
+            }
+            else {
+                title = __INITIAL_STATE__.h1Title;
+                thumb = __INITIAL_STATE__.epInfo.cover;
+                video = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.videoData.epInfo.id, key: 'result'};
+                override = {selector: ['#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen'], active: 'active'};
+            }
             extract = false;
-            biliVideoUIWrapper(worker.override);
-            biliVideoTitle(__INITIAL_STATE__, worker.title);
-            biliVideoThumbnail(__INITIAL_STATE__, worker.thumb);
-            biliVideoExtractor(__INITIAL_STATE__, worker.play);
+            biliVideoUIWrapper(override);
+            biliVideoTitle(title);
+            biliVideoThumbnail(thumb);
+            biliVideoExtractor(video);
         }
     });
     player.addEventListener('loadstart', () => {
@@ -74,11 +74,10 @@ function biliVideoBreakPoint(player) {
         video.innerHTML = '';
         audio.innerHTML = '';
     });
-}
+});
 
 function biliVideoUIWrapper({selector, active}) {
-    __ob5erver2.node(['video', ...selector], (player, toolbar, full, wide) => {
-        biliVideoBreakPoint(player);
+    __ob5erver2.node(selector, (toolbar, full, wide) => {
         toolbar.appendChild(mybox);
         toolbar.appendChild(css);
         full.addEventListener('click', () => { mybox.style.display = full.classList.contains(active) ? 'none' : 'block'; });
@@ -87,21 +86,18 @@ function biliVideoUIWrapper({selector, active}) {
     });
 }
 
-function biliVideoTitle(state, {root, name}) {
-    var title = root ? state[root][name] : state[name];
+function biliVideoTitle(title) {
     mybox.title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-    __ob5erver2.node('#multi_page li.on', watch => { mybox.title += ' - ' + watch.childNodes[0].title; });
+    __ob5erver2.node('#multi_page li.on', watch => mybox.title += ' - ' + watch.childNodes[0].title);
 }
 
-function biliVideoThumbnail(state, {root, name}) {
-    var url = state[root][name];
+function biliVideoThumbnail(url) {
     var menu = createMenuitem('视频封面', url, url.slice(url.lastIndexOf('.')));
     thumb.appendChild(menu);
 }
 
-function biliVideoExtractor(state, {param, key}) {
-    var url = 'https://api.bilibili.com/' + param.map(arg => typeof arg === 'object' ? state[arg.root][arg.name] : arg).join('') + '&fourk=1&fnval=80';
-    fetch(url, {credentials: 'include'}).then(response => response.json()).then(json => {
+function biliVideoExtractor({param, key}) {
+    fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=80', {credentials: 'include'}).then(response => response.json()).then(json => {
         [...json[key].dash.video, ...json[key].dash.audio].forEach(meta => {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
             var {label, ext} = format[meta.id];
