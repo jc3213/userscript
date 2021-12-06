@@ -19,12 +19,14 @@
                 }).observe(node, {attributes: true, subtree});
             }
         },
-        node: ({selector, multi, iframe}, callback) => {
-            var timer = 0;
+        node: (selector, frame, callback) => {
+            var resolve = typeof callback === 'function' ? callback : typeof frame === 'function' ? frame : null;
+            var iframe = typeof frame === 'string' ? frame : null;
+            var timeout = 0;
             var nodes;
             var observer = setInterval(() => {
-                timer ++;
-                if (timer === 50) {
+                timeout ++;
+                if (timeout === 50) {
                     clearInterval(observer);
                 }
                 if (iframe) {
@@ -33,10 +35,10 @@
                     }
                     catch(error) { return; }
                 }
-                else if (multi) {
+                else if (Array.isArray(selector)) {
                     nodes = [];
-                    selector.map(sel => {
-                        var node = document.querySelector(sel);
+                    selector.forEach(item => {
+                        var node = document.querySelector(item);
                         if (node) {
                             nodes.push(node);
                         }
@@ -50,7 +52,7 @@
                 }
                 if (nodes) {
                     clearInterval(observer);
-                    Array.isArray(nodes) ? callback(...nodes) : callback(nodes);
+                    Array.isArray(nodes) ? resolve(...nodes) : resolve(nodes);
                 }
             }, 50);
         }
