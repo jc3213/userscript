@@ -75,9 +75,7 @@ function biliVideoPlayer(player) {
     });
     player.addEventListener('loadstart', () => {
         extract = true;
-        thumb.innerHTML = '';
-        video.innerHTML = '';
-        audio.innerHTML = '';
+        thumb.innerHTML = video.innerHTML = audio.innerHTML = '';
     });
 }
 
