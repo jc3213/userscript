@@ -28,7 +28,7 @@ var format = {
     'mp4a': '音频编码: AAC'
 };
 
-var extract = true;
+var title = '';
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -47,14 +47,14 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 
 __ob5erver2.node('video', biliVideoPlayer);
 __ob5erver2.node('bwp-video', biliVideoPlayer);
-__ob5erver2.node('#multi_page li.on > a', watch => mybox.title += ' - ' + watch.title);
+__ob5erver2.node('#multi_page li.on > a', watch => title += ' - ' + watch.title);
 
 function biliVideoPlayer(player) {
     player.autoplay = 'true';
     player.addEventListener('playing', () => {
-        if (extract) {
+        if (title === '') {
             if (location.pathname.startsWith('/video/')) {
-                var title = __INITIAL_STATE__.videoData.title;
+                title = __INITIAL_STATE__.videoData.title;
                 var thumb = __INITIAL_STATE__.videoData.pic;
                 var index = location.search.includes('p=') ? location.search.match(/p=(\d+)/)[1] : '1';
                 var video = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[index] , key: 'data'};
@@ -63,19 +63,17 @@ function biliVideoPlayer(player) {
             else {
                 title = __INITIAL_STATE__.h1Title;
                 thumb = __INITIAL_STATE__.epInfo.cover;
-                video = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.videoData.epInfo.id, key: 'result'};
+                video = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
                 override = {selector: ['#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen'], active: 'active'};
             }
-            extract = false;
-            mybox.title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
             biliVideoUIWrapper(override);
             biliVideoThumbnail(thumb);
             biliVideoExtractor(video);
         }
     });
     player.addEventListener('loadstart', () => {
-        extract = true;
-        thumb.innerHTML = video.innerHTML = audio.innerHTML = '';
+        thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
     });
 }
 
@@ -113,7 +111,7 @@ function createMenuitem(label, url, ext, codec) {
     item.target = '_self';
     item.innerText = label;
     item.addEventListener('mouseenter', function mouseOver() {
-        item.download = mybox.title + ext;
+        item.download = title + ext;
         item.removeEventListener('mouseenter', mouseOver);
     });
     item.addEventListener('click', (event) => {
