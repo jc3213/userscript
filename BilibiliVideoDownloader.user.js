@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.1
+// @version         2.2
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -77,7 +77,7 @@ function biliVideoBreakPoint(player) {
 }
 
 function biliVideoUIWrapper({selector, active}) {
-    __ob5erver2.node({selector: ['video', ...selector], multi: true}, (player, toolbar, full, wide) => {
+    __ob5erver2.node(['video', ...selector], (player, toolbar, full, wide) => {
         biliVideoBreakPoint(player);
         toolbar.appendChild(mybox);
         toolbar.appendChild(css);
@@ -90,7 +90,7 @@ function biliVideoUIWrapper({selector, active}) {
 function biliVideoTitle(state, {root, name}) {
     var title = root ? state[root][name] : state[name];
     mybox.title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-    __ob5erver2.node({selector: '#multi_page li.on'}, watch => { mybox.title += ' - ' + watch.childNodes[0].title; });
+    __ob5erver2.node('#multi_page li.on', watch => { mybox.title += ' - ' + watch.childNodes[0].title; });
 }
 
 function biliVideoThumbnail(state, {root, name}) {
