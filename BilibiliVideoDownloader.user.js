@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.5
+// @version         2.6
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -45,13 +45,17 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-__ob5erver2.node('video', biliVideoPlayer);
-__ob5erver2.node('bwp-video', biliVideoPlayer);
-__ob5erver2.node('#multi_page li.on > a', watch => title += ' - ' + watch.title);
+biliVideoHelper();
+
+function biliVideoHelper() {
+    __ob5erver2.node('video', biliVideoPlayer);
+    __ob5erver2.node('bwp-video', biliVideoPlayer);
+    __ob5erver2.node('#multi_page li.on > a', watch => title += ' - ' + watch.title);
+}
 
 function biliVideoPlayer(player) {
     player.autoplay = 'true';
-    player.addEventListener('playing', () => {
+    player.addEventListener('playing', event => {
         if (title === '') {
             if (location.pathname.startsWith('/video/')) {
                 title = __INITIAL_STATE__.videoData.title;
@@ -73,6 +77,7 @@ function biliVideoPlayer(player) {
     });
     player.addEventListener('loadstart', () => {
         thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
+        biliVideoHelper();
     });
 }
 
@@ -106,18 +111,9 @@ function biliVideoExtractor({param, key}) {
 function createMenuitem(label, url, ext, codec) {
     var item = document.createElement('a');
     item.href = url;
-    item.title = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
-    item.target = '_self';
+    item.target = '_blank';
     item.innerText = label;
-    item.addEventListener('mouseenter', function mouseOver() {
-        item.download = title + ext;
-        item.removeEventListener('mouseenter', mouseOver);
-    });
-    item.addEventListener('click', event => {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            navigator.clipboard.writeText(JSON.stringify({url: item.href, filename: item.download, referer: location.href}));
-        }
-    });
+    item.title = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
+    setTimeout(() => item.download = title.ext, 1000);
     return item;
 }
