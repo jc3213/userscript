@@ -39,13 +39,13 @@ menu.innerHTML = '<span class="my-button">签到</span>\
 menu.className = 'my-menu';
 menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
 document.body.appendChild(menu);
-menu.querySelector('.my-button:nth-child(1)').addEventListener('click', (event) => {
+menu.querySelector('.my-button:nth-child(1)').addEventListener('click', event => {
     autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
 });
-menu.querySelector('.my-button:nth-child(2)').addEventListener('click', (event) => {
+menu.querySelector('.my-button:nth-child(2)').addEventListener('click', event => {
     autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
 });
-menu.querySelector('.my-button:nth-child(3)').addEventListener('click', (event) => {
+menu.querySelector('.my-button:nth-child(3)').addEventListener('click', event => {
     autoed = !autoed;
     menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
     GM_setValue('autoed', autoed);
@@ -97,7 +97,7 @@ function makeFrame(url, id, load) {
     iframe.src = url;
     iframe.id = id + '-frame';
     iframe.style.cssText = 'position: absolute; top: 200px; left: 100px; height: 800px; width: 800px; display: none;';
-    iframe.addEventListener('load', (event) => load(iframe.contentWindow, iframe.contentDocument));
+    iframe.addEventListener('load', event => load(iframe.contentWindow, iframe.contentDocument));
     document.body.appendChild(iframe);
 }
 
@@ -144,4 +144,4 @@ function warnOver(id, text) {
     setTimeout(() => warn.remove(), 3000);
 }
 
-window.addEventListener('message', (event) => setTimeout(() => document.getElementById(event.data).remove(), 5000));
+window.addEventListener('message', event => setTimeout(() => document.getElementById(event.data).remove(), 5000));

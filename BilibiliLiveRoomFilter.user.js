@@ -38,7 +38,7 @@ document.head.appendChild(css);
 var manager = document.createElement('span');
 manager.innerHTML = '管理屏蔽列表';
 manager.className = 'fancybutton';
-manager.addEventListener('click', (event) => {
+manager.addEventListener('click', event => {
     if (!show) {
         banned.forEach(({id, liver}) => makeBanlist(id, liver));
         show = true;
@@ -57,7 +57,7 @@ batch_box.innerHTML = '<textarea></textarea><div>\
 <span id="bililive_filter_export" class="fancybutton">导出列表</span>\
 <span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="application/json">';
 container.appendChild(batch_box);
-batch_box.addEventListener('click', (event) => {
+batch_box.addEventListener('click', event => {
     if (event.target.id === 'bililive_filter_batch' && confirm('确定要屏蔽列表中的直播间吗？')) {
         var batch = document.querySelector('textarea');
         batch.value.split('\n').forEach(item => {
@@ -81,7 +81,7 @@ batch_box.addEventListener('click', (event) => {
         saveBanlist();
     }
 });
-batch_box.addEventListener('change', (event) => {
+batch_box.addEventListener('change', event => {
     if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -5) + '】吗？')) {
         var reader = new FileReader();
         reader.readAsText(event.target.files[0]);
@@ -145,7 +145,7 @@ function banInsideLiveRoom(domPlayer, id) {
     var block = document.createElement('span');
     block.innerHTML = '屏蔽直播间';
     block.className = 'fancybutton';
-    block.addEventListener('click', (event) => {
+    block.addEventListener('click', event => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
             saveBanlist();
@@ -162,7 +162,7 @@ function makeBanlist(id, liver) {
     var ban = document.createElement('tr');
     ban.id = 'banned_' + id;
     ban.innerHTML = '<td class="fancybutton">' + id + '</td><td>' + liver + '</td>';
-    ban.querySelector('.fancybutton').addEventListener('click', (event) => {
+    ban.querySelector('.fancybutton').addEventListener('click', event => {
         if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
             removeBanlist(id);
             saveBanlist();
@@ -221,7 +221,7 @@ function addMenuToLiveRoom(element) {
     menu.className = 'fancymenu';
     menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
 <span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
-    menu.addEventListener('click', (event) => {
+    menu.addEventListener('click', event => {
         event.preventDefault();
         if (event.target.id === 'bililive_filter_block' && confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);

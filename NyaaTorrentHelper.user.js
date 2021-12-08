@@ -72,13 +72,13 @@ document.querySelector('#navbar').appendChild(container);
 var input = document.createElement('input');
 input.style.cssText = 'color: black; border: 1px solid black; padding: 5px; width: 180px; height: 38px;';
 input.placeholder = i18n.keyword;
-input.addEventListener('keypress', (event) => { if (event.key === 'Enter') {button.click();} });
+input.addEventListener('keypress', event => { if (event.key === 'Enter') {button.click();} });
 container.appendChild(input);
 
 var button = document.createElement('span');
 button.className = 'filter-button';
 button.innerHTML = i18n.filter;
-button.addEventListener('click', (event) => {
+button.addEventListener('click', event => {
     var keys = input.value.split(/[\|\/\\\+,:;\s]+/);
     if (filter && keys.join() === keyword.join()) {
         popup.style.display = 'none';
@@ -113,11 +113,11 @@ function getFilterResult(data) {
     <a href="' + data.magnet + '">' + i18n.magnet + '</a>\
     <span>' + i18n.copy + '</span>';
     popup.appendChild(menu);
-    menu.querySelector('span:nth-child(2)').addEventListener('click', (event) => {
+    menu.querySelector('span:nth-child(2)').addEventListener('click', event => {
         event.target.style.cssText = 'background-color: #C3C;';
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
-    menu.querySelector('span:nth-child(5)').addEventListener('click', (event) => {
+    menu.querySelector('span:nth-child(5)').addEventListener('click', event => {
         navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.image.src : data.new ? data.src : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
     });
 }
@@ -140,7 +140,7 @@ document.querySelectorAll('table > tbody > tr').forEach((element) => {
     }
     var data = {id, name, src, size, torrent, magnet};
     queue.push(data);
-    a.addEventListener('contextmenu', (event) => {
+    a.addEventListener('contextmenu', event => {
         event.preventDefault();
         a.style.cssText = 'color: #C33;';
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
@@ -240,7 +240,7 @@ function noValidPreview(data) {
 function createPreview(data, mouse) {
     data.image.className = 'filter-preview';
     data.image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
-    data.image.addEventListener('click', (event) => data.image.remove());
+    data.image.addEventListener('click', event => data.image.remove());
     document.body.appendChild(data.image);
     action[data.id] = false;
 }

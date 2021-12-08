@@ -28,7 +28,7 @@ var emojiOrigin;
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
 subscribe.accept = 'application/json';
-subscribe.addEventListener('change', (event) => {
+subscribe.addEventListener('change', event => {
     [...subscribe.files].forEach((file, index, files) => {
         var reader = new FileReader();
         reader.readAsText(file);
@@ -48,7 +48,7 @@ subscribe.addEventListener('change', (event) => {
 var manager = document.createElement('button');
 manager.innerText = '添加新表情';
 manager.className = 'block_txt_big';
-manager.addEventListener('click', (event) => subscribe.click());
+manager.addEventListener('click', event => subscribe.click());
 
 function createEmojiUI({name, author, emoji}, index) {
     var panel = emojiPanel.childNodes[index + emojiOrigin];
@@ -64,7 +64,7 @@ function createEmojiUI({name, author, emoji}, index) {
         manager.before(tab);
         panel = document.createElement('div');
         emojiPanel.append(panel);
-        tab.addEventListener('click', (event) => {
+        tab.addEventListener('click', event => {
             if (event.ctrlKey && confirm('确定要删除表情包【'+ name + '】吗？')) {
                 emojiPackage.splice(index, 1);
                 delete emojiRunOnce[name];
@@ -90,7 +90,7 @@ function addEmoji(package, panel) {
         var img = document.createElement('img');
         img.src = 'https://img.nga.178.com/attachments/' + emoji;
         img.style.cssText = 'max-height: 100px; margin: 0px 5px 5px 0px;';
-        img.addEventListener('click', (event) => {
+        img.addEventListener('click', event => {
             postfunc.addText('[img]' + emoji + '[/img]');
             postfunc.selectSmilesw._.hide();
         });

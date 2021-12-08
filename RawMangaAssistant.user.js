@@ -244,7 +244,7 @@ button.innerHTML = '🖱️';
 button.className = 'menuOverlay assistantMenu';
 button.draggable = true;
 button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
-button.addEventListener('click', (event) => {
+button.addEventListener('click', event => {
     container.style.display = 'block';
 });
 document.body.appendChild(button);
@@ -256,11 +256,11 @@ container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left
 document.body.appendChild(container);
 
 // Draggable button and menu
-button.addEventListener('dragstart', (event) => {
+button.addEventListener('dragstart', event => {
     offset.top = event.clientY;
     offset.left = event.clientX
 });
-button.addEventListener('dragend', (event) => {
+button.addEventListener('dragend', event => {
     var maxHeight = visual.height - button.offsetHeight;
     var maxWidth = visual.width - button.offsetWidth;
     position.top += event.clientY - offset.top;
@@ -275,7 +275,7 @@ button.addEventListener('dragend', (event) => {
     container.style.left = button.offsetLeft + button.offsetWidth + 'px';
     GM_setValue('position', position);
 });
-document.addEventListener('click', (event) => {
+document.addEventListener('click', event => {
     if (button.contains(event.target) || aria2Menu.contains(event.target) || event.target.id === 'aria2option') {
         return;
     }
@@ -291,7 +291,7 @@ downMenu.innerHTML = '<div id="download" class="assistantMenu"><span class="assi
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
-downMenu.querySelector('#download').addEventListener('click', (event) => {
+downMenu.querySelector('#download').addEventListener('click', event => {
     urls.forEach((url, index) => {
         GM_xmlhttpRequest({
             method: 'GET',
@@ -311,12 +311,12 @@ downMenu.querySelector('#download').addEventListener('click', (event) => {
         });
     });
 })
-downMenu.querySelector('#clipboard').addEventListener('click', (event) => {
+downMenu.querySelector('#clipboard').addEventListener('click', event => {
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 });
 // Aria2 Menuitems
-downMenu.querySelector('#aria2download').addEventListener('click', (event) => {
+downMenu.querySelector('#aria2download').addEventListener('click', event => {
     urls.forEach((url, index) => aria2RequestHandler({
         method: 'aria2.addUri',
         params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]
@@ -326,7 +326,7 @@ downMenu.querySelector('#aria2download').addEventListener('click', (event) => {
         }
     }));
 });
-downMenu.querySelector('#aria2option').addEventListener('click', (event) => {
+downMenu.querySelector('#aria2option').addEventListener('click', event => {
     aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + (position.top + 82) + 'px;';
 });
 
@@ -365,14 +365,14 @@ aria2Menu.innerHTML = '<div><input id="aria2uri" class="assistantMenu menuAria2I
 <input id="aria2token" class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
 <div><span id="aria2submit" class="assistantMenu">' + i18n.submit +'</span>\
 <span id="aria2cancel" class="assistantMenu">' + i18n.cancel +'</span></div>';
-aria2Menu.querySelector('#aria2submit').addEventListener('click', (event) => {
+aria2Menu.querySelector('#aria2submit').addEventListener('click', event => {
     options.server = aria2Menu.querySelector('#aria2uri').value;
     options.secret = aria2Menu.querySelector('#aria2token').value;
     GM_setValue('server', options.server);
     GM_setValue('secret', options.secret);
     checkAria2Availability();
 });
-aria2Menu.querySelector('#aria2cancel').addEventListener('click', (event) => {
+aria2Menu.querySelector('#aria2cancel').addEventListener('click', event => {
     aria2Menu.style.display = 'none';
 });
 container.appendChild(aria2Menu);
@@ -381,7 +381,7 @@ container.appendChild(aria2Menu);
 var clickMenu = document.createElement('div');
 clickMenu.className = 'menuContainer';
 clickMenu.innerHTML = '<div id="scrolltop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
-clickMenu.querySelector('#scrolltop').addEventListener('click', (event) => {
+clickMenu.querySelector('#scrolltop').addEventListener('click', event => {
     document.documentElement.scrollTop = 0;
 });
 container.appendChild(clickMenu);
@@ -405,7 +405,7 @@ var switchMenu = document.createElement('div');
 switchMenu.innerHTML = '<div class="assistantMenu" name="menu"><span class="assistantIcon"></span>' + i18n.menu.label + '</div>';
 switchMenu.className = 'menuContainer';
 switchMenu.querySelectorAll('.assistantMenu').forEach(switchHandler);
-switchMenu.addEventListener('click', (event) => {
+switchMenu.addEventListener('click', event => {
     var name = event.target.getAttribute('name');
     options[name] = options[name] === 'on' ? 'off' : 'on';
     switchHandler(event.target);
@@ -424,7 +424,7 @@ function switchHandler(item) {
         item.querySelector('.assistantIcon').innerHTML = '';
     }
 }
-function contextMenuHandler(event) {
+function contextMenuHandlerevent {
     if (event.target.id === 'assistant_aria2' || event.shiftKey) {
         return;
     }
@@ -510,7 +510,7 @@ function extractImage() {
 // Add shortcut for chapter
 function appendShortcuts() {
     var button = Array.isArray(watching.shortcut) ? watching.shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(watching.shortcut);
-    document.addEventListener('keydown', (event) => {
+    document.addEventListener('keydown', event => {
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
             return;
         }

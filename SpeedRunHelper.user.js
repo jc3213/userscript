@@ -40,7 +40,7 @@ css.innerHTML = '.speedrun-window {position: fixed; width: 1280px; height: 740px
 .speedrun-item:active {filter: opacity(30%);}';
 document.head.appendChild(css);
 
-document.getElementById('leaderboarddiv').addEventListener('contextmenu', (event) => {
+document.getElementById('leaderboarddiv').addEventListener('contextmenu', event => {
     event.preventDefault();
     var row = [...document.querySelectorAll('tr')].find(record => record.contains(event.target));
     if (row) {
@@ -96,7 +96,7 @@ function createRecordWindow(id, content, title) {
     var index = [...document.querySelectorAll('[id^="speedrun-"]')].findIndex(view => view === container);
     container.top = container.style.top = 130 + index * 20 + 'px';
     container.left = container.style.left = (screen.availWidth - 1280) / 2 + index * 20 + 'px';
-    container.addEventListener('click', (event) => {
+    container.addEventListener('click', event => {
         if (event.target.id === 'speedrun-minimum') {
             event.target.style.display = content.style.display = maximum.style.display = 'none';
             container.querySelector('#speedrun-restore').style.display = 'inline-block';
@@ -120,11 +120,11 @@ function createRecordWindow(id, content, title) {
     });
 }
 
-document.addEventListener('dragstart', (event) => {
+document.addEventListener('dragstart', event => {
     offset.top = event.clientY;
     offset.left = event.clientX
 });
-document.addEventListener('dragend', (event) => {
+document.addEventListener('dragend', event => {
     event.target.style.top = event.target.offsetTop + event.clientY - offset.top + 'px';
     event.target.style.left = event.target.offsetLeft + event.clientX - offset.left + 'px';
 });

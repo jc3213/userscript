@@ -54,7 +54,7 @@ var manager = document.createElement('span');
 manager.innerHTML = '書庫管理';
 manager.className = 'manager-button';
 manager.style.cssText = 'margin: 8px 5px;'
-manager.addEventListener('click', (event) => {
+manager.addEventListener('click', event => {
     if (!show) {
         bookmark.forEach(fancyTableItem);
         show = true;
@@ -81,8 +81,8 @@ container.innerHTML = '<div class="manager-menu"><span id="mgr-btn-subscribe" cl
 container.className = 'manager-container';
 container.style.cssText = 'display: none;';
 document.body.appendChild(container);
-container.addEventListener('change', (event) => {novelist.myncode = event.target.value ?? novelist.ncode;});
-container.addEventListener('click', (event) => {
+container.addEventListener('change', event => {novelist.myncode = event.target.value ?? novelist.ncode;});
+container.addEventListener('click', event => {
     if (event.target.id === 'mgr-btn-subscribe') {
         var book = bookmark.find(book => book.ncode === novelist.myncode);
         if (book) {
@@ -174,7 +174,7 @@ function fancyTableItem(book, index) {
     <span title="' + (book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します') + '"><input value="' + book.next + '"></span>\
     <span id="mgr-bk-update" class="manager-button" title="縦書きPDFの更新をチェックします">' + generateTimeFormat(book.last) + '</span>';
     container.querySelector('.manager-shelf').appendChild(mybook);
-    mybook.addEventListener('click', (event) => {
+    mybook.addEventListener('click', event => {
         if (event.target.id === 'mgr-bk-remove' && confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
             mybook.remove();
             bookmark.splice(index, 1);
@@ -188,7 +188,7 @@ function fancyTableItem(book, index) {
             updateObserver(1, () => batchDownloadPreHandler(book), saveBookmarkButton);
         }
     });
-    mybook.addEventListener('change', (event) => {
+    mybook.addEventListener('change', event => {
         var day = parseInt(event.target.value);
         book.next = day;
         saveBookmarkButton();
@@ -316,7 +316,7 @@ function myFancyPopup(ncode, title, result) {
     popup.innerHTML = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
     popup.className = 'notification manager-container';
     popup.style.height = 'fit-content';
-    popup.addEventListener('click', (event) => removePopup(popup));
+    popup.addEventListener('click', event => removePopup(popup));
     document.body.appendChild(popup);
     alignFancyPopup();
     setTimeout(() => removePopup(popup), 5000);

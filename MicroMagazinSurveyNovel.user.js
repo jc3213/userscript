@@ -41,7 +41,7 @@ var button = document.createElement('div');
 button.id = 'print_helper';
 button.style.cssText = 'position: absolute; left: 25%; top: 5%; z-lindex: 3213; background-color: white; color: black; padding: 5px; border: 1px solid #e9e9e9; cursor: pointer;';
 button.innerHTML = 'プリント仕様';
-button.addEventListener('click', (event) => {
+button.addEventListener('click', event => {
     book.style.cssText = 'border: none; margin: 0px; padding: 0px';
     document.body.replaceWith(book);
 });

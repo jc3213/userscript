@@ -113,7 +113,7 @@ function createMenuitem(label, url, ext, codec) {
         item.download = title + ext;
         item.removeEventListener('mouseenter', mouseOver);
     });
-    item.addEventListener('click', (event) => {
+    item.addEventListener('click', event => {
         if (event.ctrlKey) {
             event.preventDefault();
             navigator.clipboard.writeText(JSON.stringify({url: item.href, filename: item.download, referer: location.href}));
