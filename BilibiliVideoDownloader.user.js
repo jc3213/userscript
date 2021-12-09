@@ -2,11 +2,10 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.7
+// @version         2.8
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/ob5erver2.js
 // @match           *://www.bilibili.com/video/*
 // ==/UserScript==
 
@@ -30,6 +29,7 @@ var format = {
 };
 
 var title = '';
+var multi;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -49,9 +49,11 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 biliVideoHelper();
 
 function biliVideoHelper() {
-    __ob5erver2.node('video', biliVideoPlayer);
-    __ob5erver2.node('bwp-video', biliVideoPlayer);
-    __ob5erver2.node('#multi_page li.on > a', watch => title += ' - ' + watch.title);
+    setTimeout(() => {
+        var video = document.querySelector('video') || document.querySelector('bwp-video');
+        multi = document.querySelector('#multi_page li.on > a');
+        biliVideoPlayer(video);
+    }, 1000);
 }
 
 function biliVideoPlayer(player) {
@@ -61,19 +63,21 @@ function biliVideoPlayer(player) {
             if (location.pathname.startsWith('/video/')) {
                 title = __INITIAL_STATE__.videoData.title;
                 var thumb = __INITIAL_STATE__.elecFullInfo.data.pic;
-                var video = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
-                var override = {selector: ['#arc_toolbar_report', 'div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen'], active: 'closed'};
+                var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
+                var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen')];
+                var active = 'closed';
             }
             else {
                 title = __INITIAL_STATE__.h1Title;
                 thumb = __INITIAL_STATE__.epInfo.cover;
-                video = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
-                override = {selector: ['#toolbar_module', 'div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen'], active: 'active'};
+                stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
+                override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen')];
+                active = 'active';
             }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '');
-            biliVideoUIWrapper(override);
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
+            biliVideoExtractor(stream);
             biliVideoThumbnail(thumb);
-            biliVideoExtractor(video);
+            biliVideoUIWrapper(override, active);
         }
     });
     player.addEventListener('loadstart', () => {
@@ -82,14 +86,12 @@ function biliVideoPlayer(player) {
     });
 }
 
-function biliVideoUIWrapper({selector, active}) {
-    __ob5erver2.node(selector, (toolbar, full, wide) => {
-        toolbar.appendChild(mybox);
-        toolbar.appendChild(css);
-        full.addEventListener('click', () => { mybox.style.display = full.classList.contains(active) ? 'none' : 'block'; });
-        wide.addEventListener('click', () => { mybox.style.display = 'block'; });
-        if (!wide.classList.contains(active)) { wide.click(); }
-    });
+function biliVideoUIWrapper([toolbar, full, wide], active) {
+    toolbar.appendChild(mybox);
+    toolbar.appendChild(css);
+    full.addEventListener('click', () => { mybox.style.display = full.classList.contains(active) ? 'none' : 'block'; });
+    wide.addEventListener('click', () => { mybox.style.display = 'block'; });
+    if (!wide.classList.contains(active)) { wide.click(); }
 }
 
 function biliVideoThumbnail(url) {
@@ -113,8 +115,8 @@ function createMenuitem(label, url, ext, codec) {
     var item = document.createElement('a');
     item.href = url;
     item.target = '_blank';
+    item.download = title;
     item.innerText = label;
     item.title = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
-    setTimeout(() => item.download = title.ext, 1000);
     return item;
 }
