@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.8
+// @version         2.9
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -52,38 +52,33 @@ function biliVideoHelper() {
     setTimeout(() => {
         var video = document.querySelector('video') || document.querySelector('bwp-video');
         multi = document.querySelector('#multi_page li.on > a');
-        biliVideoPlayer(video);
+        video.addEventListener('playing', event => {
+            if (title === '') {
+                if (location.pathname.startsWith('/video/')) {
+                    title = __INITIAL_STATE__.videoData.title;
+                    var thumb = __INITIAL_STATE__.elecFullInfo.data.pic;
+                    var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
+                    var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen')];
+                    var active = 'closed';
+                }
+                else {
+                    title = __INITIAL_STATE__.h1Title;
+                    thumb = __INITIAL_STATE__.epInfo.cover;
+                    stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
+                    override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen')];
+                    active = 'active';
+                }
+                title = title.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
+                biliVideoExtractor(stream);
+                biliVideoThumbnail(thumb);
+                biliVideoUIWrapper(override, active);
+            }
+        });
+        video.addEventListener('loadstart', () => {
+            thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
+            biliVideoHelper();
+        });
     }, 1000);
-}
-
-function biliVideoPlayer(player) {
-    player.autoplay = 'true';
-    player.addEventListener('playing', event => {
-        if (title === '') {
-            if (location.pathname.startsWith('/video/')) {
-                title = __INITIAL_STATE__.videoData.title;
-                var thumb = __INITIAL_STATE__.elecFullInfo.data.pic;
-                var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
-                var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen')];
-                var active = 'closed';
-            }
-            else {
-                title = __INITIAL_STATE__.h1Title;
-                thumb = __INITIAL_STATE__.epInfo.cover;
-                stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
-                override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen')];
-                active = 'active';
-            }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
-            biliVideoExtractor(stream);
-            biliVideoThumbnail(thumb);
-            biliVideoUIWrapper(override, active);
-        }
-    });
-    player.addEventListener('loadstart', () => {
-        thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
-        biliVideoHelper();
-    });
 }
 
 function biliVideoUIWrapper([toolbar, full, wide], active) {
