@@ -2,12 +2,11 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.2
+// @version         3.3
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/ob5erver2.js
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -123,10 +122,15 @@ else {
 }
 
 function livePlayerInFrame(id) {
-    __ob5erver2.node('#head-info-vm > div > div.rows-ctnr', '#player-ctnr iframe', player => {
-        player.appendChild(css);
-        banInsideLiveRoom(player, id);
-    });
+    var observer = setInterval(() => {
+        try {
+            var player = document.querySelector('#player-ctnr iframe').contentDocument.querySelector('#head-info-vm > div > div.rows-ctnr');
+            player.appendChild(css);
+            banInsideLiveRoom(player, id);
+            clearInterval(observer);
+        }
+        catch(error) {}
+    }, 100);
 }
 
 function applyFilterToArea({menu, room, list}) {
@@ -135,7 +139,16 @@ function applyFilterToArea({menu, room, list}) {
         document.querySelector(menu).after(container);
         container.style.top = document.querySelector(menu).offsetTop + 30 + 'px';
         document.querySelectorAll(room).forEach(addMenuToLiveRoom);
-        list.forEach(item => __ob5erver2.mutation.new(document.querySelector(item), false, addMenuToLiveRoom));
+        list.forEach(item => {
+            new MutationObserver(mutationList => {
+                mutationList.forEach(mutation => {
+                    var newNode = mutation.addedNodes[0];
+                    if (newNode) {
+                        addMenuToLiveRoom(newNode);
+                    }
+                });
+            }).observe(document.querySelector(item), {childList: true, subtree: false});
+        });
     }, 1000);
 }
 
