@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.6
+// @version         2.7
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -14,6 +14,7 @@ var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
     '30216': {label: '音频 低码率', ext: '.64k.aac'},
+    '127': {label: '8K 超高清', ext: '.8K-UHD.mp4'},
     '120': {label: '4K 超清', ext: '.4K-UHD.mp4'},
     '116': {label: '1080P 60帧', ext: '.1080HQ.mp4'},
     '112': {label: '1080P 高码率', ext: '.1080Hbr.mp4'},
@@ -97,7 +98,7 @@ function biliVideoThumbnail(url) {
 }
 
 function biliVideoExtractor({param, key}) {
-    fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=80', {credentials: 'include'}).then(response => response.json()).then(json => {
+    fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'}).then(response => response.json()).then(json => {
         [...json[key].dash.video, ...json[key].dash.audio].forEach(meta => {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
             var {label, ext} = format[meta.id];
