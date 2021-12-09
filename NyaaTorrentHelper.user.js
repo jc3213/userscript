@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.39
+// @version      4.40
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
-// @grant        GM_xmlhttpRequest
 // @connect      *
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
+// @grant        GM_xmlhttpRequest
+// @grant        GM_openInTab
 // ==/UserScript==
 
 'use strict';
@@ -39,10 +40,6 @@ var messages = {
     }
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
-
-var preview = {
-    'hentai-covers.site': '#image-viewer-container > img'
-}
 
 if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
     setTimeout(() => location.reload(), 5000);
@@ -199,16 +196,9 @@ function getPreviewURL(node, data, mouse) {
     }
     var url = /https?:\/\/[^\*\r\n\)\]]+/g.exec(description);
     if (url) {
-        var src = url[0];
-        var host = src.split(/[\/:]+/)[1];
-        data.src = src;
-        if (data.sel = preview[host]) {
-            xmlNodeHandler(data, mouse, getWebPreview);
-        }
-        else {
-            data.new = true;
-            openWebPreview(data);
-        }
+        data.src = url[0];
+        data.new = true;
+        openWebPreview(data);
         return;
     }
     data.none = true;
@@ -227,7 +217,7 @@ function getWebPreview(node, data, mouse) {
 }
 
 function openWebPreview(data) {
-    open(data.src, '_blank');
+    GM_openInTab(data.src, true);
     action[data.id] = false;
 }
 
