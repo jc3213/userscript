@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      6
+// @version      2.6
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.net/*
@@ -16,29 +16,31 @@ var worked = GM_getValue('worked', 0);
 var autoed = GM_getValue('autoed', false);
 var today = new Date().getFullYear() + new Date().getMonth() + new Date().getDate();
 
-if (autoed) {
-    if (today > signed) {
-        autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
-    }
-    if (Date.now() > worked) {
-        autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
-    }
-}
-
 var css = document.createElement('style');
 css.innerHTML = '.my-button {padding: 5px; border: 1px outset #000; text-align: center; vertical-align: middle; display: inline-block; background-color: #FFF; width: 60px; height: 20px; cursor: pointer; font-weight: bold;}\
 .my-button:hover {filter: opacity(60%);}\
 .my-button:active {filter: opacity(30%);}\
 .my-menu {background-color: #fff; position: absolute; top: 15px; left: 100px; z-index: 99999;}'
-document.head.appendChild(css);
-
 var menu = document.createElement('div');
 menu.innerHTML = '<span class="my-button">签到</span>\
 <span class="my-button">打工</span>\
 <span class="my-button"><span class="my-auto"></span>自动</span>';
 menu.className = 'my-menu';
 menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
-document.body.appendChild(menu);
+
+if (document.querySelector('strong.vwmy')) {
+    document.head.appendChild(css);
+    document.body.appendChild(menu);
+    if (autoed) {
+        if (today > signed) {
+            autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
+        }
+        if (Date.now() > worked) {
+            autoHandler('/plugin.php?id=np_cliworkdz:work', workHandler);
+        }
+    }
+}
+
 menu.querySelector('.my-button:nth-child(1)').addEventListener('click', event => {
     autoHandler('/plugin.php?id=dsu_paulsign:sign', signHandler);
 });
