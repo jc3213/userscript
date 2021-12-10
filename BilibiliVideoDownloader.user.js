@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.11
+// @version         2.12
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -29,7 +29,6 @@ var format = {
 };
 
 var title = '';
-var multi;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -50,9 +49,9 @@ biliVideoHelper();
 
 function biliVideoHelper() {
     setTimeout(() => {
-        var video = document.querySelector('video') || document.querySelector('bwp-video');
-        multi = document.querySelector('#multi_page li.on > a');
-        video.addEventListener('playing', event => {
+        var player = document.querySelector('video') || document.querySelector('bwp-video');
+        var multi = document.querySelector('#multi_page li.on > a');
+        player.addEventListener('playing', event => {
             if (title === '') {
                 if (location.pathname.startsWith('/video/')) {
                     title = __INITIAL_STATE__.videoData.title;
@@ -72,7 +71,7 @@ function biliVideoHelper() {
                 biliVideoUIWrapper(...override);
             }
         });
-        video.addEventListener('loadstart', () => {
+        player.addEventListener('loadstart', () => {
             thumb.innerHTML = '';
             video.innerHTML = '';
             audio.innerHTML = '';
