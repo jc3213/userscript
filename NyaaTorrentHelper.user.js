@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.40
+// @version      5.0
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
-// @grant        GM_xmlhttpRequest
 // @grant        GM_openInTab
 // ==/UserScript==
 
@@ -154,14 +153,14 @@ function getPreviewHandler(data, mouse) {
         return;
     }
     action[data.id] = true;
-    if (data.image) {
-        createPreview(data, mouse);
+    if (data.none) {
+        noValidPreview(data);
     }
     else if (data.new) {
         openWebPreview(data);
     }
-    else if (data.none) {
-        noValidPreview(data);
+    else if (data.preview) {
+        createPreview(data, mouse);
     }
     else {
         xmlNodeHandler(data, mouse, getPreviewURL);
@@ -169,55 +168,37 @@ function getPreviewHandler(data, mouse) {
 }
 
 function xmlNodeHandler(data, mouse, handler) {
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: data.src,
-        onload: (details) => {
-            if (details.response.includes('502 Bad Gateway')) {
-                setTimeout(() => xmlNodeHandler(data, mouse, handler), 3000);
-            }
-            else {
-                var node = document.createElement('div');
-                node.innerHTML = details.response;
-                handler(node, data, mouse);
-            }
-        },
-        onerror: () => setTimeout(() => xmlNodeHandler(data, mouse, handler), 3000)
-    });
+    fetch(data.src).then(response => response.text()).then(text => {
+        if (text.includes('502 Bad Gateway')) {
+            throw new Error('502 Bad Gateway');
+        }
+        else {
+            var node = document.createElement('div');
+            node.innerHTML = text;
+            handler(node, data, mouse);
+        }
+    }).catch(error => setTimeout(() => xmlNodeHandler(data, mouse, handler), 5000));
 }
 
 function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
     var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(description);
     if (img) {
-        data.image = document.createElement('img');
-        data.image.src = img[0];
+        data.preview = img[0];
         return createPreview(data, mouse);
     }
     var url = /https?:\/\/[^\*\r\n\)\]]+/g.exec(description);
     if (url) {
-        data.src = url[0];
+        data.preview = url[0];
         data.new = true;
-        openWebPreview(data);
-        return;
+        return openWebPreview(data);
     }
     data.none = true;
     noValidPreview(data);
 }
 
-function getWebPreview(node, data, mouse) {
-    data.image = node.querySelector(data.sel);
-    if (data.image) {
-        createPreview(data, mouse);
-    }
-    else {
-        alert(data.name + '\n' + data.src + '\nFailed Previewing');
-        action[data.id] = false;
-    }
-}
-
 function openWebPreview(data) {
-    GM_openInTab(data.src, true);
+    GM_openInTab(data.preview, true);
     action[data.id] = false;
 }
 
@@ -228,9 +209,11 @@ function noValidPreview(data) {
 
 // Create preview
 function createPreview(data, mouse) {
-    data.image.className = 'filter-preview';
-    data.image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
-    data.image.addEventListener('click', event => data.image.remove());
-    document.body.appendChild(data.image);
+    var image = document.createElement('img');
+    image.src = data.preview;
+    image.className = 'filter-preview';
+    image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
+    image.addEventListener('click', event => image.remove());
+    document.body.appendChild(image);
     action[data.id] = false;
 }
