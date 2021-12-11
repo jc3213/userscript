@@ -45,37 +45,33 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-biliVideoHelper();
-
-function biliVideoHelper() {
-    setTimeout(() => {
-        var player = document.querySelector('video') || document.querySelector('bwp-video');
-        var multi = document.querySelector('#multi_page li.on > a');
-        player.addEventListener('playing', event => {
-            if (location.pathname.startsWith('/video/')) {
-                var tit1e = __INITIAL_STATE__.videoData.title;
-                var image = __INITIAL_STATE__.elecFullInfo.data.pic;
-                var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
-                var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen'), 'closed'];
-            }
-            else {
-                tit1e = __INITIAL_STATE__.h1Title;
-                image = __INITIAL_STATE__.epInfo.cover;
-                stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
-                override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen'), 'active'];
-            }
-            if (title !== tit1e) {
-                thumb.innerHTML = '';
-                video.innerHTML = '';
-                audio.innerHTML = '';
-                title = tit1e.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
-                biliVideoExtractor(stream);
-                biliVideoThumbnail(image);
-                biliVideoUIWrapper(...override);
-            }
-        });
-    }, 2000);
-}
+setTimeout(() => {
+    var player = document.querySelector('video') || document.querySelector('bwp-video');
+    var multi = document.querySelector('#multi_page li.on > a');
+    player.addEventListener('playing', event => {
+        if (location.pathname.startsWith('/video/')) {
+            var tit1e = __INITIAL_STATE__.videoData.title;
+            var image = __INITIAL_STATE__.elecFullInfo.data.pic;
+            var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
+            var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen'), 'closed'];
+        }
+        else {
+            tit1e = __INITIAL_STATE__.h1Title;
+            image = __INITIAL_STATE__.epInfo.cover;
+            stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
+            override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen'), 'active'];
+        }
+        if (title !== tit1e) {
+            thumb.innerHTML = '';
+            video.innerHTML = '';
+            audio.innerHTML = '';
+            title = tit1e.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
+            biliVideoExtractor(stream);
+            biliVideoThumbnail(image);
+            biliVideoUIWrapper(...override);
+        }
+    });
+}, 1000);
 
 function biliVideoUIWrapper(toolbar, full, wide, active) {
     toolbar.appendChild(mybox);
