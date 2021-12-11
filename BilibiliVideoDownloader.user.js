@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.13
+// @version         2.14
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -45,31 +45,34 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
+
 setTimeout(() => {
     var player = document.querySelector('video') || document.querySelector('bwp-video');
-    var multi = document.querySelector('#multi_page li.on > a');
     player.addEventListener('playing', event => {
-        if (location.pathname.startsWith('/video/')) {
-            var tit1e = __INITIAL_STATE__.videoData.title;
-            var image = __INITIAL_STATE__.elecFullInfo.data.pic;
-            var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
-            var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen'), 'closed'];
-        }
-        else {
-            tit1e = __INITIAL_STATE__.h1Title;
-            image = __INITIAL_STATE__.epInfo.cover;
-            stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
-            override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen'), 'active'];
-        }
-        if (title !== tit1e) {
-            thumb.innerHTML = '';
-            video.innerHTML = '';
-            audio.innerHTML = '';
-            title = tit1e.replace(/[\/\\\?\|\<\>:"']/g, '') + (multi ? ' - ' + multi.title : '');
+        if (title === '') {
+            if (location.pathname.startsWith('/video/')) {
+                title = __INITIAL_STATE__.videoData.title;
+                var thumb = __INITIAL_STATE__.elecFullInfo.data.pic;
+                var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
+                var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen'), 'closed'];
+            }
+            else {
+                title = __INITIAL_STATE__.h1Title;
+                thumb = __INITIAL_STATE__.epInfo.cover;
+                stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
+                override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen'), 'active'];
+            }
+            title = title.replace(/[\/\\\?\|\<\>:"']/g, '') + (document.querySelector('#multi_page li.on > a') ? ' - ' + document.querySelector('#multi_page li.on > a').title : '');
             biliVideoExtractor(stream);
-            biliVideoThumbnail(image);
+            biliVideoThumbnail(thumb);
             biliVideoUIWrapper(...override);
         }
+    });
+    player.addEventListener('loadstart', () => {
+        thumb.innerHTML = '';
+        video.innerHTML = '';
+        audio.innerHTML = '';
+        title = '';
     });
 }, 1000);
 
