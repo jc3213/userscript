@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.32
+// @version         5.33
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -424,7 +424,7 @@ function switchHandler(item) {
         item.querySelector('.assistantIcon').innerHTML = '';
     }
 }
-function contextMenuHandlerevent {
+function contextMenuHandler(event) {
     if (event.target.id === 'assistant_aria2' || event.shiftKey) {
         return;
     }
