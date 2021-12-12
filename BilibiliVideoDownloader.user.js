@@ -68,8 +68,7 @@ setTimeout(() => {
     player.addEventListener('loadstart', () => {
         thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
     });
-    toolbar.appendChild(mybox);
-    toolbar.appendChild(css);
+    toolbar.append(mybox, css);
 }, 1000);
 
 function bilibiliVideoTitle(name) {
