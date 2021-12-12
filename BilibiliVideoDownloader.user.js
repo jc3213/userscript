@@ -29,7 +29,6 @@ var format = {
 };
 
 var title = '';
-var bili = location.pathname.startsWith('/video/') ? true : false;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -52,7 +51,7 @@ setTimeout(() => {
     var toolbar = document.querySelector('#arc_toolbar_report') ?? document.querySelector('#toolbar_module');
     player.addEventListener('playing', event => {
         if (title === '') {
-            if (bili) {
+            if (location.pathname.startsWith('/video/')) {
                 bilibiliVideoTitle(__INITIAL_STATE__.videoData.title);
                 biliVideoThumbnail(__INITIAL_STATE__.elecFullInfo.data.pic);
                 biliVideoExtractor('x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p], 'data');
