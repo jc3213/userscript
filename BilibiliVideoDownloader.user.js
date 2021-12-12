@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.14
+// @version         2.15
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -29,6 +29,7 @@ var format = {
 };
 
 var title = '';
+var bili = location.pathname.startsWith('/video/') ? true : false;
 var mybox = document.createElement('div')
 var thumb = document.createElement('div');
 var video = document.createElement('div');
@@ -47,41 +48,42 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 
 
 setTimeout(() => {
-    var player = document.querySelector('video') || document.querySelector('bwp-video');
+    var player = document.querySelector('video') ?? document.querySelector('bwp-video');
+    var toolbar = document.querySelector('#arc_toolbar_report') ?? document.querySelector('#toolbar_module');
     player.addEventListener('playing', event => {
         if (title === '') {
-            if (location.pathname.startsWith('/video/')) {
-                title = __INITIAL_STATE__.videoData.title;
-                var thumb = __INITIAL_STATE__.elecFullInfo.data.pic;
-                var stream = {param: 'x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p] , key: 'data'};
-                var override = [document.querySelector('#arc_toolbar_report'), document.querySelector('div.bilibili-player-video-web-fullscreen'), document.querySelector('div.bilibili-player-video-btn-widescreen'), 'closed'];
+            if (bili) {
+                bilibiliVideoTitle(__INITIAL_STATE__.videoData.title);
+                biliVideoThumbnail(__INITIAL_STATE__.elecFullInfo.data.pic);
+                biliVideoExtractor('x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p], 'data');
+                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen', 'closed')
             }
             else {
-                title = __INITIAL_STATE__.h1Title;
-                thumb = __INITIAL_STATE__.epInfo.cover;
-                stream = {param: 'pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, key: 'result'};
-                override = [document.querySelector('#toolbar_module'), document.querySelector('div.squirtle-video-pagefullscreen'), document.querySelector('div.squirtle-video-widescreen'), 'active'];
+                bilibiliVideoTitle(__INITIAL_STATE__.h1Title);
+                biliVideoThumbnail(__INITIAL_STATE__.epInfo.cover);
+                biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
+                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen', 'active')
             }
-            title = title.replace(/[\/\\\?\|\<\>:"']/g, '') + (document.querySelector('#multi_page li.on > a') ? ' - ' + document.querySelector('#multi_page li.on > a').title : '');
-            biliVideoExtractor(stream);
-            biliVideoThumbnail(thumb);
-            biliVideoUIWrapper(...override);
         }
     });
     player.addEventListener('loadstart', () => {
-        thumb.innerHTML = '';
-        video.innerHTML = '';
-        audio.innerHTML = '';
-        title = '';
+        thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
     });
-}, 1000);
-
-function biliVideoUIWrapper(toolbar, full, wide, active) {
     toolbar.appendChild(mybox);
     toolbar.appendChild(css);
-    full.addEventListener('click', () => { mybox.style.display = full.classList.contains(active) ? 'none' : 'block'; });
-    wide.addEventListener('click', () => { mybox.style.display = 'block'; });
-    if (!wide.classList.contains(active)) { wide.click(); }
+}, 1000);
+
+function bilibiliVideoTitle(name) {
+    var multi = document.querySelector('#multi_page li.on > a');
+    title = (name + (multi ? multi.innerText : '')).replace(/[\/\\\?\|\<\>:"']/g, '');
+}
+
+function biliVideoUIWrapper(full, wide, active) {
+    setTimeout(() => {
+        document.querySelector(full).addEventListener('click', () => { mybox.style.display = document.querySelector(full).classList.contains(active) ? 'none' : 'block'; });
+        document.querySelector(wide).addEventListener('click', () => { mybox.style.display = 'block'; });
+        if (!document.querySelector(wide).classList.contains(active)) { document.querySelector(wide).click(); }
+    }, 1000);
 }
 
 function biliVideoThumbnail(url) {
@@ -89,7 +91,7 @@ function biliVideoThumbnail(url) {
     thumb.appendChild(menu);
 }
 
-function biliVideoExtractor({param, key}) {
+function biliVideoExtractor(param, key) {
     fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'}).then(response => response.json()).then(json => {
         [...json[key].dash.video, ...json[key].dash.audio].forEach(meta => {
             var menu = meta.mimeType.startsWith('video') ? video : audio;
