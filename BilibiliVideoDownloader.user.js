@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.15
+// @version         2.16
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -55,13 +55,13 @@ setTimeout(() => {
                 bilibiliVideoTitle(__INITIAL_STATE__.videoData.title);
                 biliVideoThumbnail(__INITIAL_STATE__.elecFullInfo.data.pic);
                 biliVideoExtractor('x/player/playurl?avid=' + __INITIAL_STATE__.aid + '&cid=' + __INITIAL_STATE__.cidMap[__INITIAL_STATE__.aid].cids[__INITIAL_STATE__.p], 'data');
-                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen', 'closed')
+                biliVideoUIWrapper('div.bilibili-player-video-web-fullscreen', 'div.bilibili-player-video-btn-widescreen', 'closed', 'div.bilibili-player-dm-tip-wrap');
             }
             else {
                 bilibiliVideoTitle(__INITIAL_STATE__.h1Title);
                 biliVideoThumbnail(__INITIAL_STATE__.epInfo.cover);
                 biliVideoExtractor('pgc/player/web/playurl?ep_id=' + __INITIAL_STATE__.epInfo.id, 'result');
-                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen', 'active')
+                biliVideoUIWrapper('div.squirtle-video-pagefullscreen', 'div.squirtle-video-widescreen', 'active');
             }
         }
     });
@@ -76,11 +76,12 @@ function bilibiliVideoTitle(name) {
     title = (name + (multi ? multi.innerText : '')).replace(/[\/\\\?\|\<\>:"']/g, '');
 }
 
-function biliVideoUIWrapper(full, wide, active) {
+function biliVideoUIWrapper(full, wide, active, dblck) {
     setTimeout(() => {
         document.querySelector(full).addEventListener('click', () => { mybox.style.display = document.querySelector(full).classList.contains(active) ? 'none' : 'block'; });
         document.querySelector(wide).addEventListener('click', () => { mybox.style.display = 'block'; });
         if (!document.querySelector(wide).classList.contains(active)) { document.querySelector(wide).click(); }
+        if (dblck) { document.querySelector(dblck).remove(); }
     }, 1000);
 }
 
