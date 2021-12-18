@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.16
+// @version         2.17
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -45,11 +45,10 @@ css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px;
 .mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
 .mybox > div > a:hover {background-color: #26c;}';
 
-
 setTimeout(() => {
     var player = document.querySelector('video') ?? document.querySelector('bwp-video');
     var toolbar = document.querySelector('#arc_toolbar_report') ?? document.querySelector('#toolbar_module');
-    player.addEventListener('playing', event => {
+    player.addEventListener('progress', () => {
         if (title === '') {
             if (location.pathname.startsWith('/video/')) {
                 bilibiliVideoTitle(__INITIAL_STATE__.videoData.title);
@@ -69,7 +68,7 @@ setTimeout(() => {
         thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
     });
     toolbar.append(mybox, css);
-}, 1000);
+}, 1500);
 
 function bilibiliVideoTitle(name) {
     var multi = document.querySelector('#multi_page li.on > a');
@@ -82,7 +81,7 @@ function biliVideoUIWrapper(full, wide, active, dblck) {
         document.querySelector(wide).addEventListener('click', () => { mybox.style.display = 'block'; });
         if (!document.querySelector(wide).classList.contains(active)) { document.querySelector(wide).click(); }
         if (dblck) { document.querySelector(dblck).remove(); }
-    }, 1000);
+    }, 1500);
 }
 
 function biliVideoThumbnail(url) {
