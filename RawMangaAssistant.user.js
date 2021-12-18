@@ -85,8 +85,7 @@ var message = {
             label: 'Send to Aria2 RPC',
             option: 'Options Aria2 RPC',
             done: 'All %n% image urls <b>have been sent to Aria2 RPC</b>',
-            norpc: '<b>No response</b> from Aria2 RPC server',
-            nokey: 'Aria2 RPC secret <b>token is invalid</b>'
+            error: 'Aria2 RPC <b>failed to send request</b>'
         },
         secret: 'Secret token updated, reloading page in 5 seconds',
         gotop: {
@@ -123,8 +122,7 @@ var message = {
             option: '设置 Aria2 RPC',
             icon: '🖅',
             done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
-            norpc: 'Aria2 RPC <b>服务器没有响应</b>',
-            nokey: 'Aria2 RPC <b>密钥不正确</b>'
+            error: 'Aria2 RPC <b>请求发生错误</b>'
         },
         secret: '密钥已更新，５秒后自动刷新页面',
         gotop: {
@@ -327,7 +325,7 @@ function checkAria2Availability() {
     .then(result => {
         folder = result['dir'] + '\\' + title.replace(/[:\/\\\?\>\<]/g, '_') + '\\' + longDecimalNumber(chapter);
         downMenu.querySelector('#aria2download').style.display = 'block';
-    }).catch(error => notification('aria2', 'norpc'));
+    }).catch(error => notification('aria2', 'error'));
 }
 function aria2RequestHandler({method, params = []}) {
     return fetch(options.server, {method: 'POST', body: JSON.stringify({id: '', jsonrpc: '2.0', method, params: ['token:' + options.secret, ...params]})})
