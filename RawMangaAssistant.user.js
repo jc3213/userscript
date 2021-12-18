@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         5.33
+// @version         6.0
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -61,11 +61,7 @@ var folder;
 var observer;
 var images;
 var watching;
-var options = {
-    server: GM_getValue('server', 'http://localhost:6800/jsonrpc'),
-    secret: GM_getValue('secret', ''),
-    menu: GM_getValue('menu', 'on')
-};
+var options = GM_getValue('options', {server: 'http://localhost:6800/jsonrpc', secret: '', menu: true});
 var visual = {height: document.documentElement.clientHeight, width: document.documentElement.clientWidth};
 var offset = {};
 var position = GM_getValue('position', {top: visual.height * 0.3, left: visual.width * 0.15});
@@ -276,10 +272,7 @@ button.addEventListener('dragend', event => {
     GM_setValue('position', position);
 });
 document.addEventListener('click', event => {
-    if (button.contains(event.target) || aria2Menu.contains(event.target) || event.target.id === 'aria2option') {
-        return;
-    }
-    container.style.display = 'none';
+    container.style.display = button.contains(event.target) ? 'block' : 'none';
 });
 
 // Primary menus
@@ -327,7 +320,10 @@ downMenu.querySelector('#aria2download').addEventListener('click', event => {
     }));
 });
 downMenu.querySelector('#aria2option').addEventListener('click', event => {
-    aria2Menu.style.cssText = 'display: block; left: ' + (position.left + 234) + 'px; top: ' + (position.top + 82) + 'px;';
+    options.server = prompt('Aria2 JSONRPC URI', options.server) ?? options.server;
+    options.secret = prompt('Aria2 Secret Token', options.secret) ?? options.secret;
+    GM_setValue('options', options);
+    checkAria2Availability();
 });
 
 function checkAria2Availability() {
@@ -356,26 +352,6 @@ function aria2RequestHandler({method, params = []}) {
         }
     });
 }
-
-// Aria2 Sub Menus
-var aria2Menu = document.createElement('form');
-aria2Menu.className = 'aria2Container';
-aria2Menu.style.cssText = 'display: none;';
-aria2Menu.innerHTML = '<div><input id="aria2uri" class="assistantMenu menuAria2Item" name="server" value="' + options.server + '">\
-<input id="aria2token" class="assistantMenu menuAria2Item" type="password" name="secret" value="' + options.secret + '"></div>\
-<div><span id="aria2submit" class="assistantMenu">' + i18n.submit +'</span>\
-<span id="aria2cancel" class="assistantMenu">' + i18n.cancel +'</span></div>';
-aria2Menu.querySelector('#aria2submit').addEventListener('click', event => {
-    options.server = aria2Menu.querySelector('#aria2uri').value;
-    options.secret = aria2Menu.querySelector('#aria2token').value;
-    GM_setValue('server', options.server);
-    GM_setValue('secret', options.secret);
-    checkAria2Availability();
-});
-aria2Menu.querySelector('#aria2cancel').addEventListener('click', event => {
-    aria2Menu.style.display = 'none';
-});
-container.appendChild(aria2Menu);
 
 // Secondary menus
 var clickMenu = document.createElement('div');
