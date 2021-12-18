@@ -229,9 +229,7 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
 .aria2Container {position: fixed; background-color: #fff; font-size: 14px;}\
 .aria2Container div {display: inline-block;}\
-.aria2Container span.assistantMenu {border: 1px outset darkviolet; width: fit-content; display: block; height: 38px; margin: 1px; padding: 8px 10px;}\
-.menuAria2Item {width: 240px !important; height: 38px; border: 1px ridge darkblue; overflow: hidden; word-break: break-word; user-select: none; margin: 1px;}\
-.menuAria2Item:focus {background-color: darkblue !important; color: white;}';
+.aria2Container span.assistantMenu {border: 1px outset darkviolet; width: fit-content; display: block; height: 38px; margin: 1px; padding: 8px 10px;}';
 document.body.appendChild(css);
 
 var button = document.createElement('span');
