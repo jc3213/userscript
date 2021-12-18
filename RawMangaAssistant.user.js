@@ -226,10 +226,7 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .menuContainer {background-color: #fff; min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
 .assistantIcon {width: 30px; display: inline-block; text-align: center}\
 .assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
-.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
-.aria2Container {position: fixed; background-color: #fff; font-size: 14px;}\
-.aria2Container div {display: inline-block;}\
-.aria2Container span.assistantMenu {border: 1px outset darkviolet; width: fit-content; display: block; height: 38px; margin: 1px; padding: 8px 10px;}';
+.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}';
 document.body.appendChild(css);
 
 var button = document.createElement('span');
