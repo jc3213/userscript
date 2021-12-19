@@ -75,7 +75,6 @@ function bilibiliVideoTitle(name) {
 
 function biliVideoUIWrapper(wide, active, dblck) {
     setTimeout(() => {
-        document.querySelector(wide).addEventListener('click', () => { mybox.style.display = 'block'; });
         if (!document.querySelector(wide).classList.contains(active)) { document.querySelector(wide).click(); }
         if (dblck) { document.querySelector(dblck).remove(); }
     }, 1500);
