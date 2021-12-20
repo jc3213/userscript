@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.0
+// @version      5.1
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -104,17 +104,17 @@ function getFilterResult(data) {
     var menu = document.createElement('div');
     menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
-    <span>' + i18n.preview + '</span>\
+    <span id="preview">' + i18n.preview + '</span>\
     <a href="' + data.torrent + '" target="_blank" style="display: ' + (data.torrent ? 'block' : 'none') + '">' + i18n.torrent + '</a>\
     <a href="' + data.magnet + '">' + i18n.magnet + '</a>\
-    <span>' + i18n.copy + '</span>';
+    <span id="copy">' + i18n.copy + '</span>';
     popup.appendChild(menu);
-    menu.querySelector('span:nth-child(2)').addEventListener('click', event => {
+    menu.querySelector('#preview').addEventListener('click', event => {
         event.target.style.cssText = 'background-color: #C3C;';
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
-    menu.querySelector('span:nth-child(5)').addEventListener('click', event => {
-        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.image.src : data.new ? data.src : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+    menu.querySelector('#copy').addEventListener('click', event => {
+        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.preview.src : data.new ? data.preview : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
     });
 }
 
