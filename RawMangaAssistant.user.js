@@ -2,12 +2,12 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.1
+// @version         6.2
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
 // @match           *://ja.mangatoro.com/*
-// @match           *://hakaraw.com/*
+// @match           *://mikaraw.com/*
 // @match           *://klmanga.com/*
 // @match           *://rawdevart.com/*
 // @match           *://manga1000.com/*
@@ -31,25 +31,24 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 //                  hakaraw.com / rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-//                  manga1000.com / manga1001.com / hakaraw.com
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-//                  hakaraw.com
-// @webRequest      {"selector": "*parringepigene.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*velawhagru.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*2fe5885777.b370db8cb7.com/*", "action": "cancel"}
+//                  manga1000.com / manga1001.com / mikaraw.com
+// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
+//                  mikaraw.com
+// @webRequest      {"selector": "*puturebraving.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
 //                  rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
 // @webRequest      {"selector": "https://static.manga10000.com/popup1000.js", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.kahiliwintun.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*livezombymil.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  klmanga.com
 // @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.greeter.me/*", "action": "cancel"}
 // @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
-//                  weloma.art // weloma.net
+//                  weloma.art / weloma.net
 // @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
 // ==/UserScript==
 
@@ -152,19 +151,13 @@ var i18n = message[navigator.language] ?? message['en-US'];
 var manga = {
     'ja.mangatoro.com': {
         chapter: /\/chapter-\d+/,
-        title: () => {
-            var result = /^(.+)\sChapter\s([^\s]+)\sNext/.exec(document.title);
-            return {title: result[1], chapter: result[2]};
-        },
+        title: {reg: /^(.+)\schap\s([^\s]+)/, sel: 'div.page-chapter > img', attr: 'alt', tl: 1, ch: 2},
         selector: 'div.page-chapter > img',
         lazyload: 'data-original'
     },
-    'hakaraw.com': {
+    'mikaraw.com': {
         chapter: /\/chapter-\d+/,
-        title: () => {
-            var result = /^(.+)\sRAW.+Chapter\s([^\s]+)/.exec(document.querySelector('a.chapter-title').title);
-            return {title: result[1], chapter: result[2]};
-        },
+        title: [{reg: /^([^(])+/, sel: '#header-bot li:nth-child(2) a', attr: 'title', nl: 0}, {reg: /([^\s]+)$/, sel: '#header-bot li:nth-child(3) a', attr: 'title', nl: 0}],
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]'],
         selector: 'div.chapter-c > img',
@@ -172,10 +165,7 @@ var manga = {
     },
     'klmanga.com': {
         chapter: /chapter-\d+/,
-        title: () => {
-            var result = /^(.+)(\s-)?(\sRaw)?\sChapter\s([^\s]+)\s-\s/.exec(document.title);
-            return {title: result[1], chapter: result.pop()};
-        },
+        title: {reg: /^(.+)(!?\s-\sRAW)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 3},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         ads: ['#id-custom_banner', 'div.float-ck'],
         selector: 'img.chapter-img',
@@ -183,38 +173,26 @@ var manga = {
     },
     'rawdevart.com': {
         chapter: /\/chapter-\d+/,
-        title: () => {
-            var result = /^Chapter\s(.+)\s\|\s([^\s]+)\sRaw\s\|/.exec(document.title);
-            return {title: result[2], chapter: result[1]};
-        },
+        title: {reg: /^Chapter\s([^\s]+)\s\|\s(.+)\sPage/, sel: '#img-container > div > img', attr: 'alt', tl: 2, ch: 1},
         selector: '#img-container > div > img',
         lazyload: 'data-src'
     },
     'manga1000.com': {
-        chapter: /【第(\S+)話】/,
-        title: () => {
-            var result = /^(.+)\s-\s(Raw\s)?Chapter\s([^\s]+)/.exec(document.title);
-            return {title: result[1], chapter: result[3]};
-        },
+        chapter: /-raw\/$/,
+        title: {reg: /^(.+)\s-\sRaw\s【第(.+)話】/, sel: 'img.aligncenter', attr: 'alt', tl: 1, ch: 2},
         shortcut: 'div.linkchap > a',
         selector: 'img.aligncenter'
     },
     'weloma.art': {
         chapter: /\d+\/\d+/,
-        title: () => {
-            var result = /^(.+)(\s-\sRAW)?\sChapter\s([^\s]+)\s/.exec(document.querySelector('img.chapter-img').getAttribute('alt'));
-            return {title: result[1], chapter: result.pop()};
-        },
+        title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
         lazyload: 'data-srcset'
     },
     'mangameta.com': {
         chapter: /\/chapter-\d+/,
-        title: () => {
-            var result = /^(.+)(\s-\sRAW)?\sChapter\s([^\s]+)/.exec(document.querySelector('a.chapter-title').title);
-            return {title: result[1], chapter: result.pop()};
-        },
+        title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
         shortcut: 'div.linkchap > a',
         selector: 'div.chapter-c > img'
     }
@@ -227,6 +205,18 @@ function longDecimalNumber(number, length = 3) {
     number = number.toString();
     var float = number.length - number.split(/[\._-]/)[0].length;
     return (10 ** length + number).slice(0 - length - float);
+}
+
+function extractMangaTitle(title = '') {
+    var symbol = navigator.platform === 'Win32' ? '\\' : '/';
+    if (Array.isArray(watching.title)) {
+        watching.title.forEach(item => { title += symbol + watching.title[0].reg.exec(document.querySelector(watching.title[0].sel).getAttribute(watching.title[0].attr))[watching.title[0].nl]; });
+    }
+    else {
+        var result = watching.title.reg.exec(document.querySelector(watching.title.sel).getAttribute(watching.title.attr));
+        title += symbol + result[watching.title.tl] + symbol + result[watching.title.ch];
+    }
+    return title;
 }
 
 // Create UI
@@ -330,10 +320,9 @@ downMenu.querySelector('#aria2option').addEventListener('click', event => {
 });
 
 function checkAria2Availability() {
-    var {title, chapter} = watching.title();
     aria2RequestHandler({method: 'aria2.getGlobalOption'})
     .then(result => {
-        folder = result['dir'] + '\\' + title.replace(/[:\/\\\?\>\<]/g, '_') + '\\' + longDecimalNumber(chapter);
+        folder = result['dir'] + extractMangaTitle();
         downMenu.querySelector('#aria2download').style.display = 'block';
     }).catch(error => notification('aria2', 'error'));
 }
