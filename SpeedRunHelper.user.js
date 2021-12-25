@@ -102,8 +102,7 @@ function createRecordWindow(id, content, title) {
         container.style.cssText = '';
     });
     container.querySelector('#speedrun-restore').addEventListener('click', event => {
-        container.classList.remove('speedrun-maximum');
-        container.classList.remove('speedrun-minimum');
+        container.classList.remove('speedrun-maximum', 'speedrun-minimum');
         container.style.cssText = style[id];
     });
     container.querySelector('#speedrun-close').addEventListener('click', event => {
