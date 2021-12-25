@@ -1,12 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.15
+// @version      2.16
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
 // @grant        GM_webRequest
-// @webRequest   {"selector": "*://*.speedrun.com/a.js*", "action": "cancel"}
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
 // ==/UserScript==
@@ -14,32 +13,25 @@
 'use strict';
 var logger = {};
 var offset = {};
-
-var minimum = document.createElement('div');
-minimum.className = 'speedrun-minimum';
-document.body.appendChild(minimum);
-
-var maximum = document.createElement('div');
-maximum.className = 'speedrun-maximum';
-document.body.appendChild(maximum);
+var style = {};
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
 #centerwidget {width: 100% !important;}\
 .speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999;}\
 .speedrun-window iframe {height: calc(100% - 20px); width: 100%;}\
-.speedrun-minimum {position: fixed; bottom: 0px; left: 0px; height: 20px; width: 100%; z-index: 99999;}\
-.speedrun-minimum > * {position: static; width: 200px; margin-right: 5px; display: inline-block;}\
-.speedrun-maximum {position: fixed; top: 0px; left: 0px; width: 100%; height: 100vh; z-index: 99999; display: none;}\
-.speedrun-maximum > * {position: static; width: 100%; height: 100%;}\
 .speedrun-top {position: relative; background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
-.speedrun-title {width: 75%;}\
-.speedrun-title > * {display: inline-block; width: 33%;}\
+.speedrun-title > * {display: inline-block; width: 25%;}\
 .speedrun-menu {position: absolute; right: 0px; top: 0px;}\
 .speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 5px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
-.speedrun-item:active {filter: opacity(30%);}';
-document.head.appendChild(css);
+.speedrun-item:active {filter: opacity(30%);}\
+.speedrun-minimum {bottom: 0px; left: 0px; width: 30%; height: 20px; z-index: 99999;}\
+.speedrun-minimum iframe {height: 0px;}\
+.speedrun-maximum {top: 0px; left: 0px; width: ' + (outerWidth - 54) + 'px; height: ' + (outerHeight - 20) + 'px; z-index: 99999;}\
+.speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
+.speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: inline-block;}';
+document.body.append(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', event => {
     event.preventDefault();
@@ -88,8 +80,8 @@ function createRecordWindow(id, content, title) {
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-top">' + title + '</div>\
 <div class="speedrun-menu"><span id="speedrun-minimum" class="speedrun-item">📌</span>\
-<span id="speedrun-maximum" class="speedrun-item">📽️</span>\
-<span id="speedrun-restore" class="speedrun-item" style="display: none;">🔳</span>\
+<span id="speedrun-maximum" class="speedrun-item">🔲</span>\
+<span id="speedrun-restore" class="speedrun-item">⚓</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     document.body.appendChild(container);
     content.style.cssText = 'height: calc(100% - 20px); width: 100%;';
@@ -97,27 +89,25 @@ function createRecordWindow(id, content, title) {
     var index = [...document.querySelectorAll('[id^="speedrun-"]')].findIndex(view => view === container);
     container.top = container.style.top = 130 + index * 20 + 'px';
     container.left = container.style.left = (screen.availWidth - 1280) / 2 + index * 20 + 'px';
-    container.addEventListener('click', event => {
-        if (event.target.id === 'speedrun-minimum') {
-            event.target.style.display = content.style.display = maximum.style.display = 'none';
-            container.querySelector('#speedrun-restore').style.display = 'inline-block';
-            minimum.appendChild(container);
-        }
-        if (event.target.id === 'speedrun-maximum') {
-            event.target.style.display = 'none';
-            container.querySelector('#speedrun-restore').style.display = 'inline-block';
-            maximum.style.display = 'block';
-            maximum.appendChild(container);
-        }
-        if (event.target.id === 'speedrun-restore') {
-            container.querySelector('#speedrun-minimum').style.display = container.querySelector('#speedrun-maximum').style.display = 'inline-block';
-            event.target.style.display = maximum.style.display = 'none';
-            content.style.display = 'block';
-            document.body.appendChild(container);
-        }
-        if (event.target.id === 'speedrun-close') {
-            container.remove();
-        }
+    container.querySelector('#speedrun-minimum').addEventListener('click', event => {
+        container.classList.add('speedrun-minimum');
+        container.classList.remove('speedrun-maximum');
+        style[id] = container.style.cssText ? container.style.cssText : style[id];
+        container.style.cssText = '';
+    });
+    container.querySelector('#speedrun-maximum').addEventListener('click', event => {
+        container.classList.add('speedrun-maximum');
+        container.classList.remove('speedrun-minimum');
+        style[id] = container.style.cssText ? container.style.cssText : style[id];
+        container.style.cssText = '';
+    });
+    container.querySelector('#speedrun-restore').addEventListener('click', event => {
+        container.classList.remove('speedrun-maximum');
+        container.classList.remove('speedrun-minimum');
+        container.style.cssText = style[id];
+    });
+    container.querySelector('#speedrun-close').addEventListener('click', event => {
+        container.remove();
     });
 }
 
