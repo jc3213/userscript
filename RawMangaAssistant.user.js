@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.0
+// @version         6.1
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -12,7 +12,9 @@
 // @match           *://rawdevart.com/*
 // @match           *://manga1000.com/*
 // @match           *://manga1001.com/*
-// @match           *://www.rawscan.net/*
+// @match           *://weloma.art/*
+// @match           *://weloma.net/*
+// @match           *://mangameta.com/*
 // @connect         *
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -47,9 +49,8 @@
 // @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.greeter.me/*", "action": "cancel"}
 // @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
-//                  www.rawscan.net
-// @webRequest      {"selector": "*.cstwpush.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*cobwebcomprehension.com/*", "action": "cancel"}
+//                  weloma.art // weloma.net
+// @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -198,18 +199,28 @@ var manga = {
         shortcut: 'div.linkchap > a',
         selector: 'img.aligncenter'
     },
-    'www.rawscan.net': {
-        chapter: /read\/[^\/]+\/[^\/]+\.html$/,
+    'weloma.art': {
+        chapter: /\d+\/\d+/,
         title: () => {
-            var result = /^(.+)\s(Raw\s)?Chapter\s([^\s]+)\s/.exec(document.title);
-            return {title: result[1], chapter: result[3]};
+            var result = /^(.+)(\s-\sRAW)?\sChapter\s([^\s]+)\s/.exec(document.querySelector('img.chapter-img').getAttribute('alt'));
+            return {title: result[1], chapter: result.pop()};
         },
-        shortcut: ['a.prev', 'a.next'],
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         selector: 'img.chapter-img',
-        lazyload: 'data-src'
+        lazyload: 'data-srcset'
+    },
+    'mangameta.com': {
+        chapter: /\/chapter-\d+/,
+        title: () => {
+            var result = /^(.+)(\s-\sRAW)?\sChapter\s([^\s]+)/.exec(document.querySelector('a.chapter-title').title);
+            return {title: result[1], chapter: result.pop()};
+        },
+        shortcut: 'div.linkchap > a',
+        selector: 'div.chapter-c > img'
     }
 };
 manga['manga1001.com'] = manga['manga1000.com'];
+manga['weloma.net'] = manga['weloma.art'];
 watching = manga[location.host];
 
 function longDecimalNumber(number, length = 3) {
@@ -225,7 +236,6 @@ css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index:
 .assistantIcon {width: 30px; display: inline-block; text-align: center}\
 .assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
 .assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}';
-document.body.appendChild(css);
 
 var button = document.createElement('span');
 button.id = 'assistant_button';
@@ -236,7 +246,7 @@ button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + '
 button.addEventListener('click', event => {
     container.style.display = 'block';
 });
-document.body.appendChild(button);
+document.body.append(button, css);
 
 var container = document.createElement('div');
 container.id = 'assistant_container';
