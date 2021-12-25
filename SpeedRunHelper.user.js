@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.14
+// @version      2.15
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -24,17 +24,18 @@ maximum.className = 'speedrun-maximum';
 document.body.appendChild(maximum);
 
 var css = document.createElement('style');
-css.innerHTML = '.speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999;}\
+css.innerHTML = '#widget {display: none !important;}\
+#centerwidget {width: 100% !important;}\
+.speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999;}\
 .speedrun-window iframe {height: calc(100% - 20px); width: 100%;}\
 .speedrun-minimum {position: fixed; bottom: 0px; left: 0px; height: 20px; width: 100%; z-index: 99999;}\
 .speedrun-minimum > * {position: static; width: 200px; margin-right: 5px; display: inline-block;}\
 .speedrun-maximum {position: fixed; top: 0px; left: 0px; width: 100%; height: 100vh; z-index: 99999; display: none;}\
 .speedrun-maximum > * {position: static; width: 100%; height: 100%;}\
-.speedrun-top {background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
-.speedrun-top * {display: inline-block;}\
-.speedrun-title {width: 85%;}\
-.speedrun-title * {width: 33%;}\
-.speedrun-menu {text-align: right; user-select: none; width: 15%;}\
+.speedrun-top {position: relative; background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
+.speedrun-title {width: 75%;}\
+.speedrun-title > * {display: inline-block; width: 33%;}\
+.speedrun-menu {position: absolute; right: 0px; top: 0px;}\
 .speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 5px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}';
@@ -50,7 +51,7 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', event 
             var cells = row.querySelectorAll('td');
             var record = row.classList.contains('center-sm') ? {rank: 1, time: 2} : row.classList.contains('height-minimal') ? {rank: 1, player: 2, time: 3} : {rank: 0, player: 1, time: 2};
             var player = record.player ? cells[record.player].innerText : document.querySelector('.profile-username').innerText;
-            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerText + '</span> <span>Player : ' + player + '</span> <span>Time : ' + cells[record.time].innerText + '</span>'
+            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerHTML + '</span> <span>Player : ' + player + '</span> <span>Time : ' + cells[record.time].innerHTML + '</span>';
             viewSpeedrunRecord({id, src, title});
         }
     }
