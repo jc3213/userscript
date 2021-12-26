@@ -164,7 +164,7 @@ var manga = {
     },
     'klmanga.com': {
         chapter: /chapter-\d+/,
-        title: {reg: /^(.+)(!?\s-\sRAW)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 3},
+        title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
         ads: ['#id-custom_banner', 'div.float-ck'],
         selector: 'img.chapter-img',
