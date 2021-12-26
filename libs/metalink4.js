@@ -22,9 +22,9 @@
         if (size) { f += '<size>' + size + '</size>'; }
         if (version) { f += '<version>' + version + '</version>'; }
         if (locale) { f += '<language>' + locale + '</language>'; }
-        if (Array.isArray(hash[0])) { hash.forEach(h => { f += '<hash type="' + h[0] + '">' + h[1] + '</hash>'; }); } else { f += '<hash type="' + hash[0] + '">' + hash[1] + '</hash>'; }
+        if (hash) { if (Array.isArray(hash[0])) { hash.forEach(h => { f += '<hash type="' + h[0] + '">' + h[1] + '</hash>'; }); } else { f += '<hash type="' + hash[0] + '">' + hash[1] + '</hash>'; } }
         if (Array.isArray(url)) { url.forEach(u => { f += '<url location="' + u[0] + '">' + u[1] + '</url>'; }); } else { f += '<url>' + url + '</url>'; }
-        if (Array.isArray(metaurl[0])) { metaurl.forEach(m => { f += '<metaurl metatype="' + m[0] + '">' + m[1] + '</metaurl>'; }); } else { f += '<metaurl metatype="' + metaurl[0] + '">' + metaurl[1] + '</metaurl>'; }
+        if (metaurl) { if (Array.isArray(metaurl[0])) { metaurl.forEach(m => { f += '<metaurl metatype="' + m[0] + '">' + m[1] + '</metaurl>'; }); } else { f += '<metaurl metatype="' + metaurl[0] + '">' + metaurl[1] + '</metaurl>'; } }
         return f += '</file>';
     }
 })();
