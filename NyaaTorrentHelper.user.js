@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.1
+// @version      5.2
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -114,7 +114,7 @@ function getFilterResult(data) {
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
     menu.querySelector('#copy').addEventListener('click', event => {
-        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.preview.src : data.new ? data.preview : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.image : data.web ? data.web : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
     });
 }
 
@@ -156,11 +156,11 @@ function getPreviewHandler(data, mouse) {
     if (data.none) {
         noValidPreview(data);
     }
+    else if (data.image) {
+        createPreview(data, mouse);
+    }
     else if (data.new) {
         openWebPreview(data);
-    }
-    else if (data.preview) {
-        createPreview(data, mouse);
     }
     else {
         xmlNodeHandler(data, mouse, getPreviewURL);
@@ -184,13 +184,12 @@ function getPreviewURL(node, data, mouse) {
     var description = node.querySelector('#torrent-description').innerHTML;
     var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(description);
     if (img) {
-        data.preview = img[0];
+        data.image = img[0];
         return createPreview(data, mouse);
     }
     var url = /https?:\/\/[^\*\r\n\)\]]+/g.exec(description);
     if (url) {
-        data.preview = url[0];
-        data.new = true;
+        data.web = url[0];
         return openWebPreview(data);
     }
     data.none = true;
@@ -198,7 +197,7 @@ function getPreviewURL(node, data, mouse) {
 }
 
 function openWebPreview(data) {
-    GM_openInTab(data.preview, true);
+    GM_openInTab(data.web, true);
     action[data.id] = false;
 }
 
@@ -210,7 +209,7 @@ function noValidPreview(data) {
 // Create preview
 function createPreview(data, mouse) {
     var image = document.createElement('img');
-    image.src = data.preview;
+    image.src = data.image;
     image.className = 'filter-preview';
     image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
     image.addEventListener('click', event => image.remove());
