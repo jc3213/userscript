@@ -18,7 +18,7 @@
     }
 
     function m({name, size, version, locale, hash, url, metaurl}) {
-        var f = name ? '<file name="' + name + '>' : '<file>';
+        var f = name ? '<file name="' + name + '">' : '<file>';
         if (size) { f += '<size>' + size + '</size>'; }
         if (version) { f += '<version>' + version + '</version>'; }
         if (locale) { f += '<language>' + locale + '</language>'; }
