@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.2
+// @version         6.3
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -39,10 +39,9 @@
 //                  rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 //                  manga1000.com / manga1001.com
-// @webRequest      {"selector": "https://static.manga10000.com/popup1000.js", "action": "cancel"}
+// @webRequest      {"selector": "*static.manga10000.com/popup1001.js*", "action": "cancel"}
+// @webRequest      {"selector": "*downysewersettle.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.kahiliwintun.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*livezombymil.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  klmanga.com
 // @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
