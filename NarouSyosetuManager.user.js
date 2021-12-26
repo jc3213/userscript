@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.4
+// @version      4.5
 // @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -73,7 +73,7 @@ var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span id="mgr-btn-subscribe" class="manager-button">NCODE登録</span>\
 <input style="padding: 5px;">\
 <span id="mgr-btn-update" class="manager-button">NCODE一括更新</span>\
-<span id="mgr-btn-json" class="manager-button">NCODEをエックスポート</span>\
+<span id="mgr-btn-meta4" class="manager-button">NCODEをエックスポート</span>\
 <span id="mgr-btn-save" class="manager-button" style="display: none; background-color: #387ec8; color: #fff">書庫更新</span>\
 <span id="mgr-btn-log" class="manager-button" style="display: none;">ログ表示</span></div>\
 <div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
@@ -82,46 +82,52 @@ container.className = 'manager-container';
 container.style.cssText = 'display: none;';
 document.body.appendChild(container);
 container.addEventListener('change', event => {novelist.myncode = event.target.value ?? novelist.ncode;});
-container.addEventListener('click', event => {
-    if (event.target.id === 'mgr-btn-subscribe') {
-        var book = bookmark.find(book => book.ncode === novelist.myncode);
-        if (book) {
-            myFancyPopup(book.ncode, book.title, 'は既に書庫に登録しています！');
-            validate[book.ncode] = book.title;
-        }
-        else if (novelist.myncode === novelist.ncode) {
-            subscribeNcode(novelist.ncode, novelist.title);
-        }
-        else {
-            validateNcode(novelist.myncode);
-        }
+container.querySelector('#mgr-btn-subscribe').addEventListener('click', event => {
+    var book = bookmark.find(book => book.ncode === novelist.myncode);
+    if (book) {
+        myFancyPopup(book.ncode, book.title, 'は既に書庫に登録しています！');
+        validate[book.ncode] = book.title;
     }
-    if (event.target.id === 'mgr-btn-update' && confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
+    else if (novelist.myncode === novelist.ncode) {
+        subscribeNcode(novelist.ncode, novelist.title);
+    }
+    else {
+        validateNcode(novelist.myncode);
+    }
+});
+container.querySelector('#mgr-btn-update').addEventListener('click', event => {
+    if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         bookmarkSyncPreHandler(() => bookmark.forEach(batchDownloadPreHandler));
     }
-    if (event.target.id === 'mgr-btn-json' && confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
+});
+container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
+    if ( confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
         saveBookmarkButton();
-        var json = bookmark.map(book => exportBookmarkInfo(book) ?? {url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', filename: book.title + '.pdf'});
+        var json = [];
+        bookmark.forEach(book => {
+            exportBookmarkInfo(book);
+            json.push({url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', name: book.title + '.pdf', locale: 'ja'});
+        });
         saveAsMetalink(json, '小説家になろう書庫');
         alert('情報のエックスポートは無事に成功しました！');
     }
-    if (event.target.id === 'mgr-btn-save') {
-        GM_setValue('bookmark', bookmark);
-        container.querySelector('.manager-logs').innerHTML = '';
-        container.querySelector('.manager-button:nth-child(5)').style.display = 'none';
-        container.querySelector('.manager-button:nth-child(6)').style.display = 'none';
+});
+container.querySelector('#mgr-btn-save').addEventListener('click', event => {
+    GM_setValue('bookmark', bookmark);
+    container.querySelector('.manager-logs').innerHTML = '';
+    container.querySelector('.manager-button:nth-child(5)').style.display = 'none';
+    container.querySelector('.manager-button:nth-child(6)').style.display = 'none';
+});
+container.querySelector('#mgr-btn-log').addEventListener('click', event => {
+    if (event.target.classList.contains('manager-checked')) {
+        container.querySelector('.manager-logs').style.display = 'none';
+        container.querySelector('.manager-shelf').style.display = 'block';
     }
-    if (event.target.id === 'mgr-btn-log') {
-        if (event.target.classList.contains('manager-checked')) {
-            container.querySelector('.manager-logs').style.display = 'none';
-            container.querySelector('.manager-shelf').style.display = 'block';
-        }
-        else {
-            container.querySelector('.manager-logs').style.display = 'block';
-            container.querySelector('.manager-shelf').style.display = 'none';
-        }
-        event.target.classList.toggle('manager-checked');
+    else {
+        container.querySelector('.manager-logs').style.display = 'block';
+        container.querySelector('.manager-shelf').style.display = 'none';
     }
+    event.target.classList.toggle('manager-checked');
 });
 
 // NCODE検証&登録
@@ -174,17 +180,21 @@ function fancyTableItem(book, index) {
     <span title="' + (book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します') + '"><input value="' + book.next + '"></span>\
     <span id="mgr-bk-update" class="manager-button" title="縦書きPDFの更新をチェックします">' + generateTimeFormat(book.last) + '</span>';
     container.querySelector('.manager-shelf').appendChild(mybook);
-    mybook.addEventListener('click', event => {
-        if (event.target.id === 'mgr-bk-remove' && confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
+    mybook.querySelector('#mgr-bk-remove').addEventListener('click', event => {
+        if (confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
             mybook.remove();
             bookmark.splice(index, 1);
             saveBookmarkButton();
             myFancyLog(book.ncode, book.title, 'は書庫から削除しました！');
         }
-        if (event.target.id === 'mgr-bk-open' && confirm('小説【 ' + book.title + ' 】を開きますか？')) {
+    });
+    mybook.querySelector('#mgr-bk-open').addEventListener('click', event => {
+        if (confirm('小説【 ' + book.title + ' 】を開きますか？')) {
             open('https://ncode.syosetu.com/' + book.ncode + '/', '_blank');
         }
-        if (event.target.id === 'mgr-bk-update' && confirm(book.title + ' をダウンロードしますか？')) {
+    });
+    mybook.querySelector('#mgr-bk-update').addEventListener('click', event => {
+        if (confirm(book.title + ' をダウンロードしますか？')) {
             updateObserver(1, () => batchDownloadPreHandler(book), saveBookmarkButton);
         }
     });
