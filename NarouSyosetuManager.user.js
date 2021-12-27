@@ -101,14 +101,14 @@ container.querySelector('#mgr-btn-update').addEventListener('click', event => {
     }
 });
 container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
-    if ( confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        saveBookmarkButton();
-        var json = [];
-        bookmark.forEach(book => {
-            exportBookmarkInfo(book);
-            json.push({url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', name: book.title + '.pdf', locale: 'ja'});
+    if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
+        var json = bookmark.map(book => {
+            book.last = novelist.now;
+            container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
+            return {url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', name: book.title + '.pdf', locale: 'ja'};
         });
         saveAsMetalink(json, '小説家になろう書庫');
+        saveBookmarkButton();
         alert('情報のエックスポートは無事に成功しました！');
     }
 });
@@ -161,14 +161,6 @@ function subscribeNcode(ncode, title) {
     bookmark.push(book);
     saveBookmarkButton();
     myFancyLog(ncode, title, 'は書庫に登録しました！');
-}
-
-function exportBookmarkInfo(book) {
-    book.last = novelist.now;
-    container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
-    var url = 'https://pdfnovels.net/' + book.ncode + '/main.pdf';
-    var filename = book.title + '.pdf';
-    return {url, filename};
 }
 
 // ブックマーク表記生成
