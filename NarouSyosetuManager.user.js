@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#ssha256-QKUXWW5bZZv7sqNDpGB+nhKv6e2IdGELUp99owlh4dc=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -107,7 +107,7 @@ container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
             container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
             return {url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', name: book.title + '.pdf', locale: 'ja'};
         });
-        saveAsMetalink.saveAs('小説家になろう書庫');
+        toMetalink4(json).saveAs('小説家になろう書庫');
         saveBookmarkButton();
         alert('情報のエックスポートは無事に成功しました！');
     }
