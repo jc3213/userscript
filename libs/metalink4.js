@@ -1,5 +1,5 @@
 (function() {
-    this.saveAsMetalink = i => {
+    this.toMetalink4 = i => {
         var a = ['<?xml version="1.0" encoding="UTF-8"?>', '<metalink xmlns="urn:ietf:params:xml:ns:metalink">', ...(Array.isArray(i) ? i : [i]).map(m), '</metalink>'];
         var b = new Blob(a, {type: 'application/metalink+xml; charset=utf-8'});
         return { binary: a, text: a.join(''), blob: b, saveAs: n => s(b, n) };
