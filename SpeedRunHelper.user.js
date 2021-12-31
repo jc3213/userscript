@@ -56,7 +56,7 @@ function viewSpeedrunRecord(id, title, src) {
         style[id] = view.style.cssText = 'top: ' + (130 + view.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + view.idx * 30) + 'px;';
     }
     else if (logger[id]) {
-        createRecordWindow(id, logger[id], title);
+        createRecordWindow(id, title, logger[id]);
     }
     else {
         fetch(src).then(response => response.text()).then(htmlText => {
