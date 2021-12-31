@@ -62,7 +62,7 @@ var images;
 var watching;
 var options = GM_getValue('options', {server: 'http://localhost:6800/jsonrpc', secret: '', menu: true});
 var visual = {height: document.documentElement.clientHeight, width: document.documentElement.clientWidth};
-var offset = {};
+var offset;
 var position = GM_getValue('position', {top: visual.height * 0.3, left: visual.width * 0.15});
 var warning;
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
@@ -245,18 +245,15 @@ document.body.appendChild(container);
 
 // Draggable button and menu
 button.addEventListener('dragstart', event => {
-    offset.top = event.clientY;
-    offset.left = event.clientX
+    offset = {top: event.clientY, left: event.clientX};
 });
 button.addEventListener('dragend', event => {
-    var maxHeight = visual.height - button.offsetHeight;
-    var maxWidth = visual.width - button.offsetWidth;
-    position.top += event.clientY - offset.top;
-    position.left += event.clientX - offset.left;
-    position.top = position.top < 0 ? 0 : position.top;
-    position.top = position.top > maxHeight ? maxHeight : position.top;
-    position.left = position.left < 0 ? 0 : position.left;
-    position.left = position.left > maxWidth ? maxWidth : position.left;
+    var height = visual.height - button.offsetHeight;
+    var width = visual.width - button.offsetWidth;
+    var top = position.top + event.clientY - offset.top;
+    var left = position.left + event.clientX - offset.left;
+    position.top = top < 0 ? 0 : top > height ? height : top;
+    position.left = left < 0 ? 0 : left > width ? width : left;
     button.style.top = position.top + 'px';
     button.style.left = position.left + 'px';
     container.style.top = button.offsetTop + 'px';
@@ -319,15 +316,13 @@ downMenu.querySelector('#aria2option').addEventListener('click', event => {
 });
 
 function checkAria2Availability() {
-    aria2RequestHandler({method: 'aria2.getGlobalOption'})
-    .then(result => {
+    aria2RequestHandler({method: 'aria2.getGlobalOption'}).then(result => {
         folder = result['dir'] + extractMangaTitle();
         downMenu.querySelector('#aria2download').style.display = 'block';
     }).catch(error => notification('aria2', 'error'));
 }
 function aria2RequestHandler({method, params = []}) {
-    return fetch(options.server, {method: 'POST', body: JSON.stringify({id: '', jsonrpc: '2.0', method, params: ['token:' + options.secret, ...params]})})
-    .then(response => {
+    return fetch(options.server, {method: 'POST', body: JSON.stringify({id: '', jsonrpc: '2.0', method, params: ['token:' + options.secret, ...params]})}).then(response => {
         if (response.ok) {
             return response.json();
         }
@@ -408,12 +403,12 @@ if (watching) {
         removeAdsElement();
     }
     if (watching.chapter.test(location.pathname)) {
-        checkAria2Availability();
         if (watching.shortcut) {
             appendShortcuts();
         }
         images = document.querySelectorAll(watching.selector);
         if (images.length > 0) {
+            checkAria2Availability();
             extractImage();
         }
         else {
