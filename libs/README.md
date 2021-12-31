@@ -1,2 +1,2 @@
 ## How to use
-[metalink.js](libs/HowToUse/metalink4.md)
+[metalink.js](HowToUse/metalink4.md)
