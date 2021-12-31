@@ -23,7 +23,7 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-top {position: relative; background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
 .speedrun-title > * {display: inline-block; width: 25%;}\
 .speedrun-menu {position: absolute; right: 0px; top: 0px;}\
-.speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 5px;}\
+.speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 30%; height: 20px; z-index: 99999;}\
