@@ -1,15 +1,11 @@
 (function() {
-    this.saveAsMetalink = (i, n) => {
-        var a = Array.isArray(i) ? i : [i];
-        var b = new Blob([
-            '<?xml version="1.0" encoding="UTF-8"?><metalink xmlns="urn:ietf:params:xml:ns:metalink">',
-            ...a.map(m),
-            '</metalink>'
-        ], {type: 'application/metalink+xml; charset=utf-8'});
-        s(b, n);
+    this.saveAsMetalink = i => {
+        var a = ['<?xml version="1.0" encoding="UTF-8"?>', '<metalink xmlns="urn:ietf:params:xml:ns:metalink">', ...(Array.isArray(i) ? i : [i]).map(m), '</metalink>'];
+        var b = new Blob(b, {type: 'application/metalink+xml; charset=utf-8'});
+        return { binary: a, text: a.join(''), blob: b, saveAs: n => s(b, n) };
     }
 
-    function s(b, n) {
+    function s(b, n = 'metalink') {
         var s = document.createElement('a');
         s.href = URL.createObjectURL(b);
         s.download = n + '-' + new Date().toLocaleString('ja').replace(/[\/\s:]/g, '_') + '.meta4';
