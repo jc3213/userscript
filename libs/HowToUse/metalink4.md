@@ -18,7 +18,7 @@ An object containing information to generate metalink file `{ name, size, versio
 An array `[ { name, size, version, locale, hash, url, metaurl }, { name, size, version, locale, hash, url, metaurl }... ]`
 #### url `*required`
 The download address of the file\
-String `<url>https://sam.pl/e.zip</url>`\
+String to generate `<url>https://sam.pl/e.zip</url>`\
 Array `[ locale, url ]` to generate `<url location="en">https://sam.pl/e.zip</url>`\
 Array `[ [ locale, url ], [ locale, url ]... ]` for multiple download addresses
 ####`name `Optional`
@@ -34,6 +34,7 @@ The hash of the file\
 Array `[ type, hash ]` to generate `<hash type="sha-256">40a51...1e1d7</hash>`\
 Array `[ [ type, hash ], [ type, hash ]... ]` for multiple hashes
 #### metaurl `Optional`
+The metaurl address of the file\
 Array `[ type, metaurl ]` to generate `<metaurl type="torrent">https://sam.pl/e.zip.torrent</metaurl>`\
 Array `[ [ type, metaurl ], [ type, metaurl ]... ]` for multiple metaurl addresses
 ### `meta4`
