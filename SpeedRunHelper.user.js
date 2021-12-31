@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.18
+// @version      2.19
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -53,7 +53,8 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', event 
 function viewSpeedrunRecord(id, title, src) {
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
-        view.style.cssText = 'top: ' + style[id].top + 'px; left: ' + style[id].width + 'px;'
+        var index = document.querySelectorAll('[id^="speedrun-"]').length;
+        style[id] = view.style.cssText = 'top: ' + (130 + index * 20) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + index * 20) + 'px;';
     }
     else if (logger[id]) {
         createRecordWindow(id, logger[id], title);
@@ -74,7 +75,6 @@ function createRecordWindow(id, title, content) {
         return open(content.href, '_blank');
     }
 
-    var index = document.querySelectorAll('[id^="speedrun-"]').length;
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.draggable = 'true';
@@ -86,6 +86,7 @@ function createRecordWindow(id, title, content) {
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     document.body.appendChild(container);
     container.appendChild(content);
+    var index = document.querySelectorAll('[id^="speedrun-"]').length;
     style[id] = container.style.cssText = 'top: ' + (130 + index * 20) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + index * 20) + 'px;';
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
         container.classList.add('speedrun-minimum');
@@ -110,7 +111,7 @@ document.addEventListener('dragstart', event => {
     offset = { top: event.clientY, left: event.clientX };
 });
 document.addEventListener('dragend', event => {
-    if (!event.target.classList.contains('speedrun-minimum')) {
+    if (event.target.className === 'speedrun-window') {
         var id = event.target.id.slice(event.target.id.indexOf('-') + 1);
         style[id] = event.target.style.cssText = 'top: ' + (event.target.offsetTop + event.clientY - offset.top) + 'px; left: ' + (event.target.offsetLeft + event.clientX - offset.left) + 'px;';
     }
