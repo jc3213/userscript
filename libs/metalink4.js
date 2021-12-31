@@ -8,7 +8,7 @@
     function s(b, n = 'metalink') {
         var s = document.createElement('a');
         s.href = URL.createObjectURL(b);
-        s.download = n + '-' + new Date().toLocaleString('ja').replace(/[\/\s:]/g, '_') + '.meta4';
+        s.download = n + '-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '') + '.meta4';
         s.click();
         s.remove();
     }
