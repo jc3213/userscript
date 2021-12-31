@@ -53,8 +53,7 @@ document.getElementById('leaderboarddiv').addEventListener('contextmenu', event 
 function viewSpeedrunRecord(id, title, src) {
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
-        var index = document.querySelectorAll('[id^="speedrun-"]').length;
-        style[id] = view.style.cssText = 'top: ' + (130 + index * 20) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + index * 20) + 'px;';
+        style[id] = view.style.cssText = 'top: ' + (130 + view.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + view.idx * 30) + 'px;';
     }
     else if (logger[id]) {
         createRecordWindow(id, logger[id], title);
@@ -63,7 +62,7 @@ function viewSpeedrunRecord(id, title, src) {
         fetch(src).then(response => response.text()).then(htmlText => {
             var xml = document.createElement('div');
             xml.innerHTML = htmlText;
-            logger[id] = xml.querySelector('#centerwidget iframe') ?? xml.querySelector('#centerwidget p > a');
+            logger[id] = xml.querySelector('#centerwidget iframe') ?? xml.querySelector('#centerwidget a[rel="noopener"]');
             createRecordWindow(id, title, logger[id]);
             xml.remove();
         });
@@ -77,6 +76,7 @@ function createRecordWindow(id, title, content) {
 
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
+    container.idx = document.querySelectorAll('.speedrun-window').length;
     container.draggable = 'true';
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-top">' + title + '</div>\
@@ -86,8 +86,7 @@ function createRecordWindow(id, title, content) {
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     document.body.appendChild(container);
     container.appendChild(content);
-    var index = document.querySelectorAll('[id^="speedrun-"]').length;
-    style[id] = container.style.cssText = 'top: ' + (130 + index * 20) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + index * 20) + 'px;';
+    style[id] = container.style.cssText = 'top: ' + (130 + container.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + container.idx * 30) + 'px;';
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
         container.classList.add('speedrun-minimum');
         container.classList.remove('speedrun-maximum');
