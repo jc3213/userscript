@@ -12,8 +12,8 @@
 
 'use strict';
 var logger = {};
-var offset = {};
 var style = {};
+var offset;
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
@@ -107,8 +107,7 @@ function createRecordWindow(id, title, content) {
 }
 
 document.addEventListener('dragstart', event => {
-    offset.top = event.clientY;
-    offset.left = event.clientX
+    offset = { top: event.clientY, left: event.clientX };
 });
 document.addEventListener('dragend', event => {
     if (!event.target.classList.contains('speedrun-minimum')) {
