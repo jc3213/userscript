@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.16
+// @version      2.17
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -29,7 +29,7 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 30%; height: 20px; z-index: 99999;}\
 .speedrun-minimum iframe {height: 0px;}\
 .speedrun-maximum {top: 0px; left: 0px; width: ' + (outerWidth - 54) + 'px; height: ' + (outerHeight - 20) + 'px; z-index: 99999;}\
-.speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
+#speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: inline-block;}';
 document.body.append(css);
 
@@ -84,7 +84,7 @@ function createRecordWindow(id, content, title) {
 <span id="speedrun-restore" class="speedrun-item">⚓</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     document.body.appendChild(container);
-    content.style.cssText = 'height: calc(100% - 20px); width: 100%;';
+    var restore = content.style.cssText = 'height: calc(100% - 20px); width: 100%;';
     container.appendChild(content);
     var index = [...document.querySelectorAll('[id^="speedrun-"]')].findIndex(view => view === container);
     container.top = container.style.top = 130 + index * 20 + 'px';
@@ -92,18 +92,18 @@ function createRecordWindow(id, content, title) {
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
         container.classList.add('speedrun-minimum');
         container.classList.remove('speedrun-maximum');
-        style[id] = container.style.cssText ? container.style.cssText : style[id];
+        restore = container.style.cssText ? container.style.cssText : restore;
         container.style.cssText = '';
     });
     container.querySelector('#speedrun-maximum').addEventListener('click', event => {
         container.classList.add('speedrun-maximum');
         container.classList.remove('speedrun-minimum');
-        style[id] = container.style.cssText ? container.style.cssText : style[id];
+        restore = container.style.cssText ? container.style.cssText : restore;
         container.style.cssText = '';
     });
     container.querySelector('#speedrun-restore').addEventListener('click', event => {
         container.classList.remove('speedrun-maximum', 'speedrun-minimum');
-        container.style.cssText = style[id];
+        container.style.cssText = restore;
     });
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
