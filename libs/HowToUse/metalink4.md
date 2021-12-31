@@ -17,9 +17,10 @@ An object containing information to generate metalink file `{ name, size, versio
 An array `[ { name, size, version, locale, hash, url, metaurl }, { name, size, version, locale, hash, url, metaurl }... ]`
 #### url `*required`
 The download address of the file\
-String to generate `<url>https://sam.pl/e.zip</url>`\
+String `url` to generate `<url>https://sam.pl/e.zip</url>`\
+Array `[ url0, url1... ] for multiple download addresses\
 Array `[ locale, url ]` to generate `<url location="en">https://sam.pl/e.zip</url>`\
-Array `[ [ locale, url ], [ locale, url ]... ]` for multiple download addresses
+Array `[ [ locale0, url0 ], [ locale1, url1 ]... ]` for multiple download addresses with locales
 ####`name `Optional`
 The name of the file `<file name="This.File">`
 #### size `Optional`
@@ -31,11 +32,11 @@ The language of the file `<laguage>en</language>`
 #### hash `Optional`
 The hash of the file\
 Array `[ type, hash ]` to generate `<hash type="sha-256">40a51...1e1d7</hash>`\
-Array `[ [ type, hash ], [ type, hash ]... ]` for multiple hashes
+Array `[ [ type0, hash0 ], [ type1, hash1 ]... ]` for multiple hashes
 #### metaurl `Optional`
 The metaurl address of the file\
 Array `[ type, metaurl ]` to generate `<metaurl type="torrent">https://sam.pl/e.zip.torrent</metaurl>`\
-Array `[ [ type, metaurl ], [ type, metaurl ]... ]` for multiple metaurl addresses
+Array `[ [ type0, metaurl0 ], [ type1, metaurl1 ]... ]` for multiple metaurl addresses
 ### `meta4`
 An object contains the result `{ binary, blob, text, saveAs }`
 #### binary
