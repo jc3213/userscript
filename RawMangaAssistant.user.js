@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.4
+// @version         6.5
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -16,6 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-3fyzgot+aKs1bNIwJJRqfzvFfYLYtEc6rGwuv0b3Ed0=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
@@ -60,10 +61,10 @@ var folder;
 var observer;
 var images;
 var watching;
-var options = GM_getValue('options', {server: 'http://localhost:6800/jsonrpc', secret: '', menu: true});
+aria2 = {...aria2, ...GM_getValue('aria2', {jsonrpc: 'http://localhost:6800/jsonrpc', secret: ''})};
+var options = GM_getValue('options', {menu: 'on', top: 300, left: 150});
 var visual = {height: document.documentElement.clientHeight, width: document.documentElement.clientWidth};
 var offset;
-var position = GM_getValue('position', {top: visual.height * 0.3, left: visual.width * 0.15});
 var warning;
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
 var aria2Headers = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent:' + navigator.userAgent];
@@ -213,26 +214,25 @@ function extractMangaTitle(title = '') {
 var css = document.createElement('style');
 css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index: 999999999;}\
 .menuContainer {background-color: #fff; min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
-.assistantIcon {width: 30px; display: inline-block; text-align: center}\
 .assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
-.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}';
+.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
+.assistantIcon {width: 30px; display: inline-block; text-align: center}';
+document.body.appendChild(css);
 
 var button = document.createElement('span');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay assistantMenu';
+button.style.cssText = 'top: ' + options.top + 'px; left: ' + options.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
 button.draggable = true;
-button.style.cssText = 'top: ' + position.top + 'px; left: ' + position.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
 button.addEventListener('click', event => {
     container.style.display = 'block';
 });
-document.body.append(button, css);
-
 var container = document.createElement('div');
 container.id = 'assistant_container';
 container.className = 'menuOverlay';
-container.style.cssText = 'top: ' + position.top + 'px; left: ' + (position.left + button.offsetWidth) + 'px; display: none';
-document.body.appendChild(container);
+container.style.cssText = 'top: ' + options.top + 'px; left: ' + (options.left + button.offsetWidth) + 'px; display: none';
+document.body.append(button, container);
 
 // Draggable button and menu
 button.addEventListener('dragstart', event => {
@@ -241,15 +241,15 @@ button.addEventListener('dragstart', event => {
 button.addEventListener('dragend', event => {
     var height = visual.height - button.offsetHeight;
     var width = visual.width - button.offsetWidth;
-    var top = position.top + event.clientY - offset.top;
-    var left = position.left + event.clientX - offset.left;
-    position.top = top < 0 ? 0 : top > height ? height : top;
-    position.left = left < 0 ? 0 : left > width ? width : left;
-    button.style.top = position.top + 'px';
-    button.style.left = position.left + 'px';
+    var top = options.top + event.clientY - offset.top;
+    var left = options.left + event.clientX - offset.left;
+    options.top = top < 0 ? 0 : top > height ? height : top;
+    options.left = left < 0 ? 0 : left > width ? width : left;
+    button.style.top = options.top + 'px';
+    button.style.left = options.left + 'px';
     container.style.top = button.offsetTop + 'px';
     container.style.left = button.offsetLeft + button.offsetWidth + 'px';
-    GM_setValue('position', position);
+    GM_setValue('options', options);
 });
 document.addEventListener('click', event => {
     container.style.display = button.contains(event.target) ? 'block' : 'none';
@@ -259,7 +259,7 @@ document.addEventListener('click', event => {
 var downMenu = document.createElement('div');
 downMenu.innerHTML = '<div id="download" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
 <div id="clipboard" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div id="aria2download" class="assistantMenu" style="display: none;"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
+<div id="aria2download" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
 <div id="aria2option" class="assistantMenu" id="aria2Option"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
 downMenu.className = 'menuContainer';
 downMenu.style.display = 'none';
@@ -290,43 +290,26 @@ downMenu.querySelector('#clipboard').addEventListener('click', event => {
 });
 // Aria2 Menuitems
 downMenu.querySelector('#aria2download').addEventListener('click', event => {
-    urls.forEach((url, index) => aria2RequestHandler({
-        method: 'aria2.addUri',
-        params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]
-    }).then(result => {
+    urls.forEach((url, index) => aria2.request('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]).then(result => {
         if (index === urls.length - 1) {
             notification('aria2', 'done');
         }
     }));
 });
 downMenu.querySelector('#aria2option').addEventListener('click', event => {
-    options.server = prompt('Aria2 JSONRPC URI', options.server) ?? options.server;
-    options.secret = prompt('Aria2 Secret Token', options.secret) ?? options.secret;
-    GM_setValue('options', options);
+    aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
+    aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
+    GM_setValue('aria2', aria2);
     checkAria2Availability();
 });
 
 function checkAria2Availability() {
-    aria2RequestHandler({method: 'aria2.getGlobalOption'}).then(result => {
-        folder = result['dir'] + extractMangaTitle();
+    aria2.request('aria2.getGlobalOption').then(result => {
+        folder = result.dir + extractMangaTitle();
         downMenu.querySelector('#aria2download').style.display = 'block';
-    }).catch(error => notification('aria2', 'error'));
-}
-function aria2RequestHandler({method, params = []}) {
-    return fetch(options.server, {method: 'POST', body: JSON.stringify({id: '', jsonrpc: '2.0', method, params: ['token:' + options.secret, ...params]})}).then(response => {
-        if (response.ok) {
-            return response.json();
-        }
-        else {
-            throw response.statusText;
-        }
-    }).then(json => {
-        if (json.result) {
-            return json.result;
-        }
-        if (json.error) {
-            throw json.error.message;
-        }
+    }).catch(error => {
+        notification('aria2', 'error');
+        downMenu.querySelector('#aria2download').style.display = 'none';
     });
 }
 
@@ -362,7 +345,7 @@ switchMenu.addEventListener('click', event => {
     var name = event.target.getAttribute('name');
     options[name] = options[name] === 'on' ? 'off' : 'on';
     switchHandler(event.target);
-    GM_setValue(name, options[name]);
+    GM_setValue('options', options);
 });
 container.appendChild(switchMenu);
 
