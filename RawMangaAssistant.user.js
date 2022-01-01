@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.3
+// @version         6.4
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -102,8 +102,7 @@ var message = {
             start: '<b>Extracting</b> manga source',
             done: 'A total of %n% image urls <b>has been extracted</b>',
             fail: '<b>Download function not available</b> due to extraction failure',
-            error: '<b>Can\'t be extracted</b> image extension',
-            fatal: '<b>No manga source</b> for extraction. Please send feedback'
+            error: '<b>Can\'t be extracted</b> image extension'
         }
     },
     'zh-CN': {
@@ -139,8 +138,7 @@ var message = {
             start: '<b>正在解析</b>图像来源',
             done: '已<b>成功解析</b>全部 %n% 图像来源',
             fail: '无法解析图像来源，下载功能<b>无法使用</b>',
-            error: '<b>无法解析</b>图像后缀',
-            fatal: '<b>无法获取</b>图像来源，请反馈问题'
+            error: '<b>无法解析</b>图像后缀'
         }
     }
 };
@@ -149,51 +147,44 @@ var i18n = message[navigator.language] ?? message['en-US'];
 // Supported sites
 var manga = {
     'ja.mangatoro.com': {
-        chapter: /\/chapter-\d+/,
-        title: {reg: /^(.+)\schap\s([^\s]+)/, sel: 'div.page-chapter > img', attr: 'alt', tl: 1, ch: 2},
-        selector: 'div.page-chapter > img',
-        lazyload: 'data-original'
+        image: 'div.page-chapter > img',
+        lazyload: 'data-original',
+        title: {reg: /^(.+)\schap\s([^\s]+)/, sel: 'div.page-chapter > img', attr: 'alt', tl: 1, ch: 2}
     },
     'mikaraw.com': {
-        chapter: /\/chapter-\d+/,
+        image: 'div.chapter-c > img',
+        lazyload: 'data-src',
         title: [{reg: /^([^(])+/, sel: '#header-bot li:nth-child(2) a', attr: 'title', nl: 0}, {reg: /([^\s]+)$/, sel: '#header-bot li:nth-child(3) a', attr: 'title', nl: 0}],
         shortcut: ['#prev_chap', '#next_chap'],
-        ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]'],
-        selector: 'div.chapter-c > img',
-        lazyload: 'data-src'
+        ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]']
     },
     'klmanga.com': {
-        chapter: /chapter-\d+/,
+        image: 'img.chapter-img',
+        lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['#id-custom_banner', 'div.float-ck'],
-        selector: 'img.chapter-img',
-        lazyload: 'data-aload'
+        ads: ['#id-custom_banner', 'div.float-ck']
     },
     'rawdevart.com': {
-        chapter: /\/chapter-\d+/,
-        title: {reg: /^Chapter\s([^\s]+)\s\|\s(.+)\sPage/, sel: '#img-container > div > img', attr: 'alt', tl: 2, ch: 1},
-        selector: '#img-container > div > img',
-        lazyload: 'data-src'
+        image: '#img-container > div > img',
+        lazyload: 'data-src',
+        title: {reg: /^Chapter\s([^\s]+)\s\|\s(.+)\sPage/, sel: '#img-container > div > img', attr: 'alt', tl: 2, ch: 1}
     },
     'manga1000.com': {
-        chapter: /-raw\/$/,
+        image: 'img.aligncenter',
         title: {reg: /^(.+)\s-\sRaw\s【第(.+)話】/, sel: 'img.aligncenter', attr: 'alt', tl: 1, ch: 2},
-        shortcut: 'div.linkchap > a',
-        selector: 'img.aligncenter'
+        shortcut: 'div.linkchap > a'
     },
     'weloma.art': {
-        chapter: /\d+\/\d+/,
+        image: 'img.chapter-img',
+        lazyload: 'data-srcset',
         title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        selector: 'img.chapter-img',
-        lazyload: 'data-srcset'
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
     'mangameta.com': {
-        chapter: /\/chapter-\d+/,
+        image: 'div.chapter-c > img',
         title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
-        shortcut: 'div.linkchap > a',
-        selector: 'div.chapter-c > img'
+        shortcut: 'div.linkchap > a'
     }
 };
 manga['manga1001.com'] = manga['manga1000.com'];
@@ -402,17 +393,12 @@ if (watching) {
     if (watching.ads) {
         removeAdsElement();
     }
-    if (watching.chapter.test(location.pathname)) {
+    images = document.querySelectorAll(watching.image);
+    if (images.length > 0) {
+        checkAria2Availability();
+        extractImage();
         if (watching.shortcut) {
             appendShortcuts();
-        }
-        images = document.querySelectorAll(watching.selector);
-        if (images.length > 0) {
-            checkAria2Availability();
-            extractImage();
-        }
-        else {
-            notification('extract', 'fatal');
         }
     }
 }
