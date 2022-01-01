@@ -16,7 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-3fyzgot+aKs1bNIwJJRqfzvFfYLYtEc6rGwuv0b3Ed0=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-6gpigHvgEesYm635dyvOCRUHcXRFAaRj9X0BfEmJ+rs=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
@@ -290,7 +290,7 @@ downMenu.querySelector('#clipboard').addEventListener('click', event => {
 });
 // Aria2 Menuitems
 downMenu.querySelector('#aria2download').addEventListener('click', event => {
-    urls.forEach((url, index) => aria2.request('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]).then(result => {
+    urls.forEach((url, index) => aria2.send('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]).then(result => {
         if (index === urls.length - 1) {
             notification('aria2', 'done');
         }
@@ -304,7 +304,7 @@ downMenu.querySelector('#aria2option').addEventListener('click', event => {
 });
 
 function checkAria2Availability() {
-    aria2.request('aria2.getGlobalOption').then(result => {
+    aria2.send('aria2.getGlobalOption').then(result => {
         folder = result.dir + extractMangaTitle();
         downMenu.querySelector('#aria2download').style.display = 'block';
     }).catch(error => {
