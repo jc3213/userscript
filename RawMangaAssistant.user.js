@@ -16,7 +16,8 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-6gpigHvgEesYm635dyvOCRUHcXRFAaRj9X0BfEmJ+rs=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-wzomqXdCxnFpRTaVKPS+BWGKaScbF+PhAjX+EMxOLBo=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-bppXwb8qd91C8TSgkTTVB2f7bzRmRWPPPO1Sf1OpEb4=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
@@ -63,7 +64,6 @@ var images;
 var watching;
 aria2 = {...aria2, ...GM_getValue('aria2', {jsonrpc: 'http://localhost:6800/jsonrpc', secret: ''})};
 var options = GM_getValue('options', {menu: 'on', top: 300, left: 150});
-var visual = {height: document.documentElement.clientHeight, width: document.documentElement.clientWidth};
 var offset;
 var warning;
 var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
@@ -224,7 +224,6 @@ button.id = 'assistant_button';
 button.innerHTML = '🖱️';
 button.className = 'menuOverlay assistantMenu';
 button.style.cssText = 'top: ' + options.top + 'px; left: ' + options.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
-button.draggable = true;
 button.addEventListener('click', event => {
     container.style.display = 'block';
 });
@@ -235,18 +234,10 @@ container.style.cssText = 'top: ' + options.top + 'px; left: ' + (options.left +
 document.body.append(button, container);
 
 // Draggable button and menu
-button.addEventListener('dragstart', event => {
-    offset = {top: event.clientY, left: event.clientX};
-});
+dragndrop(button);
 button.addEventListener('dragend', event => {
-    var height = visual.height - button.offsetHeight;
-    var width = visual.width - button.offsetWidth;
-    var top = options.top + event.clientY - offset.top;
-    var left = options.left + event.clientX - offset.left;
-    options.top = top < 0 ? 0 : top > height ? height : top;
-    options.left = left < 0 ? 0 : left > width ? width : left;
-    button.style.top = options.top + 'px';
-    button.style.left = options.left + 'px';
+    options.top = button.offsetTop;
+    options.left = button.offsetLeft;
     container.style.top = button.offsetTop + 'px';
     container.style.left = button.offsetLeft + button.offsetWidth + 'px';
     GM_setValue('options', options);
@@ -478,6 +469,6 @@ function notification(action, status, url) {
 function align_notification() {
     document.querySelectorAll('#assistant_caution').forEach((element, index) => {
         element.style.top = index * (element.offsetHeight + 5) + 10 + 'px';
-        element.style.left = (visual.width - element.offsetWidth) / 2 + 'px';
+        element.style.left = (document.documentElement.clientWidth - element.offsetWidth) / 2 + 'px';
     });
 }
