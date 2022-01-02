@@ -1,21 +1,22 @@
 (function() {
-    this.dragndrop = (n, {left = 0, top = 0, bottom = 0, right = 0}) => {
+    this.dragndrop = ({node, top = 0, right = 0, bottom = 0, left = 0}, c) => {
         var x, y, w, h;
         var d = document.documentElement;
-        n.draggable=true;
-        n.addEventListener('dragstart', e => {
-            x = e.clientX;
+        node.draggable=true;
+        node.addEventListener('dragstart', e => {
             y = e.clientY;
+            x = e.clientX;
         });
-        n.addEventListener('dragend', e => {
-            w = d.clientWidth > n.offsetWidth + right ? d.clientWidth - n.offsetWidth - right : 0;
-            h = d.clientHeight > n.offsetHeight + bottom ? d.clientHeight - n.offsetHeight - bottom : 0;
-            x = n.offsetLeft + e.clientX - x;
-            y = n.offsetTop + e.clientY - y;
-            x = x < left ? left : x > w ? w : x;
+        node.addEventListener('dragend', e => {
+            h = d.clientHeight > node.offsetHeight + bottom ? d.clientHeight - node.offsetHeight - bottom : 0;
+            w = d.clientWidth > node.offsetWidth + right ? d.clientWidth - node.offsetWidth - right : 0;
+            y = node.offsetTop + e.clientY - y;
+            x = node.offsetLeft + e.clientX - x;
             y = y < top ? top : y > h ? h : y;
-            n.style.left = x + 'px';
-            n.style.top = y + 'px';
+            x = x < left ? left : x > w ? w : x;
+            node.style.top = y + 'px';
+            node.style.left = x + 'px';
+            typeof c === 'function' ? c(y, x) : null;
         });
     };
 })();
