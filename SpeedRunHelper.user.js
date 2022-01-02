@@ -5,7 +5,7 @@
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-bppXwb8qd91C8TSgkTTVB2f7bzRmRWPPPO1Sf1OpEb4=
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-lSdnlkrnwtdX4Slk17sO7+ooQ7oQYyI0ZjxjBv0wRAg=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
@@ -85,7 +85,6 @@ function createRecordWindow(id, title, content) {
 <span id="speedrun-restore" class="speedrun-item">⚓</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     style[id] = container.style.cssText = 'top: ' + (130 + container.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + container.idx * 30) + 'px;';
-    dragndrop(container, {top: document.querySelector('nav').parentNode.offsetHeight});
     document.body.appendChild(container);
     container.appendChild(content);
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
@@ -105,7 +104,7 @@ function createRecordWindow(id, title, content) {
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
-    container.addEventListener('dragend', event => {
+    dragndrop({node: container, top: document.querySelector('nav').parentNode.offsetHeight}, () => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
         }
