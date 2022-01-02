@@ -16,7 +16,7 @@
             x = x < left ? left : x > w ? w : x;
             node.style.top = y + 'px';
             node.style.left = x + 'px';
-            typeof c === 'function' ? c(y, x) : null;
+            if (typeof c === 'function') { c(y, x); }
         });
     };
 })();
