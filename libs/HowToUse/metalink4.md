@@ -2,7 +2,7 @@
 ### HTML
 ```HTML
 <script src="https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js"
-        integrity="sha256-4W7nOCP6di9pmO+yv1Ta633VGIocNHeGZDwkMIjNiAo=" crossorigin="anonymous"/>
+        integrity="sha256-4W7nOCP6di9pmO+yv1Ta633VGIocNHeGZDwkMIjNiAo=" crossorigin="anonymous"></script>
 ```
 ### TamperMonkey
 ```javascript
