@@ -1,8 +1,8 @@
 (function() {
     this.dragndrop = n => {
         var x, y;
-        var h = innerHeight - n.offsetHeight;
-        var w = innerWidth - n.offsetWidth;
+        var h = document.documentElement.clientHeight - n.offsetHeight;
+        var w = document.documentElement.clientWidth - n.offsetWidth;
         n.draggable=true;
         n.addEventListener('dragstart', e => {
             x = e.clientX;
