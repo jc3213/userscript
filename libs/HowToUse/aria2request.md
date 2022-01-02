@@ -2,7 +2,7 @@
 ### HTML
 ```HTML
 <script src="https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js"
-        integrity="sha256-wzomqXdCxnFpRTaVKPS+BWGKaScbF+PhAjX+EMxOLBo=" crossorigin="anonymous"/>
+        integrity="sha256-wzomqXdCxnFpRTaVKPS+BWGKaScbF+PhAjX+EMxOLBo=" crossorigin="anonymous"></script>
 ```
 ### TamperMonkey
 ```javascript
