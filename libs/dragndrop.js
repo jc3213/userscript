@@ -8,8 +8,8 @@
             y = e.clientY;
         });
         n.addEventListener('dragend', e => {
-            w = d.clientWidth > (n.offsetWidth + right) ? d.clientWidth - n.offsetWidth - right : 0;
-            h = d.clientHeight > (n.offsetHeight + bottom) ? d.clientHeight - n.offsetHeight - bottom : 0;
+            w = d.clientWidth > n.offsetWidth + right ? d.clientWidth - n.offsetWidth - right : 0;
+            h = d.clientHeight > n.offsetHeight + bottom ? d.clientHeight - n.offsetHeight - bottom : 0;
             x = n.offsetLeft + e.clientX - x;
             y = n.offsetTop + e.clientY - y;
             x = x < left ? left : x > w ? w : x;
