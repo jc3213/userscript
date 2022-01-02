@@ -5,7 +5,7 @@
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-lSdnlkrnwtdX4Slk17sO7+ooQ7oQYyI0ZjxjBv0wRAg=
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
