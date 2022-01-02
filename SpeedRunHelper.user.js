@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.19
+// @version      2.20
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-bppXwb8qd91C8TSgkTTVB2f7bzRmRWPPPO1Sf1OpEb4=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
@@ -13,12 +14,11 @@
 'use strict';
 var logger = {};
 var style = {};
-var offset;
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
 #centerwidget {width: 100% !important;}\
-.speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999;}\
+.speedrun-window {position: fixed; width: 1280px; height: 740px; z-index: 999999;}\
 .speedrun-window iframe {width: 1280px !important; height: 720px !important;}\
 .speedrun-top {position: relative; background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
 .speedrun-title > * {display: inline-block; width: 25%;}\
@@ -28,7 +28,7 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-item:active {filter: opacity(30%);}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 30%; height: 20px; z-index: 99999;}\
 .speedrun-minimum iframe {display: none !important;}\
-.speedrun-maximum {top: 0px; left: 0px; width: ' + (outerWidth - 54) + 'px; height: ' + (outerHeight - 20) + 'px; z-index: 99999;}\
+.speedrun-maximum {top: 0px; left: 0px; width: ' + (outerWidth - 54) + 'px; height: ' + (outerHeight - 20) + 'px; z-index: 999999;}\
 .speedrun-maximum iframe {width: 100% !important; height: calc(100% - 20px) !important;}\
 #speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: inline-block;}';
@@ -84,9 +84,10 @@ function createRecordWindow(id, title, content) {
 <span id="speedrun-maximum" class="speedrun-item">🔲</span>\
 <span id="speedrun-restore" class="speedrun-item">⚓</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
+    style[id] = container.style.cssText = 'top: ' + (130 + container.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + container.idx * 30) + 'px;';
+    dragndrop(container, {top: document.querySelector('nav').parentNode.offsetHeight});
     document.body.appendChild(container);
     container.appendChild(content);
-    style[id] = container.style.cssText = 'top: ' + (130 + container.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + container.idx * 30) + 'px;';
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
         container.classList.add('speedrun-minimum');
         container.classList.remove('speedrun-maximum');
@@ -104,14 +105,12 @@ function createRecordWindow(id, title, content) {
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
+    container.addEventListener('dragend', event => {
+        if (container.className === 'speedrun-window') {
+            style[id] = container.style.cssText;
+        }
+        else {
+            container.style.cssText = '';
+        }
+    });
 }
-
-document.addEventListener('dragstart', event => {
-    offset = { top: event.clientY, left: event.clientX };
-});
-document.addEventListener('dragend', event => {
-    if (event.target.className === 'speedrun-window') {
-        var id = event.target.id.slice(event.target.id.indexOf('-') + 1);
-        style[id] = event.target.style.cssText = 'top: ' + (event.target.offsetTop + event.clientY - offset.top) + 'px; left: ' + (event.target.offsetLeft + event.clientX - offset.left) + 'px;';
-    }
-});
