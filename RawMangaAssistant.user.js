@@ -17,7 +17,7 @@
 // @match           *://mangameta.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-wzomqXdCxnFpRTaVKPS+BWGKaScbF+PhAjX+EMxOLBo=
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-lSdnlkrnwtdX4Slk17sO7+ooQ7oQYyI0ZjxjBv0wRAg=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
