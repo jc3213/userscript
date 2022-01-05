@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-4W7nOCP6di9pmO+yv1Ta633VGIocNHeGZDwkMIjNiAo=
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-FsRx7H9t2YaHx6uutNQIARFvasjQ1mWyqSLvC1SLggU=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
