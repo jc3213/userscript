@@ -2,11 +2,11 @@
 ### HTML
 ```HTML
 <script src="https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js"
-        integrity="sha256-D+Tb/9BPMUZ/Bu2RTyHkWFiJkO0U2ihmWbZeBQ7BwTo=" crossorigin="anonymous"></script>
+        integrity="sha256-sJFxO/Xi8lu3msbA2J9h46fvpHdacjfmKZ1xJ8AauDM=" crossorigin="anonymous"></script>
 ```
 ### TamperMonkey
 ```javascript
-// @require https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-D+Tb/9BPMUZ/Bu2RTyHkWFiJkO0U2ihmWbZeBQ7BwTo=
+// @require https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-sJFxO/Xi8lu3msbA2J9h46fvpHdacjfmKZ1xJ8AauDM=
 ```
 ## Syntax
 ```javascript
