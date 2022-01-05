@@ -5,6 +5,6 @@
 
 # Libraries
 
-#### [aria2request.js](HowToUse/aria2request.md)
-#### [dragndrop.js](HowToUse/dragndrop.md)
-#### [metalink.js](HowToUse/metalink4.md)
+#### [aria2request.js](libs/aria2request.md)
+#### [dragndrop.js](libs/dragndrop.md)
+#### [metalink.js](libs/metalink4.md)
