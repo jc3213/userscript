@@ -20,7 +20,6 @@ var action = {};
 // i18n Strings
 var messages = {
     'en-US': {
-        filter: 'Filter',
         keyword: 'Keyword...',
         name: 'Name',
         preview: 'Preview',
@@ -29,7 +28,6 @@ var messages = {
         copy: 'Copy'
     },
     'zh-CN': {
-        filter: '过滤',
         keyword: '关键词...',
         name: '名字',
         preview: '预览',
@@ -46,8 +44,8 @@ if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
 
 // Create UI
 var css= document.createElement('style');
-css.innerHTML = '#filter-menu {position: relative; top: 8px; display: grid; grid-template-columns: 180px 62px;}\
-#filter-menu button {background-color: #056b00;}\
+css.innerHTML = '#filter-menu input {display: inline-block; width: 170px; margin-top: 8px;}\
+#filter-menu button {background-color: #056b00; margin-top: -3px;}\
 #filter-list {position: absolute; background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none; overflow-x: hidden; z-index: 9999999;}\
 #filter-list > * {display: grid; grid-template-columns: 700px 70px 70px 70px 70px; position: relative;}\
 #filter-list > * > * {padding: 10px 5px; margin: 1px; color: #fff; border-radius: 5px; text-decoration: none;}\
@@ -63,7 +61,7 @@ document.head.appendChild(css);
 
 var menu = document.createElement('div');
 menu.id = 'filter-menu';
-menu.innerHTML = '<span><input class="form-control search-bar" placeholder="' + i18n.keyword + '"></span><button class="btn btn-primary">' + i18n.filter + '</button>';
+menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.keyword + '"><button class="btn btn-primary">🔆</button>';
 document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
