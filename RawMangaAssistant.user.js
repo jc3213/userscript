@@ -98,7 +98,7 @@ var message = {
         },
         extract: {
             start: '<b>Extracting</b> manga source',
-            done: 'A total of %n% image urls <b>has been extracted</b>',
+            done: 'A total of %n% image urls <b>have been extracted</b>',
             fail: '<b>Download function not available</b> due to extraction failure',
             error: '<b>Can\'t be extracted</b> image extension'
         }
