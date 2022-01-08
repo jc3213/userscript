@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.2
+// @version      5.3
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -46,67 +46,52 @@ if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
 
 // Create UI
 var css= document.createElement('style');
-css.innerHTML = '.filter-button {background-color: #056b00; border: 1px solid black; color: #FFF; padding: 10px; cursor: pointer; user-select: none;}\
-.filter-buttonn:active {filter: opacity(30%);}\
-.filter-item {position: relative; padding: 2px;}\
-.filter-item > * {color: #fff; padding: 10px 5px; width: fit-content; border-radius: 3px; position: absolute; display: inline-block; text-decoration: none; vertical-align: middle;}\
-.filter-item > *:not(:first-child) {cursor: pointer; width: 60px; text-align: center; user-select: none;}\
-.filter-item *:not(:first-child):hover, filter-button:hover {filter: opacity(60%);}\
-.filter-item > *:nth-child(1) {background-color: #2bceec; overflow: hidden; z-index: 3213; width: 728px;}\
-.filter-item > *:nth-child(1):hover {min-width: fit-content;}\
-.filter-item > *:nth-child(2) {background-color: #ee1c1c; left: 733px;}\
-.filter-item > *:nth-child(3) {background-color: #0056b0; left: 797px;}\
-.filter-item > *:nth-child(4) {background-color: #056b00; left: 860px;}\
-.filter-item > *:nth-child(5) {background-color: #0005cc; left: 923px;}\
-.filter-preview {position: fixed; z-index: 3213;}';
+css.innerHTML = '#filter-menu {position: relative; top: 8px; display: grid; grid-template-columns: 180px 62px;}\
+#filter-menu button {background-color: #056b00;}\
+#filter-list {position: absolute; background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none; overflow-x: hidden; z-index: 9999999;}\
+#filter-list > * {display: grid; grid-template-columns: 700px 70px 70px 70px 70px; position: relative;}\
+#filter-list > * > * {padding: 10px 5px; margin: 1px; color: #fff; border-radius: 5px; text-decoration: none;}\
+#filter-list > * > *:not(:first-child, text) {text-align: center; cursor: pointer; user-select: none;}\
+#filter-list > * > *:nth-child(1) {background-color: #2bceec; overflow: hidden; z-index: 3213;}\
+#filter-list > * > *:nth-child(1):hover {min-width: fit-content;}\
+#filter-list > * > *:nth-child(2) {background-color: #ee1c1c;}\
+#filter-list > * > *:nth-child(3):not(text) {background-color: #0056b0;}\
+#filter-list > * > *:nth-child(4) {background-color: #056b00;}\
+#filter-list > * > *:nth-child(5) {background-color: #0005cc;}\
+#filter-preview {position: absolute; z-index: 3213;}';
 document.head.appendChild(css);
 
-var container = document.createElement('div');
-container.style.cssText = 'position: relative; top: 6px;';
-document.querySelector('#navbar').appendChild(container);
-
-var input = document.createElement('input');
-input.style.cssText = 'color: black; border: 1px solid black; padding: 5px; width: 180px; height: 38px;';
-input.placeholder = i18n.keyword;
-input.addEventListener('keypress', event => { if (event.key === 'Enter') {button.click();} });
-container.appendChild(input);
-
-var button = document.createElement('span');
-button.className = 'filter-button';
-button.innerHTML = i18n.filter;
-button.addEventListener('click', event => {
-    var keys = input.value.split(/[\|\/\\\+,:;\s]+/);
+var menu = document.createElement('div');
+menu.id = 'filter-menu';
+menu.innerHTML = '<span><input class="form-control search-bar" placeholder="' + i18n.keyword + '"></span><button class="btn btn-primary">' + i18n.filter + '</button>';
+document.querySelector('#navbar').appendChild(menu);
+menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
+menu.querySelector('button').addEventListener('click', event => {
+    var keys = menu.querySelector('input').value.split(/[\|\/\\\+,:;\s]+/);
     if (filter && keys.join() === keyword.join()) {
         popup.style.display = 'none';
         filter = false;
     }
     else {
         popup.innerHTML = '';
-        popup.style.display = 'block';
-        queue.forEach(data => {
-            if (keys.filter(key => data.name.includes(key)).length === keys.length) {
-                getFilterResult(data);
-            }
-        });
-        popup.querySelectorAll('div').forEach((element, index) => { element.style.top = index * 40 + 'px'; });
+        popup.style.cssText = 'left: ' + (document.documentElement.offsetWidth - 1000) / 2 + 'px; top: ' + document.querySelector('#navbar').offsetHeight + 'px; display: block';
+        queue.forEach(data => keys.filter(key => data.name.includes(key)).length === keys.length && getFilterResult(data) );
         keyword = keys;
         filter = true;
     }
 });
-container.appendChild(button);
 
 var popup = document.createElement('div');
-popup.style.cssText = 'position: fixed; left: calc(50% - 550px); background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none; overflow-x: hidden;';
-container.appendChild(popup);
+popup.id = 'filter-list';
+document.body.appendChild(popup);
 
 // Show filter result
 function getFilterResult(data) {
     var menu = document.createElement('div');
-    menu.className = 'filter-item';
     menu.innerHTML = '<span>' + data.name + '</span>\
-    <span id="preview">' + i18n.preview + '</span>\
-    <a href="' + data.torrent + '" target="_blank" style="display: ' + (data.torrent ? 'block' : 'none') + '">' + i18n.torrent + '</a>\
-    <a href="' + data.magnet + '">' + i18n.magnet + '</a>\
+    <span id="preview">' + i18n.preview + '</span>' +
+    (data.torrent ? '<a href="' + data.torrent + '" target="_blank">' + i18n.torrent + '</a>' : '<text></text>') +
+    '<a href="' + data.magnet + '">' + i18n.magnet + '</a>\
     <span id="copy">' + i18n.copy + '</span>';
     popup.appendChild(menu);
     menu.querySelector('#preview').addEventListener('click', event => {
@@ -114,7 +99,9 @@ function getFilterResult(data) {
         getPreviewHandler(data, {top: event.clientY, left: event.clientX});
     });
     menu.querySelector('#copy').addEventListener('click', event => {
+        event.target.innerText = '!';
         navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.image ? data.image : data.web ? data.web : '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+        setTimeout(() => {event.target.innerText = i18n.copy;}, 1000);
     });
 }
 
@@ -209,8 +196,8 @@ function noValidPreview(data) {
 // Create preview
 function createPreview(data, mouse) {
     var image = document.createElement('img');
+    image.id = 'filter-preview';
     image.src = data.image;
-    image.className = 'filter-preview';
     image.style.cssText = 'max-height: 800px; width: auto; top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
     image.addEventListener('click', event => image.remove());
     document.body.appendChild(image);
