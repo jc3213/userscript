@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-FsRx7H9t2YaHx6uutNQIARFvasjQ1mWyqSLvC1SLggU=
+// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-sJFxO/Xi8lu3msbA2J9h46fvpHdacjfmKZ1xJ8AauDM=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -30,23 +30,18 @@ var scheduler = GM_getValue('scheduler', novelist.today);
 // UI作成関連
 var css = document.createElement('style');
 css.innerHTML = '.manager-button {background-color: #fff; text-align: center; vertical-align: middle; padding: 5px; border: 1px outset #000 ; user-select: none ; z-index: 3213; display: inline-block; cursor: pointer; font-weight: bold;}\
-.manager-button:hover {filter: opacity(60%);}\
-.manager-button:active {filter: opacity(30%);}\
+.manager-button:hover, .manager-shelf > * > *:hover {filter: opacity(75%);}\
+.manager-button:active，.manager-shelf > * > *:active {filter: opacity(45%);}\
 .manager-checked {padding: 4px; border: 2px inset #00F;}\
 .manager-container {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px;}\
 .manager-menu :not(:first-child) {margin-left: 5px;}\
 .manager-menu input {height: 20px;}\
 .manager-container > div:nth-child(n+2) {margin-top: 5px;}\
 .manager-shelf, .manager-logs {overflow-y: scroll; height: 552px;}\
-.manager-shelf div:nth-child(2n+1) {background-color: #DDD;}\
-.manager-shelf span { background-color: inherit; display: inline-block; padding: 5px; border: none; padding: 5px; font-weight: normal;}\
-.manager-shelf span:nth-child(1) {width: 100px;}\
-.manager-shelf span:nth-child(2) {width: 515px; text-align: left;}\
-.manager-shelf span:nth-child(3) {width: 100px;}\
-.manager-shelf input {width: 70px; padding: 5px;}\
-.manager-shelf div:nth-child(1) span:nth-child(4) {width: 100px;}\
-.manager-shelf div:nth-child(n+2) span:nth-child(4) {width: 90px; margin-right: 2px;}\
-.manager-shelf div:nth-child(1) span {height: 20px; overflow-y: hidden; text-align: center; margin: 0px; cursor: default; border: 1px solid #fff;}\
+.manager-shelf > * {display: grid; grid-template-columns: 100px calc(100% - 300px) 100px 100px; text-align: center;}\
+.manager-shelf > *:nth-child(2n+1):not(:first-child) * {background-color: #eee;}\
+.manager-shelf > *:not(:first-child) > *:nth-child(2) {text-align: left;}\
+.manager-shelf > *:not(:first-child) > *:nth-child(1) {line-height: 40px;}\
 .notification {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff;}';
 document.head.appendChild(css);
 
@@ -105,7 +100,7 @@ container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
         var json = bookmark.map(book => {
             book.last = novelist.now;
             container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
-            return {url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf', name: book.title + '.pdf', locale: 'ja'};
+            return {url: ['https://pdfnovels.net/' + book.ncode + '/main.pdf'], name: book.title + '.pdf', locale: 'ja'};
         });
         toMetalink4(json).saveAs('小説家になろう書庫');
         saveBookmarkButton();
@@ -167,10 +162,10 @@ function subscribeNcode(ncode, title) {
 function fancyTableItem(book, index) {
     var mybook = document.createElement('div');
     mybook.id = book.ncode;
-    mybook.innerHTML = '<span id="mgr-bk-remove" class="manager-button" title="NCODEを書庫から削除します">' + book.ncode + '</span>\
-    <span id="mgr-bk-open" class="manager-button" title="小説のウェブページを開きます">' + book.title + '</span>\
-    <span title="' + (book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します') + '"><input value="' + book.next + '"></span>\
-    <span id="mgr-bk-update" class="manager-button" title="縦書きPDFの更新をチェックします">' + generateTimeFormat(book.last) + '</span>';
+    mybook.innerHTML = '<span id="mgr-bk-remove" title="NCODEを書庫から削除します">' + book.ncode + '</span>\
+    <span id="mgr-bk-open" title="小説のウェブページを開きます">' + book.title + '</span>\
+    <input title="' + (book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します') + '" value="' + book.next + '">\
+    <span id="mgr-bk-update" title="縦書きPDFの更新をチェックします">' + generateTimeFormat(book.last) + '</span>';
     container.querySelector('.manager-shelf').appendChild(mybook);
     mybook.querySelector('#mgr-bk-remove').addEventListener('click', event => {
         if (confirm('【 ' + book.title + ' 】を書庫から削除しますか？')) {
@@ -191,16 +186,15 @@ function fancyTableItem(book, index) {
         }
     });
     mybook.addEventListener('change', event => {
-        var day = parseInt(event.target.value);
-        book.next = day;
+        book.next = parseInt(event.target.value);
         saveBookmarkButton();
-        if (day === 0) {
-            event.target.parentNode.title = '自動更新をしません';
+        if (book.next === 0) {
+            event.target.title = '自動更新をしません';
             myFancyLog(book.ncode, book.title, 'は更新しないように設定しました！');
         }
         else {
-            event.target.parentNode.title = day + '日間隔で更新します';
-            myFancyLog(book.ncode, book.title, 'は ' + day + ' 日間隔で更新するように設定しました！');
+            event.target.title = book.next + '日間隔で更新します';
+            myFancyLog(book.ncode, book.title, 'は ' + book.next + ' 日間隔で更新するように設定しました！');
         }
     });
 }
