@@ -8,7 +8,7 @@
 // @author          jc3213
 // @match           *://ja.mangatoro.com/*
 // @match           *://mikaraw.com/*
-// @match           *://klmanga.com/*
+// @match           *://klmag.net/*
 // @match           *://rawdevart.com/*
 // @match           *://manga1000.com/*
 // @match           *://manga1001.com/*
@@ -45,7 +45,7 @@
 // @webRequest      {"selector": "*downysewersettle.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-//                  klmanga.com
+//                  klmag.net
 // @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.greeter.me/*", "action": "cancel"}
 // @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
@@ -87,7 +87,6 @@ var message = {
             done: 'All %n% image urls <b>have been sent to Aria2 RPC</b>',
             error: 'Aria2 RPC <b>failed to send request</b>'
         },
-        secret: 'Secret token updated, reloading page in 5 seconds',
         gotop: {
             label: 'Back to Top',
         },
@@ -97,8 +96,6 @@ var message = {
         menu: {
             label: 'Context Menu Mode'
         },
-        submit: 'Submit',
-        cancel: 'Cancel',
         extract: {
             start: '<b>Extracting</b> manga source',
             done: 'A total of %n% image urls <b>has been extracted</b>',
@@ -119,11 +116,9 @@ var message = {
         aria2: {
             label: '发送至 Aria2 RPC',
             option: '设置 Aria2 RPC',
-            icon: '🖅',
             done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
             error: 'Aria2 RPC <b>请求发生错误</b>'
         },
-        secret: '密钥已更新，５秒后自动刷新页面',
         gotop: {
             label: '回到顶部',
         },
@@ -133,8 +128,6 @@ var message = {
         menu: {
             label: '右键菜单模式',
         },
-        submit: '确定',
-        cancel: '取消',
         extract: {
             start: '<b>正在解析</b>图像来源',
             done: '已<b>成功解析</b>全部 %n% 图像来源',
@@ -159,7 +152,7 @@ var manga = {
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]']
     },
-    'klmanga.com': {
+    'klmag.net': {
         image: 'img.chapter-img',
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
@@ -212,25 +205,27 @@ function extractMangaTitle(title = '') {
 
 // Create UI
 var css = document.createElement('style');
-css.innerHTML = '.menuOverlay {background-color: #fff; position: fixed; z-index: 999999999;}\
-.menuContainer {background-color: #fff; min-width: fit-content; max-width: 330px; border: 1px ridge darkblue; font-size: 14px;}\
-.assistantMenu {color: black; width: 190px; padding: 10px; height: 40px; display: block; user-select: none;}\
-.assistantMenu:hover {background-color: darkviolet !important; color: white; cursor: default;}\
-.assistantIcon {width: 30px; display: inline-block; text-align: center}';
+css.innerHTML = '#assistant_button, #assistant_container, #assistant_caution {background-color: #fff; color: #000; position: fixed; z-index: 999999999;}\
+#assistant_button {text-align: center; line-height: 42px; width: 42px !important; height: 42px !important; border: 1px solid darkviolet; top: ' + options.top + 'px; left: ' + options.left + 'px;}\
+#assistant_container {top: ' + options.top + 'px; left: ' + (options.left + 42) + 'px; display: none}\
+#assistant_container > * {background-color: #fff; width: 220px; border: 1px ridge darkblue; font-size: 14px;}\
+#assistant_container > * > *, #assistant_caution {line-height: 40px; height: 40px; user-select: none; display: grid; grid-template-columns: 40px auto;}\
+#assistant_container > * > * > *:first-child {text-align: center;}\
+#assistant_caution {font-size: 16px; border: 1px ridge darkviolet; border-radius: 5px; height: 60px; line-height: 60px; text-align: center;}\
+#assistant_caution > *:last-child {text-align: left; width: fit-content; padding-right: 10px;}\
+#assistant_button:hover, #assistant_container > * > *:hover {background-color: darkviolet !important; color: white !important;}';
 document.body.appendChild(css);
+
+var container = document.createElement('div');
+container.id = 'assistant_container';
 
 var button = document.createElement('span');
 button.id = 'assistant_button';
 button.innerHTML = '🖱️';
-button.className = 'menuOverlay assistantMenu';
-button.style.cssText = 'top: ' + options.top + 'px; left: ' + options.left + 'px; text-align: center; vertical-align: middle; width: 42px; height: 42px; border: 1px solid darkviolet;';
 button.addEventListener('click', event => {
     container.style.display = 'block';
 });
-var container = document.createElement('div');
-container.id = 'assistant_container';
-container.className = 'menuOverlay';
-container.style.cssText = 'top: ' + options.top + 'px; left: ' + (options.left + button.offsetWidth) + 'px; display: none';
+
 document.body.append(button, container);
 
 // Draggable button and menu
@@ -246,11 +241,10 @@ document.addEventListener('click', event => {
 
 // Primary menus
 var downMenu = document.createElement('div');
-downMenu.innerHTML = '<div id="download" class="assistantMenu"><span class="assistantIcon">💾</span>' + i18n.save.label + '</span></div>\
-<div id="clipboard" class="assistantMenu"><span class="assistantIcon">📄</span>' + i18n.copy.label + '</span></div>\
-<div id="aria2download" class="assistantMenu"><span class="assistantIcon">🖅</span>' + i18n.aria2.label + '</span></div>\
-<div id="aria2option" class="assistantMenu" id="aria2Option"><span class="assistantIcon">⚙️</span>' + i18n.aria2.option + '</div>';
-downMenu.className = 'menuContainer';
+downMenu.innerHTML = '<div id="download"><span>💾</span><span>' + i18n.save.label + '</span></div>\
+<div id="clipboard"><span>📄</span><span>' + i18n.copy.label + '</span></div>\
+<div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div>\
+<div id="aria2option"><span>⚙️</span><span>' + i18n.aria2.option + '</span></div>';
 downMenu.style.display = 'none';
 container.appendChild(downMenu);
 downMenu.querySelector('#download').addEventListener('click', event => {
@@ -295,7 +289,7 @@ downMenu.querySelector('#aria2option').addEventListener('click', event => {
 function checkAria2Availability() {
     aria2.send('aria2.getGlobalOption').then(result => {
         folder = result.dir + extractMangaTitle();
-        downMenu.querySelector('#aria2download').style.display = 'block';
+        downMenu.querySelector('#aria2download').style.display = 'grid';
     }).catch(error => {
         notification('aria2', 'error');
         downMenu.querySelector('#aria2download').style.display = 'none';
@@ -304,8 +298,7 @@ function checkAria2Availability() {
 
 // Secondary menus
 var clickMenu = document.createElement('div');
-clickMenu.className = 'menuContainer';
-clickMenu.innerHTML = '<div id="scrolltop" class="assistantMenu"><span class="assistantIcon">⬆️</span>' + i18n.gotop.label + '</div>';
+clickMenu.innerHTML = '<div id="scrolltop"><span>⬆️</span><span>' + i18n.gotop.label + '</div>';
 clickMenu.querySelector('#scrolltop').addEventListener('click', event => {
     document.documentElement.scrollTop = 0;
 });
@@ -327,8 +320,7 @@ var switchWorker = {
     }
 };
 var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div class="assistantMenu" name="menu"><span class="assistantIcon"></span>' + i18n.menu.label + '</div>';
-switchMenu.className = 'menuContainer';
+switchMenu.innerHTML = '<div name="menu"><span></span></span>' + i18n.menu.label + '</div>';
 switchMenu.querySelectorAll('.assistantMenu').forEach(switchHandler);
 switchMenu.addEventListener('click', event => {
     var name = event.target.getAttribute('name');
@@ -445,14 +437,9 @@ function appendShortcuts() {
 // Notifications
 function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
-    var html = '⚠️' + warn.replace('%n%', '<i><u>' + images.length + '</u></i>');
-    if (url) {
-        html += '<p>' + url + '</p>';
-    }
+    var html = '<span>⚠️</span><span>' + warn.replace('%n%', '<i><u>' + images.length + (url ? '<p>' + url + '</p>' : '') + '</u></i>') + '</span>';
     var caution = document.createElement('div');
     caution.id = 'assistant_caution';
-    caution.className = 'menuOverlay assistantMenu';
-    caution.style.cssText = 'width: fit-content; height: 50px; text-align: center; font-size: 16px; padding: 12px; border: 1px ridge darkviolet; border-radius: 10px;';
     caution.innerHTML = html;
     document.body.appendChild(caution);
     align_notification();
