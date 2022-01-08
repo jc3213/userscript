@@ -30,8 +30,8 @@ var scheduler = GM_getValue('scheduler', novelist.today);
 // UI作成関連
 var css = document.createElement('style');
 css.innerHTML = '.manager-button {background-color: #fff; text-align: center; vertical-align: middle; padding: 5px; border: 1px outset #000 ; user-select: none ; z-index: 3213; display: inline-block; cursor: pointer; font-weight: bold;}\
-.manager-button:hover, .manager-shelf > * > *:hover {filter: opacity(75%);}\
-.manager-button:active，.manager-shelf > * > *:active {filter: opacity(45%);}\
+.manager-button:hover, .manager-shelf > *:not(:first-child) > *:hover {filter: opacity(75%);}\
+.manager-button:active，.manager-shelf > *:not(:first-child) > *:active {filter: opacity(45%);}\
 .manager-checked {padding: 4px; border: 2px inset #00F;}\
 .manager-container {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px;}\
 .manager-menu :not(:first-child) {margin-left: 5px;}\
