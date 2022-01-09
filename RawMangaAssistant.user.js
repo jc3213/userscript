@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.6
+// @version         6.7
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -200,7 +200,7 @@ function extractMangaTitle(title = '') {
         var result = watching.title.reg.exec(document.querySelector(watching.title.sel).getAttribute(watching.title.attr));
         title += symbol + result[watching.title.tl] + symbol + result[watching.title.ch];
     }
-    return title;
+    return title.replace(/[:\?\"\'\\\/]/g, '_');
 }
 
 // Create UI
@@ -230,10 +230,9 @@ document.body.append(button, container);
 
 // Draggable button and menu
 dragndrop({node: button}, (top, left) => {
-    options = {...options, top, left};
     container.style.top = top + 'px';
     container.style.left = left + button.offsetWidth + 'px';
-    GM_setValue('options', options);
+    GM_setValue('options', {...options, top, left});
 });
 document.addEventListener('click', event => {
     container.style.display = button.contains(event.target) ? 'block' : 'none';
