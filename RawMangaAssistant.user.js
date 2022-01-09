@@ -200,7 +200,7 @@ function extractMangaTitle(title = '') {
         var result = watching.title.reg.exec(document.querySelector(watching.title.sel).getAttribute(watching.title.attr));
         title += symbol + result[watching.title.tl] + symbol + result[watching.title.ch];
     }
-    return title.replace(/[:\?\"\'\\\/]/g, '_');
+    return title.replace(/[:\?\"\']/g, '_');
 }
 
 // Create UI
@@ -234,6 +234,7 @@ container.innerHTML = '<div><div id="download"><span>💾</span><span>' + i18n.s
 <div><div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div>\
 <div id="aria2option"><span>⚙️</span><span>' + i18n.aria2.option + '</span></div></div>\
 <div><div id="scrolltop"><span>⬆️</span><span>' + i18n.gotop.label + '</div></div>';
+document.body.append(button, container, css);
 
 // Draggable button and menu
 dragndrop({node: button}, (top, left) => {
@@ -269,7 +270,6 @@ container.querySelector('#clipboard').addEventListener('click', event => {
 container.querySelector('#scrolltop').addEventListener('click', event => {
     document.documentElement.scrollTop = 0;
 });
-document.body.append(button, container, css);
 
 // Aria2 Menuitems
 container.querySelector('#aria2download').addEventListener('click', event => {
