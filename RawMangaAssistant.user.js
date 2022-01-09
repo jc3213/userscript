@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.7
+// @version         6.8
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -207,17 +207,15 @@ function extractMangaTitle(title = '') {
 var css = document.createElement('style');
 css.innerHTML = '#assistant_button, #assistant_container, #assistant_caution {background-color: #fff; color: #000; position: fixed; z-index: 999999999;}\
 #assistant_button {text-align: center; line-height: 42px; width: 42px !important; height: 42px !important; border: 1px solid darkviolet; top: ' + options.top + 'px; left: ' + options.left + 'px;}\
-#assistant_container {top: ' + options.top + 'px; left: ' + (options.left + 42) + 'px; display: none}\
+#assistant_container {top: ' + options.top + 'px; left: ' + (options.left + 42) + 'px; display: none;}\
 #assistant_container > * {background-color: #fff; width: 220px; border: 1px ridge darkblue; font-size: 14px;}\
+#assistant_container > *:nth-child(-n+2), #assistant_container data {display: none;}\
+#assistant_container.extract > *:nth-child(1), #assistant_container.aria2 > *:nth-child(2), #assistant_container .checked data {display: block;}\
 #assistant_container > * > *, #assistant_caution {line-height: 40px; height: 40px; user-select: none; display: grid; grid-template-columns: 40px auto;}\
 #assistant_container > * > * > *:first-child {text-align: center;}\
 #assistant_caution {font-size: 16px; border: 1px ridge darkviolet; border-radius: 5px; height: 60px; line-height: 60px; text-align: center;}\
 #assistant_caution > *:last-child {text-align: left; width: fit-content; padding-right: 10px;}\
 #assistant_button:hover, #assistant_container > * > *:hover {background-color: darkviolet !important; color: white !important;}';
-document.body.appendChild(css);
-
-var container = document.createElement('div');
-container.id = 'assistant_container';
 
 var button = document.createElement('span');
 button.id = 'assistant_button';
@@ -225,8 +223,17 @@ button.innerHTML = '🖱️';
 button.addEventListener('click', event => {
     container.style.display = 'block';
 });
+document.addEventListener('click', event => {
+    container.style.display = button.contains(event.target) ? 'block' : 'none';
+});
 
-document.body.append(button, container);
+var container = document.createElement('div');
+container.id = 'assistant_container';
+container.innerHTML = '<div><div id="download"><span>💾</span><span>' + i18n.save.label + '</span></div>\
+<div id="clipboard"><span>📄</span><span>' + i18n.copy.label + '</span></div></div>\
+<div><div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div>\
+<div id="aria2option"><span>⚙️</span><span>' + i18n.aria2.option + '</span></div></div>\
+<div><div id="scrolltop"><span>⬆️</span><span>' + i18n.gotop.label + '</div></div>';
 
 // Draggable button and menu
 dragndrop({node: button}, (top, left) => {
@@ -234,19 +241,8 @@ dragndrop({node: button}, (top, left) => {
     container.style.left = left + button.offsetWidth + 'px';
     GM_setValue('options', {...options, top, left});
 });
-document.addEventListener('click', event => {
-    container.style.display = button.contains(event.target) ? 'block' : 'none';
-});
 
-// Primary menus
-var downMenu = document.createElement('div');
-downMenu.innerHTML = '<div id="download"><span>💾</span><span>' + i18n.save.label + '</span></div>\
-<div id="clipboard"><span>📄</span><span>' + i18n.copy.label + '</span></div>\
-<div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div>\
-<div id="aria2option"><span>⚙️</span><span>' + i18n.aria2.option + '</span></div>';
-downMenu.style.display = 'none';
-container.appendChild(downMenu);
-downMenu.querySelector('#download').addEventListener('click', event => {
+container.querySelector('#download').addEventListener('click', event => {
     urls.forEach((url, index) => {
         GM_xmlhttpRequest({
             method: 'GET',
@@ -266,19 +262,24 @@ downMenu.querySelector('#download').addEventListener('click', event => {
         });
     });
 })
-downMenu.querySelector('#clipboard').addEventListener('click', event => {
+container.querySelector('#clipboard').addEventListener('click', event => {
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 });
+container.querySelector('#scrolltop').addEventListener('click', event => {
+    document.documentElement.scrollTop = 0;
+});
+document.body.append(button, container, css);
+
 // Aria2 Menuitems
-downMenu.querySelector('#aria2download').addEventListener('click', event => {
+container.querySelector('#aria2download').addEventListener('click', event => {
     urls.forEach((url, index) => aria2.send('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]).then(result => {
         if (index === urls.length - 1) {
             notification('aria2', 'done');
         }
     }));
 });
-downMenu.querySelector('#aria2option').addEventListener('click', event => {
+container.querySelector('#aria2option').addEventListener('click', event => {
     aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
     aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
     GM_setValue('aria2', aria2);
@@ -288,24 +289,15 @@ downMenu.querySelector('#aria2option').addEventListener('click', event => {
 function checkAria2Availability() {
     aria2.send('aria2.getGlobalOption').then(result => {
         folder = result.dir + extractMangaTitle();
-        downMenu.querySelector('#aria2download').style.display = 'grid';
-    }).catch(error => {
-        notification('aria2', 'error');
-        downMenu.querySelector('#aria2download').style.display = 'none';
-    });
+        container.classList.add('aria2');
+    }).catch(error => notification('aria2', 'error'));
 }
 
-// Secondary menus
-var clickMenu = document.createElement('div');
-clickMenu.innerHTML = '<div id="scrolltop"><span>⬆️</span><span>' + i18n.gotop.label + '</div>';
-clickMenu.querySelector('#scrolltop').addEventListener('click', event => {
-    document.documentElement.scrollTop = 0;
-});
-container.appendChild(clickMenu);
-
 // Switchable Menus
-var switchWorker = {
-    menu: {
+var switchMenu = document.createElement('div');
+[
+    {
+        name: 'menu',
         on: () => {
             button.style.display = 'none';
             document.addEventListener('contextmenu', contextMenuHandler);
@@ -317,31 +309,32 @@ var switchWorker = {
             container.style.left = button.offsetLeft + button.offsetWidth + 'px';
         }
     }
-};
-var switchMenu = document.createElement('div');
-switchMenu.innerHTML = '<div name="menu"><span></span></span>' + i18n.menu.label + '</div>';
-switchMenu.querySelectorAll('.assistantMenu').forEach(switchHandler);
-switchMenu.addEventListener('click', event => {
-    var name = event.target.getAttribute('name');
-    options[name] = options[name] === 'on' ? 'off' : 'on';
-    switchHandler(event.target);
-    GM_setValue('options', options);
+].forEach(({name, on, off}) => {
+    var menu = document.createElement('div');
+    menu.setAttribute('name', name);
+    menu.innerHTML = '<span><data>✅</data></span><span>' + i18n.menu.label + '</span></div>';
+    menu.addEventListener('click', event => {
+        options[name] = options[name] === 'on' ? 'off' : 'on';
+        switchHandler(menu, name, on, off);
+        GM_setValue('options', options);
+    });
+    switchHandler(menu, name, on, off);
+    switchMenu.appendChild(menu);
 });
 container.appendChild(switchMenu);
 
-function switchHandler(item) {
-    var name = item.getAttribute('name');
+function switchHandler(menu, name, on, off) {
     if (options[name] === 'on') {
-        switchWorker[name].on();
-        item.querySelector('.assistantIcon').innerHTML = '✅';
+        on();
+        menu.classList.add('checked');
     }
     else {
-        switchWorker[name].off();
-        item.querySelector('.assistantIcon').innerHTML = '';
+        off();
+        menu.classList.remove('checked');
     }
 }
 function contextMenuHandler(event) {
-    if (event.target.id === 'assistant_aria2' || event.shiftKey) {
+    if (event.shiftKey) {
         return;
     }
     event.preventDefault();
@@ -379,10 +372,9 @@ function extractImage() {
     observer = setInterval(() => {
         if (images.length === urls.length + fail.length + logo.length) {
             warning.remove();
-            downMenu.style.display = 'block';
             clearInterval(observer);
             if (fail.length === 0) {
-                downMenu.style.display = 'block';
+                container.classList.add('extract');
                 notification('extract', 'done');
             }
             else {
@@ -422,14 +414,9 @@ function extractImage() {
 function appendShortcuts() {
     var button = Array.isArray(watching.shortcut) ? watching.shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(watching.shortcut);
     document.addEventListener('keydown', event => {
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-            return;
-        }
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
         var shortcut = button[index];
-        if (shortcut) {
-            shortcut.click();
-        }
+        shortcut && shortcut.click();
     });
 }
 
