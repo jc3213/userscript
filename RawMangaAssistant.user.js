@@ -114,7 +114,7 @@ var message = {
         aria2: {
             label: '发送至 Aria2 RPC',
             done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
-            error: 'JSONRPC: 请求错误<'
+            error: 'JSONRPC: 请求错误'
         },
         gotop: {
             label: '回到顶部',
