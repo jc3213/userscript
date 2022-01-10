@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.8
+// @version         6.9
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -58,7 +58,6 @@
 var urls = [];
 var fail = [];
 var logo = [];
-var folder;
 var observer;
 var images;
 var watching;
@@ -83,9 +82,8 @@ var message = {
         },
         aria2: {
             label: 'Send to Aria2 RPC',
-            option: 'Options Aria2 RPC',
             done: 'All %n% image urls <b>have been sent to Aria2 RPC</b>',
-            error: 'Aria2 RPC <b>failed to send request</b>'
+            error: 'JSONRPC: Failed to send request'
         },
         gotop: {
             label: 'Back to Top',
@@ -115,9 +113,8 @@ var message = {
         },
         aria2: {
             label: '发送至 Aria2 RPC',
-            option: '设置 Aria2 RPC',
             done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
-            error: 'Aria2 RPC <b>请求发生错误</b>'
+            error: 'JSONRPC: 请求错误<'
         },
         gotop: {
             label: '回到顶部',
@@ -210,7 +207,7 @@ css.innerHTML = '#assistant_button, #assistant_container, #assistant_caution {ba
 #assistant_container {top: ' + options.top + 'px; left: ' + (options.left + 42) + 'px; display: none;}\
 #assistant_container > * {background-color: #fff; width: 220px; border: 1px ridge darkblue; font-size: 14px;}\
 #assistant_container > *:nth-child(-n+2), #assistant_container data {display: none;}\
-#assistant_container.extract > *:nth-child(1), #assistant_container.aria2 > *:nth-child(2), #assistant_container .checked data {display: block;}\
+#assistant_container.extract > *:nth-child(-n+2), #assistant_container .checked data {display: block;}\
 #assistant_container > * > *, #assistant_caution {line-height: 40px; height: 40px; user-select: none; display: grid; grid-template-columns: 40px auto;}\
 #assistant_container > * > * > *:first-child {text-align: center;}\
 #assistant_caution {font-size: 16px; border: 1px ridge darkviolet; border-radius: 5px; height: 60px; line-height: 60px; text-align: center;}\
@@ -231,8 +228,7 @@ var container = document.createElement('div');
 container.id = 'assistant_container';
 container.innerHTML = '<div><div id="download"><span>💾</span><span>' + i18n.save.label + '</span></div>\
 <div id="clipboard"><span>📄</span><span>' + i18n.copy.label + '</span></div></div>\
-<div><div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div>\
-<div id="aria2option"><span>⚙️</span><span>' + i18n.aria2.option + '</span></div></div>\
+<div><div id="aria2download"><span>🖅</span><span>' + i18n.aria2.label + '</span></div></div>\
 <div><div id="scrolltop"><span>⬆️</span><span>' + i18n.gotop.label + '</div></div>';
 document.body.append(button, container, css);
 
@@ -273,25 +269,23 @@ container.querySelector('#scrolltop').addEventListener('click', event => {
 
 // Aria2 Menuitems
 container.querySelector('#aria2download').addEventListener('click', event => {
-    urls.forEach((url, index) => aria2.send('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]).then(result => {
-        if (index === urls.length - 1) {
-            notification('aria2', 'done');
-        }
-    }));
+    var json;
+    var folder;
+    var request = () => {
+        aria2.send('aria2.getGlobalOption').then(result => {
+            folder = folder ?? result.dir + extractMangaTitle();
+            json = json ?? urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]}));
+            aria2.multi(json).then(result => notification('aria2', 'done'));
+        }).catch(error => {
+            alert(i18n.aria2.error);
+            aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
+            aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
+            GM_setValue('aria2', aria2);
+            request();
+        });
+    }
+    request();
 });
-container.querySelector('#aria2option').addEventListener('click', event => {
-    aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
-    aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
-    GM_setValue('aria2', aria2);
-    checkAria2Availability();
-});
-
-function checkAria2Availability() {
-    aria2.send('aria2.getGlobalOption').then(result => {
-        folder = result.dir + extractMangaTitle();
-        container.classList.add('aria2');
-    }).catch(error => notification('aria2', 'error'));
-}
 
 // Switchable Menus
 var switchMenu = document.createElement('div');
@@ -351,7 +345,6 @@ if (watching) {
     }
     images = document.querySelectorAll(watching.image);
     if (images.length > 0) {
-        checkAria2Availability();
         extractImage();
         if (watching.shortcut) {
             appendShortcuts();
