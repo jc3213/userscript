@@ -29,19 +29,18 @@ var format = {
 };
 
 var title = '';
-var mybox = document.createElement('div')
+var menu = document.createElement('div');
+menu.id = 'download-box';
 var thumb = document.createElement('div');
 var video = document.createElement('div');
 var audio = document.createElement('div');
-mybox.className = 'mybox';
-mybox.append(thumb, video, audio);
+menu.append(thumb, video, audio);
 
 var css = document.createElement('style');
-css.innerHTML = '.mybox {position: relative; top: -5px; left: 10px; height: 0px; z-index: 99}\
-.mybox > div {display: inline-block; margin-left: 3px; vertical-align: top; height: 38px; overflow-y: hidden;}\
-.mybox > div:hover {height: max-content;}\
-.mybox > div > a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
-.mybox > div > a:hover {background-color: #26c;}';
+css.innerHTML = '#download-box > * {position: relative; display: inline-block; margin: -5px 1px 5px; height: 38px; overflow-y: hidden; vertical-align: top;}\
+#download-box > *:hover {height: max-content; z-index: 999999;}\
+#download-box a {background-color: #c26; color: #fff; display: block; margin-top: 1px; height: 16px; line-height: 16px; padding: 10px; text-align: center;}\
+#download-box a:hover {background-color: #26c;}';
 
 setTimeout(() => {
     var player = document.querySelector('video') ?? document.querySelector('bwp-video');
@@ -65,7 +64,7 @@ setTimeout(() => {
     player.addEventListener('loadstart', () => {
         thumb.innerHTML = video.innerHTML = audio.innerHTML = title = '';
     });
-    toolbar.append(mybox, css);
+    toolbar.append(menu, css);
 }, 1500);
 
 function bilibiliVideoTitle(name) {
