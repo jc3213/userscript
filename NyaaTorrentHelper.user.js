@@ -98,8 +98,8 @@ function getFilterResult(data) {
     });
     menu.querySelector('#copy').addEventListener('click', async event => {
         event.target.innerText = '!';
-        var url = !data.type && await xmlNodeHandler(data.src).then(({url}) => url) ;
-        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.type ? data.url : url ?? '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+        data = {...data, ...(!data.type && await xmlNodeHandler(data.src))};
+        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.url ?? '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
         event.target.innerText = i18n.copy;
     });
 }
