@@ -1,7 +1,7 @@
 (function() {
     this.promiseFileReader = i => {
         var f = new FileReader();
-        return new Promise((r, r) => {
+        return new Promise((r, e) => {
             r({
                 text: () => s('readAsText'),
                 arrayBuffer: () => s('readAsArrayBuffer'),
