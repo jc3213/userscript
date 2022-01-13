@@ -23,15 +23,16 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-top {position: relative; background-color: #52698A; width: 100%; user-select: none; height: 20px;}\
 .speedrun-title > * {display: inline-block; width: 25%;}\
 .speedrun-menu {position: absolute; right: 0px; top: 0px;}\
-.speedrun-item {background-color: #fff; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}\
+.speedrun-item {background-color: #fff; color: #000; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}\
+#speedrun-minimum {line-height: 30px;}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 25% !important; height: 20px !important; z-index: 99999;}\
 .speedrun-minimum iframe {display: none !important;}\
 .speedrun-maximum {top: 0px; left: 0px; width: ' + (screen.availWidth - 52) + 'px !important; height: ' + (screen.availHeight - 64) + 'px !important; z-index: 999999;}\
 .speedrun-maximum iframe {width: 100% !important; height: calc(100% - 20px) !important;}\
 #speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
-.speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: inline-block;}';
+.speedrun-minimum #speedrun-restore:nth-child(2), .speedrun-maximum #speedrun-restore:nth-child(4) {display: inline-block;}';
 document.body.append(css);
 
 document.getElementById('leaderboarddiv').addEventListener('contextmenu', event => {
@@ -80,9 +81,10 @@ function createRecordWindow(id, title, content) {
     container.draggable = 'true';
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-top">' + title + '</div>\
-<div class="speedrun-menu"><span id="speedrun-minimum" class="speedrun-item">📌</span>\
+<div class="speedrun-menu"><span id="speedrun-minimum" class="speedrun-item">➖</span>\
+<span id="speedrun-restore" class="speedrun-item">🔳</span>\
 <span id="speedrun-maximum" class="speedrun-item">🔲</span>\
-<span id="speedrun-restore" class="speedrun-item">⚓</span>\
+<span id="speedrun-restore" class="speedrun-item">🔳</span>\
 <span id="speedrun-close" class="speedrun-item">❌</span></div>';
     style[id] = container.style.cssText = 'top: ' + (130 + container.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + container.idx * 30) + 'px;';
     document.body.appendChild(container);
@@ -97,10 +99,10 @@ function createRecordWindow(id, title, content) {
         container.classList.remove('speedrun-minimum');
         container.style.cssText = '';
     });
-    container.querySelector('#speedrun-restore').addEventListener('click', event => {
+    container.querySelectorAll('#speedrun-restore').forEach(button => button.addEventListener('click', event => {
         container.classList.remove('speedrun-maximum', 'speedrun-minimum');
         container.style.cssText = style[id];
-    });
+    }));
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
