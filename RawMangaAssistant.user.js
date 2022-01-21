@@ -16,7 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-TgEDPu1UA9s6kvQGehhlf8pwW3rxvWg+/BF7P1qB0/4=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-m8uu3xenbReyQ3OmOyoX5Nfsu/r5B4Vg4N2akZgd8Tk=
 // @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant           GM_getValue
 // @grant           GM_setValue
