@@ -181,10 +181,10 @@ manga['manga1001.com'] = manga['manga1000.com'];
 manga['weloma.net'] = manga['weloma.art'];
 watching = manga[location.host];
 
-function longDecimalNumber(number, length = 3) {
-    number = number.toString();
-    var float = number.length - number.split(/[\._-]/)[0].length;
-    return (10 ** length + number).slice(0 - length - float);
+function longDecimalNumber(input, length = 3) {
+    var number = isNaN(input) ? input : input.toString();
+    var float = number.indexOf('.');
+    return (10 ** length + number).slice(0 - length - (float === -1 ? 0 : number.length - float));
 }
 
 function extractMangaTitle(title = '') {
