@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.9
+// @version         6.10
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -46,10 +46,9 @@
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 //                  klmag.net
-// @webRequest      {"selector": "*.adtcdn.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.greeter.me/*", "action": "cancel"}
-// @webRequest      {"selector": "*.modoro360.com/*", "action": "cancel"}
-//                  weloma.art / weloma.net
+// @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*cynicaugural.com/*", "action": "cancel"}
+//                  weloma.art / weloma.net / klmag.net
 // @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
 // ==/UserScript==
 
