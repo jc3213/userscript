@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.10
+// @version         6.11
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -16,7 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-wzomqXdCxnFpRTaVKPS+BWGKaScbF+PhAjX+EMxOLBo=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-TgEDPu1UA9s6kvQGehhlf8pwW3rxvWg+/BF7P1qB0/4=
 // @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -271,16 +271,15 @@ container.querySelector('#aria2download').addEventListener('click', event => {
     var json;
     var folder;
     var request = () => {
-        aria2.send('aria2.getGlobalOption').then(result => {
-            folder = folder ?? result.dir + extractMangaTitle();
+        aria2.send({method: 'aria2.getGlobalOption'}).then(({dir}) => {
+            folder = folder ?? dir + extractMangaTitle();
             json = json ?? urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]}));
-            aria2.multi(json).then(result => notification('aria2', 'done'));
+            aria2.send(json).then(result => notification('aria2', 'done'));
         }).catch(error => {
             alert(i18n.aria2.error);
             aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
             aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
             GM_setValue('aria2', aria2);
-            request();
         });
     }
     request();
