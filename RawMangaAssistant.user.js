@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
-// @version         6.11
+// @version         6.12
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -16,7 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2request.js#sha256-m8uu3xenbReyQ3OmOyoX5Nfsu/r5B4Vg4N2akZgd8Tk=
+// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/aria2.js#sha256-x9Xlp9IO/8Qu6vkkaE5DZXUZK/Mz4RD2yAGiVRtYqQQ=
 // @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -31,24 +31,24 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-//                  hakaraw.com / rawdevart.com
+// @                hakaraw.com / rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-//                  manga1000.com / manga1001.com / mikaraw.com
+// @                manga1000.com / manga1001.com / mikaraw.com
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-//                  mikaraw.com
+// @                mikaraw.com
 // @webRequest      {"selector": "*puturebraving.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
-//                  rawdevart.com
+// @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-//                  manga1000.com / manga1001.com
+// @                manga1000.com / manga1001.com
 // @webRequest      {"selector": "*static.manga10000.com/popup1001.js*", "action": "cancel"}
 // @webRequest      {"selector": "*downysewersettle.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exosrv.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-//                  klmag.net
+// @                 klmag.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*cynicaugural.com/*", "action": "cancel"}
-//                  weloma.art / weloma.net / klmag.net
+// @                 weloma.art / weloma.net / klmag.net
 // @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
 // ==/UserScript==
 
@@ -60,7 +60,9 @@ var logo = [];
 var observer;
 var images;
 var watching;
-aria2 = {...aria2, ...GM_getValue('aria2', {jsonrpc: 'http://localhost:6800/jsonrpc', secret: ''})};
+var {jsonrpc, secret} = GM_getValue('aria2', {jsonrpc: 'http://localhost:6800/jsonrpc', secret: ''});
+var aria2 = new Aria2(jsonrpc, secret);
+var folder;
 var options = GM_getValue('options', {menu: 'on', top: 300, left: 150});
 var offset;
 var warning;
@@ -267,22 +269,18 @@ container.querySelector('#scrolltop').addEventListener('click', event => {
 });
 
 // Aria2 Menuitems
-container.querySelector('#aria2download').addEventListener('click', event => {
-    var json;
-    var folder;
-    var request = () => {
-        aria2.send({method: 'aria2.getGlobalOption'}).then(({dir}) => {
-            folder = folder ?? dir + extractMangaTitle();
-            json = json ?? urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]}));
-            aria2.send(json).then(result => notification('aria2', 'done'));
-        }).catch(error => {
+container.querySelector('#aria2download').addEventListener('click', async event => {
+    folder = folder ?? await aria2.message('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
             alert(i18n.aria2.error);
-            aria2.jsonrpc = prompt('Aria2 JSONRPC URI', aria2.jsonrpc) ?? aria2.jsonrpc;
-            aria2.secret = prompt('Aria2 Secret Token', aria2.secret) ?? aria2.secret;
-            GM_setValue('aria2', aria2);
+            jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
+            secret = prompt('Aria2 Secret Token', secret) ?? secret;
+            aria2 = new Aria2(jsonrpc, secret);
+            GM_setValue('aria2', {jsonrpc, secret});
         });
+    if (folder) {
+        urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]));
+        notification('aria2', 'done');
     }
-    request();
 });
 
 // Switchable Menus
