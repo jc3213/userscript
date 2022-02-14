@@ -14,23 +14,12 @@ const reader = PromiseFileReader(file);
 ```
 ### `file`
 A javascript File object
-```javascript
-const text = reader.text();
-```
-### `text`
-Promise object, returns the contents of the file as a text `string` if fulfilled
-```javascript
-const data = reader.data();
-```
-### `data`
-Promise object, returns a `data:` URL representing the file's data if fulfilled
-```javascript
-const buffer = reader.buffer();
-```
-### `buffer`
-Promise object, returns an `ArrayBuffer` representing the file's data if fulfilled
-```javascript
-const binary = reader.binary();
-```
-### `binary`
-Promise object, returns the raw binary data from the file as a `string` if fulfilled
+## Method
+### `reader.text()`
+Return a promise object, which returns the contents of the file as a text `string` if fulfilled
+### `reader.data()`
+Return a promise object, which returns a `data:` URL representing the file's data if fulfilled
+### `reader.buffer()`
+Return a promise object, which returns an `ArrayBuffer` representing the file's data if fulfilled
+### `reader.binary()`
+Return a promise object, which returns the raw binary data from the file as a `string` if fulfilled
