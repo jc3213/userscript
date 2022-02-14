@@ -6,6 +6,7 @@ class PromiseFileReader {
         return new Promise((resolve, reject) => {
             var reader = new FileReader();
             reader.onload = event => resolve(reader.result);
+            reader.onerror = reject;
             reader[method](this.file);
         });
     }
