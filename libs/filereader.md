@@ -2,11 +2,11 @@
 ### HTML
 ```HTML
 <script src="https://raw.githubusercontent.com/jc3213/userscript/main/libs/filereader.js"
-        integrity="sha256-ra0CJCuvv/O10tgFcdiSFYFQXxEIa+KYMXHx1lsx7VE=" crossorigin="anonymous"></script>
+        integrity="sha256-84vezI4SRK1h06YWE6Jy3ZZcKrc4P47h1j29btJP0xo=" crossorigin="anonymous"></script>
 ```
 ### TamperMonkey
 ```javascript
-// @require https://raw.githubusercontent.com/jc3213/userscript/main/libs/filereader.js#sha256-ra0CJCuvv/O10tgFcdiSFYFQXxEIa+KYMXHx1lsx7VE=
+// @require https://raw.githubusercontent.com/jc3213/userscript/main/libs/filereader.js#sha256-84vezI4SRK1h06YWE6Jy3ZZcKrc4P47h1j29btJP0xo=
 ```
 ## Syntax
 ```javascript
