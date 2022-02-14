@@ -1,20 +1,24 @@
-(function() {
-    this.promiseFileReader = i => {
-        var f = new FileReader();
-        return new Promise((r, e) => {
-            r({
-                text: () => s('readAsText'),
-                arrayBuffer: () => s('readAsArrayBuffer'),
-                binary: () => s('readAsBinaryString'),
-                dataURL: () => s('readAsDataURL')
-            });
+class PromiseFileReader {
+    constructor(file) {
+        this.file = file;
+    }
+    reader(method) {
+        return new Promise((resolve, reject) => {
+            var reader = new FileReader();
+            reader.onload = event => resolve(reader.result);
+            reader[method](this.file);
         });
-        function s(type) {
-            return new Promise((r, e) => {
-                f.onload = () => r(f.result);
-                f.onerror = e;
-                f[type](i);
-            });
-        }
-    };
-})();
+    }
+    text () {
+        return this.reader('readAsText');
+    }
+    data () {
+        return this.reader('readAsDataURL');
+    }
+    buffer () {
+        return this.reader('readAsArrayBuffer');
+    }
+    binary () {
+        return this.reader('readAsBinaryString');
+    }
+}
