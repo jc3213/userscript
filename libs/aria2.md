@@ -16,6 +16,7 @@ const aria2 = new Aria2(jsonrpc, secret);
 Address of aria2 JSON-RPC
 ### `secret` `Optional`
 Secret token of aria2 JSON-RPC
+## Method
 ```javascript
 const result = aria2.message(method, params);
 ```
