@@ -31,12 +31,8 @@ menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
 document.body.append(menu, css);
 
 if (autoed) {
-    if (today > signed) {
-        autoSign();
-    }
-    if (Date.now() > worked) {
-        autoWork();
-    }
+    today > signed && autoSign();
+    Date.now() > worked && autoWork();
 }
 
 menu.querySelector('.my-button:nth-child(1)').addEventListener('click', event => {
@@ -55,7 +51,7 @@ async function autoSign() {
     var {warn, window, document} = await startWork('/plugin.php?id=dsu_paulsign:sign');
     if (document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)')) {
         GM_setValue('signed', today);
-        warn.innerText = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)').innerHTML;
+        warn.innerText = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)').innerText;
         endWork(window, warn);
     }
     else {
@@ -79,7 +75,7 @@ async function autoWork() {
         var next = (clock[0] | 0) * 3600000 + (clock[1] | 0) * 60000 + (clock[2] | 0) * 1000;
         warn.innerText = text;
         endWork(window, warn);
-        if (worked === 0) GM_setValue('worked', Date.now() + next);
+        worked === 0 && GM_setValue('worked', Date.now() + next);
     }
     else {
         warn.innerText = '开始打工...';
