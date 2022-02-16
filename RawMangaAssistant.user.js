@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name            Raw Manga Assistant
-// @namespace       https://github.com/jc3213/userscript
 // @name:zh         漫画生肉网站助手
+// @namespace       https://github.com/jc3213/userscript
 // @version         6.12
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
