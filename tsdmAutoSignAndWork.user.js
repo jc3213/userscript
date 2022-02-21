@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.1
+// @version      3.2
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.net/*
@@ -15,6 +15,7 @@ var signed = GM_getValue('signed', 0);
 var worked = GM_getValue('worked', 0);
 var autoed = GM_getValue('autoed', false);
 var today = new Date().getFullYear() + new Date().getMonth() + new Date().getDate();
+var now = Date.now();
 
 var css = document.createElement('style');
 css.innerHTML = '.my-menu {background-color: #fff; position: fixed; top: 40px; right: 100px; width: 100px; z-index: 99999;}\
@@ -32,7 +33,7 @@ document.body.append(menu, css);
 
 if (autoed) {
     today > signed && autoSign();
-    Date.now() > worked && autoWork();
+    now > worked ? autoWork() : setTimeout(autoWork, worked - now);
 }
 
 menu.querySelector('.my-button:nth-child(1)').addEventListener('click', event => {
@@ -87,6 +88,7 @@ async function autoWork() {
         setTimeout(() => {
             document.querySelector('#stopad > a').click();
             GM_setValue('worked', Date.now() + 21600000);
+            setTimeout(autoWork, next ?? 21600000);
             warn.innerText = '已完成打工';
             endWork(window, warn);
         }, 3000);
