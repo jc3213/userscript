@@ -21,15 +21,15 @@ css.innerHTML = '.fancybox {background-color: #fff; font-size: 14px; z-index: 99
 .fancybox > * {width: 320px; height: 360px; overflow-y: auto; display: inline-block;}\
 .fancybox, .fancybox table {border: 1px solid #23ade5;}\
 .fancybox textarea {resize: none; height: calc(100% - 30px); width: 100%; font-size: 14px; padding: 3px; margin-bottom: 5px;}\
-.fancybox td {padding: 5px; text-align: center}\
+.fancybox td, .fancybutton {padding: 5px 10px; text-align: center; font-size: 14px;}\
 .fancybox td:nth-child(1) {width: 120px;}\
 .fancybox td:nth-child(2) {width: 200px;}\
 .fancybox thead {background-color: #000; color: #fff;}\
-.fancybox tbody td:nth-child(2) {background-color: #ddd}\
-.fancybutton {background-color: #23ade5; color: #ffffff; padding: 5px 10px; border-radius: 3px; font-size: 14px; text-align: center; user-select: none; cursor: pointer;}\
+.fancybox tbody td:nth-child(2) {background-color: #eee;}\
+.fancybutton {background-color: #23ade5; color: #ffffff; border-radius: 3px; user-select: none; cursor: pointer;}\
 .fancybutton:hover {filter: opacity(60%);}\
 .fancybutton:active {filter: opacity(30%);}\
-.fancybox .fancybutton:nth-child(n+2) {margin-left: 5px;}\
+.fancybox .fancybutton {margin-left: 3px;}\
 .fancymenu {display: none; margin-top: 10px;}\
 .fancymenu * {display: inline-block; width: 38%; margin-left: 10px;}'
 document.head.appendChild(css);
@@ -55,7 +55,6 @@ batch_box.innerHTML = '<textarea></textarea><div>\
 <span id="bililive_filter_import" class="fancybutton">导入列表</span>\
 <span id="bililive_filter_export" class="fancybutton">导出列表</span>\
 <span id="bililive_filter_clear" class="fancybutton">清空列表</span></div><input type="file" style="display: none;" accept="application/json">';
-container.appendChild(batch_box);
 batch_box.addEventListener('click', event => {
     if (event.target.id === 'bililive_filter_batch' && confirm('确定要屏蔽列表中的直播间吗？')) {
         var batch = document.querySelector('textarea');
@@ -94,9 +93,9 @@ batch_box.addEventListener('change', event => {
 });
 
 var ban_list = document.createElement('table');
-ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead>\
-<tbody></tbody>';
-container.appendChild(ban_list);
+ban_list.innerHTML = '<thead><tr><td>直播间</td><td>主播</td></tr></thead><tbody></tbody>';
+
+container.append(batch_box, ban_list);
 
 var area = location.pathname.slice(1);
 if (area === '') {
