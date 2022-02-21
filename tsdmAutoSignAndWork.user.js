@@ -36,12 +36,8 @@ if (autoed) {
     now > worked ? autoWork() : setTimeout(autoWork, worked - now);
 }
 
-menu.querySelector('.my-button:nth-child(1)').addEventListener('click', event => {
-    autoSign();
-});
-menu.querySelector('.my-button:nth-child(2)').addEventListener('click', event => {
-    autoWork();
-});
+menu.querySelector('.my-button:nth-child(1)').addEventListener('click', autoSign);
+menu.querySelector('.my-button:nth-child(2)').addEventListener('click', autoWork);
 menu.querySelector('.my-button:nth-child(3)').addEventListener('click', event => {
     autoed = !autoed;
     menu.querySelector('.my-auto').innerHTML = autoed ? '✅' : '';
