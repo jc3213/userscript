@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.12
+// @version         6.13
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -16,7 +16,7 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2.js#sha256-x9Xlp9IO/8Qu6vkkaE5DZXUZK/Mz4RD2yAGiVRtYqQQ=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2.js#sha256-/NyeHAvLqSqeD6YbfeQacGIUFZ9FPn46kWmPNmlEInU=
 // @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -66,8 +66,7 @@ var folder;
 var options = GM_getValue('options', {menu: 'on', top: 300, left: 150});
 var offset;
 var warning;
-var headers = {'Cookie': document.cookie, 'Referer': location.href, 'User-Agent': navigator.userAgent};
-var aria2Headers = ['Cookie: ' + document.cookie, 'Referer: ' + location.href, 'User-Agent:' + navigator.userAgent];
+var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 
 // i18n strings and labels
 var message = {
@@ -243,10 +242,7 @@ dragndrop({node: button}, (top, left) => {
 container.querySelector('#download').addEventListener('click', event => {
     urls.forEach((url, index) => {
         GM_xmlhttpRequest({
-            method: 'GET',
-            url: url,
-            responseType: 'blob',
-            headers: headers,
+            url, headers, method: 'GET', responseType: 'blob',
             onload: (details) => {
                 var blob = details.response;
                 var a = document.createElement('a');
@@ -271,14 +267,14 @@ container.querySelector('#scrolltop').addEventListener('click', event => {
 // Aria2 Menuitems
 container.querySelector('#aria2download').addEventListener('click', async event => {
     folder = folder ?? await aria2.message('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
-            alert(i18n.aria2.error);
-            jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
-            secret = prompt('Aria2 Secret Token', secret) ?? secret;
-            aria2 = new Aria2(jsonrpc, secret);
-            GM_setValue('aria2', {jsonrpc, secret});
-        });
+        alert(i18n.aria2.error);
+        jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
+        secret = prompt('Aria2 Secret Token', secret) ?? secret;
+        aria2 = new Aria2(jsonrpc, secret);
+        GM_setValue('aria2', {jsonrpc, secret});
+    });
     if (folder) {
-        urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, header: aria2Headers}]));
+        urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]));
         notification('aria2', 'done');
     }
 });
