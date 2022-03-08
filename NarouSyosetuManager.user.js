@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/metalink4.js#sha256-sJFxO/Xi8lu3msbA2J9h46fvpHdacjfmKZ1xJ8AauDM=
+// @require      https://raw.githubusercontent.com/jc3213/metalink4.js/main/metalink4.js#sha256-6oj9bI0kPdhk0XE8OEW9VWwedwSdFxjIirpGaFTAq0A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -54,12 +54,7 @@ manager.addEventListener('click', event => {
         bookmark.forEach(fancyTableItem);
         show = true;
     }
-    if (manager.classList.contains('manager-checked')) {
-        container.style.display = 'none';
-    }
-    else {
-        container.style.display = 'block';
-    }
+    container.style.display = manager.classList.contains('manager-checked') ? 'none' : 'block';
     manager.classList.toggle('manager-checked');
 });
 (document.getElementById('head_nav') ?? document.body).appendChild(manager);
@@ -102,7 +97,7 @@ container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
             container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
             return {url: ['https://pdfnovels.net/' + book.ncode + '/main.pdf'], name: book.title + '.pdf', locale: 'ja'};
         });
-        toMetalink4(json).saveAs('小説家になろう書庫');
+        new Metalink4(json).saveAs('小説家になろう書庫');
         saveBookmarkButton();
         alert('情報のエックスポートは無事に成功しました！');
     }
@@ -114,29 +109,17 @@ container.querySelector('#mgr-btn-save').addEventListener('click', event => {
     container.querySelector('.manager-button:nth-child(6)').style.display = 'none';
 });
 container.querySelector('#mgr-btn-log').addEventListener('click', event => {
-    if (event.target.classList.contains('manager-checked')) {
-        container.querySelector('.manager-logs').style.display = 'none';
-        container.querySelector('.manager-shelf').style.display = 'block';
-    }
-    else {
-        container.querySelector('.manager-logs').style.display = 'block';
-        container.querySelector('.manager-shelf').style.display = 'none';
-    }
+    container.querySelector('.manager-logs').style.display = event.target.classList.contains('manager-checked') ? 'none' : 'block';
+    container.querySelector('.manager-shelf').style.display = event.target.classList.contains('manager-checked') ? 'block' : 'none';
     event.target.classList.toggle('manager-checked');
 });
 
 // NCODE検証&登録
 function validateNcode(ncode) {
     if (validate[ncode]) {
-        if (validate[ncode] === '検証中') {
-            myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！');
-        }
-        else if (validate[ncode] === 'エラー') {
-            myFancyPopup('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！');
-        }
-        else {
-            subscribeNcode(ncode, validate[ncode]);
-        }
+        validate[ncode] === '検証中' ? myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！') :
+        validate[ncode] === 'エラー' ? myFancyPopup('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！') :
+        subscribeNcode(ncode, validate[ncode]);
         return;
     }
     validate[ncode] = '検証中';
@@ -188,14 +171,8 @@ function fancyTableItem(book, index) {
     mybook.addEventListener('change', event => {
         book.next = parseInt(event.target.value);
         saveBookmarkButton();
-        if (book.next === 0) {
-            event.target.title = '自動更新をしません';
-            myFancyLog(book.ncode, book.title, 'は更新しないように設定しました！');
-        }
-        else {
-            event.target.title = book.next + '日間隔で更新します';
-            myFancyLog(book.ncode, book.title, 'は ' + book.next + ' 日間隔で更新するように設定しました！');
-        }
+        event.target.title = book.next === 0 ? '自動更新をしません' : book.next + '日間隔で更新します';
+        myFancyLog(book.ncode, book.title, book.next === 0 ? 'は更新しないように設定しました！' : 'は ' + book.next + ' 日間隔で更新するように設定しました！');
     });
 }
 function generateTimeFormat(ms) {
@@ -318,16 +295,9 @@ function myFancyPopup(ncode, title, result) {
     setTimeout(() => removePopup(popup), 5000);
 }
 function myFancyNcode(ncode, title) {
-    if (ncode && title) {
-        return '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」';
-    }
-    if (!ncode && title) {
-        return '<span style="color: darkgreen">' + title + '</span>';
-    }
-    if (ncode && !title) {
-        return '<span style="color: darkgreen">' + ncode + '</span>';
-    }
-    return '';
+    return ncode && title ? '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」' :
+        !ncode && title ? '<span style="color: darkgreen">' + title + '</span>' :
+    ncode && !title ? '<span style="color: darkgreen">' + ncode + '</span>' : '';
 }
 function alignFancyPopup() {
     document.querySelectorAll('.notification').forEach((element, index) => {
