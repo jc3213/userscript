@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.7
+// @version      4.8
 // @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -105,8 +105,7 @@ container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
 container.querySelector('#mgr-btn-save').addEventListener('click', event => {
     GM_setValue('bookmark', bookmark);
     container.querySelector('.manager-logs').innerHTML = '';
-    container.querySelector('.manager-button:nth-child(5)').style.display = 'none';
-    container.querySelector('.manager-button:nth-child(6)').style.display = 'none';
+    container.querySelector('#mgr-btn-save').style.display = container.querySelector('#mgr-btn-log').style.display = 'none';
 });
 container.querySelector('#mgr-btn-log').addEventListener('click', event => {
     container.querySelector('.manager-logs').style.display = event.target.classList.contains('manager-checked') ? 'none' : 'block';
@@ -180,8 +179,7 @@ function generateTimeFormat(ms) {
     return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
 }
 function saveBookmarkButton() {
-    container.querySelector('.manager-button:nth-child(5)').style.display = 'inline-block';
-    container.querySelector('.manager-button:nth-child(6)').style.display = 'inline-block';
+    container.querySelector('#mgr-btn-save').style.display = container.querySelector('#mgr-btn-log').style.display = 'inline-block';
 }
 
 // PDF自動更新関連
