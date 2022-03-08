@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.1
+// @version      3.2
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
+// @require      https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
@@ -106,12 +106,13 @@ function createRecordWindow(id, title, content) {
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
-    dragndrop({node: container, top: document.querySelector('nav').parentNode.offsetHeight}, () => {
+    var dragndrop = new DragNDrop(container, document.querySelector('nav').parentNode.offsetHeight);
+    dragndrop.ondragend = event => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
         }
         else {
             container.style.cssText = '';
         }
-    });
+    };
 }
