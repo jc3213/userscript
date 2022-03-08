@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.13
+// @version         6.14
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -17,7 +17,7 @@
 // @match           *://mangameta.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2.js#sha256-/NyeHAvLqSqeD6YbfeQacGIUFZ9FPn46kWmPNmlEInU=
-// @require         https://raw.githubusercontent.com/jc3213/userscript/main/libs/dragndrop.js#sha256-NkLbP8qGlQ6SEBaf0HeiUVT+5/kXjyJYaSwd28Dj9zA=
+// @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
@@ -233,11 +233,14 @@ container.innerHTML = '<div><div id="download"><span>💾</span><span>' + i18n.s
 document.body.append(button, container, css);
 
 // Draggable button and menu
-dragndrop({node: button}, (top, left) => {
-    container.style.top = top + 'px';
-    container.style.left = left + button.offsetWidth + 'px';
-    GM_setValue('options', {...options, top, left});
-});
+var dragndrop = new DragNDrop(button);
+dragndrop.ondragend = event => {
+    container.style.top = dragndrop.offsetTop + 'px';
+    container.style.left = dragndrop.offsetLeft + button.offsetWidth + 'px';
+    options.top = dragndrop.offsetTop;
+    options.left = dragndrop.offsetLeft;
+    GM_setValue('options', options);
+};
 
 container.querySelector('#download').addEventListener('click', event => {
     urls.forEach((url, index) => {
