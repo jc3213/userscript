@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.1
+// @version         3.2
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -11,6 +11,7 @@
 
 var {autowide = '0', videocodec = '0'} = localStorage;
 var title;
+var video;
 var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
@@ -46,22 +47,20 @@ menu.querySelector('#options').addEventListener('click', event => {
     analyse.style.display = 'none';
     options.style.display = options.style.display === 'none' ? 'block' : 'none';
 });
-menu.querySelector('#analyse').addEventListener('click', event => {
+menu.querySelector('#analyse').addEventListener('click', async event => {
     options.style.display = 'none';
+    if (video !== location.pathname || videocodec !== localStorage.videocodec) {
+        video = location.pathname;
+        videocodec = localStorage.videocodec;
+        analyse.innerHTML = '<ul id="helper-thumb"></ul><ul id="helper-video"></ul><ul id="helper-audio"></ul>';
+        title = '';
+        var {aid, cid, __INITIAL_STATE__: {videoData, elecFullInfo, h1Title, epInfo}} = document.defaultView;
+        var [title, thumb, playurl, key] = aid && cid ? [videoData.title, elecFullInfo.data.pic, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
+        biliVideoTitle(title);
+        biliVideoThumbnail(thumb);
+        await biliVideoExtractor(playurl, key);
+    }
     analyse.style.display = analyse.style.display === 'none' ? 'block' : 'none';
-    analyse.innerHTML = '<ul id="helper-thumb"></ul><ul id="helper-video"></ul><ul id="helper-audio"></ul>';
-    title = '';
-    var {aid, cid, __INITIAL_STATE__: {videoData, elecFullInfo, h1Title, epInfo}} = document.defaultView;
-    if (aid && cid) {
-        biliVideoTitle(videoData.title);
-        biliVideoThumbnail(elecFullInfo.data.pic);
-        biliVideoExtractor('x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
-    }
-    else {
-        biliVideoTitle(h1Title);
-        biliVideoThumbnail(epInfo.cover);
-        biliVideoExtractor('pgc/player/web/playurl?ep_id=' + epInfo.id, 'result');
-    }
 });
 var options = document.createElement('div');
 options.id = 'helper-options';
@@ -105,24 +104,19 @@ function biliVideoThumbnail(url) {
     analyse.querySelector('#helper-thumb').appendChild(menu);
 }
 
-function biliVideoExtractor(param, key) {
-    fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'}).then(response => response.json()).then(json => {
-        json[key].dash.video.forEach(({id, mimeType, codecs, baseUrl}) => {
+async function biliVideoExtractor(param, key) {
+    var menu = {av1: [], hevc: [], avc: [], aac: []};
+    await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'}).then(response => response.json()).then(({[key]: {dash: {video, audio}}}) => {
+        [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
             var codec = codecs.slice(0, codecs.indexOf('.'));
-            if (codec === 'avc1' && videocodec !== '0' || codec === 'hev1' && videocodec !== '1') {
-                return;
-            }
+            var array = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av1' ? menu.av1 : menu.aac;
             var {label, ext} = format[id];
-            var item = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
-            analyse.querySelector('#helper-video').appendChild(item);
+            array.push(createMenuitem(label, baseUrl, '.' + codec + ext, codec));
         });
-        json[key].dash.audio.forEach(({id, mimeType, codecs, baseUrl}) => {
-            var codec = codecs.slice(0, codecs.indexOf('.'));
-            var {label, ext} = format[id];
-            var item = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
-            analyse.querySelector('#helper-audio').appendChild(item);
-        })
     });
+    var video = videocodec === '2' && menu.av1.length !== 0 ? menu.av1 : videocodec === '1' && menu.hevc.length !== 0 ? menu.hevc : menu.avc;
+    video.forEach(item => document.querySelector('#helper-video').appendChild(item));
+    menu.aac.forEach(item => document.querySelector('#helper-audio').appendChild(item));
 }
 
 function createMenuitem(label, url, ext, codec) {
