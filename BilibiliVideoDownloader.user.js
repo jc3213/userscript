@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.0
+// @version         3.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -78,9 +78,11 @@ menu.append(options, analyse, css);
 options.style.display = analyse.style.display = 'none';
 
 setTimeout(() => {
+    var player = document.querySelector('video') ?? document.querySelector('bwp-video');
     var toolbar = document.querySelector('#arc_toolbar_report') ?? document.querySelector('#toolbar_module');
     toolbar.append(menu, css);
-    document.defaultView.cid ? biliVideoAutoWide('div.bilibili-player-video-btn-widescreen', 'closed') : biliVideoAutoWide('div.squirtle-video-widescreen', 'active');
+    player.addEventListener('loadstart', biliVideoAutoWide);
+    biliVideoAutoWide();
 }, 1500);
 
 function biliVideoTitle(name) {
@@ -88,13 +90,14 @@ function biliVideoTitle(name) {
     title = (name + (multi ? multi.innerText : '')).replace(/[\/\\\?\|\<\>:"']/g, '');
 }
 
-function biliVideoAutoWide(wide, active) {
+function biliVideoAutoWide() {
     setTimeout(() => {
-        if (document.querySelector(wide).classList.contains(active) || autowide === '0' ) {
+        var wide = document.querySelector('div.bilibili-player-video-btn-widescreen') ?? document.querySelector('div.squirtle-video-widescreen');
+        if (wide.classList.contains('closed') || wide.classList.contains('active') || autowide === '0' ) {
             return;
         }
-        document.querySelector(wide).click();
-    }, 2500);
+        wide.click();
+    }, 1500);
 }
 
 function biliVideoThumbnail(url) {
