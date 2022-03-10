@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.2
+// @version         3.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -37,7 +37,8 @@ css.innerHTML = '#helper-main {background-color: #fff; position: relative; z-ind
 #helper-options p, #helper-options select, .helper-button {font-size: 16px; text-align: center; padding: 5px;}\
 #helper-options select {width: 100%;}\
 #helper-analyse ul {display: inline-block; margin-righ: 3px; vertical-align: top;}\
-.helper-button {background-color: #c26; color: #fff; height: 16px; line-height: 16px; padding: 10px 15px; display: inline-block; margin-right: 3px; cursor: pointer;}\
+#helper-analyse a {display: inline-block; width: 100px;}\
+.helper-button {background-color: #c26; color: #fff; height: 16px; line-height: 16px; padding: 10px 15px; display: inline-block; margin: 0px 3px 3px 0px; cursor: pointer;}\
 .helper-button:hover {background-color: #26c;}';
 
 var menu = document.createElement('div');
@@ -90,13 +91,16 @@ function biliVideoTitle(name) {
 }
 
 function biliVideoAutoWide() {
-    setTimeout(() => {
+    var observer = setInterval(() => {
         var wide = document.querySelector('div.bilibili-player-video-btn-widescreen') ?? document.querySelector('div.squirtle-video-widescreen');
-        if (wide.classList.contains('closed') || wide.classList.contains('active') || autowide === '0' ) {
-            return;
+        if (wide) {
+            clearInterval(observer);
+            if (wide.classList.contains('closed') || wide.classList.contains('active') || autowide === '0' ) {
+                return;
+            }
+            wide.click();
         }
-        wide.click();
-    }, 1500);
+    }, 500);
 }
 
 function biliVideoThumbnail(url) {
