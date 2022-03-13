@@ -12,6 +12,7 @@
 var {autowide = '0', videocodec = '0'} = localStorage;
 var title;
 var video;
+var worker;
 var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
@@ -51,11 +52,10 @@ menu.querySelector('#options').addEventListener('click', event => {
 });
 menu.querySelector('#analyse').addEventListener('click', async event => {
     options.style.display = 'none';
-    if (video !== location.pathname || videocodec !== localStorage.videocodec) {
-        video = location.pathname;
+    if (worker || videocodec !== localStorage.videocodec) {
+        worker = false;
         videocodec = localStorage.videocodec;
         analyse.innerHTML = '<ul id="helper-thumb"></ul><ul id="helper-video"></ul><ul id="helper-audio"></ul>';
-        title = '';
         var {aid, cid, __INITIAL_STATE__: {videoData, elecFullInfo, h1Title, epInfo}} = document.defaultView;
         var [title, thumb, playurl, key] = aid && cid ? [videoData.title, elecFullInfo.data.pic, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
         biliVideoTitle(title);
@@ -81,6 +81,7 @@ options.style.display = analyse.style.display = 'none';
 new MutationObserver(mutations => {
     if (video !== location.pathname) {
         video = location.pathname;
+        worker = true;
         biliVideoAutoWide();
     }
 }).observe(document.head, {childList: true, subtree: true});
