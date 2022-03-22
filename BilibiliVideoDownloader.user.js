@@ -133,7 +133,7 @@ async function biliVideoExtractor(param, key) {
 function createMenuitem(label, url, ext, codec) {
     var li = document.createElement('li');
     var tip = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
-    li.innerHTML = '<a href="' + url + '" class="helper-button" target="_blank" download="' + title + '" title="' + tip + '">' + label + '</a>';
+    li.innerHTML = '<a href="' + url + '" class="helper-button" target="_blank" download="' + title + ext + '" title="' + tip + '">' + label + '</a>';
     li.addEventListener('click', event => navigator.clipboard.writeText(title));
     return li;
 }
