@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.5
+// @version         3.6
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -82,6 +82,7 @@ new MutationObserver(mutations => {
     if (video !== location.pathname) {
         video = location.pathname;
         worker = true;
+        options.style.display = analyse.style.display = 'none';
         biliVideoAutoWide();
     }
 }).observe(document.head, {childList: true, subtree: true});
@@ -133,5 +134,6 @@ function createMenuitem(label, url, ext, codec) {
     var li = document.createElement('li');
     var tip = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
     li.innerHTML = '<a href="' + url + '" class="helper-button" target="_blank" download="' + title + '" title="' + tip + '">' + label + '</a>';
+    li.addEventListener('click', event => navigator.clipboard.writeText(title));
     return li;
 }
