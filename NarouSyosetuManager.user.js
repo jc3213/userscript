@@ -38,8 +38,9 @@ css.innerHTML = '.manager-button {background-color: #fff; text-align: center; ve
 .manager-menu input {height: 20px;}\
 .manager-container > div:nth-child(n+2) {margin-top: 5px;}\
 .manager-shelf, .manager-logs {overflow-y: scroll; height: 552px;}\
-.manager-shelf > * {display: grid; grid-template-columns: 100px calc(100% - 300px) 100px 100px; text-align: center;}\
-.manager-shelf > *:nth-child(2n+1):not(:first-child) * {background-color: #eee;}\
+.manager-shelf > * {display: grid; grid-template-columns: 100px calc(100% - 306px) 100px 100px; grid-column-gap: 2px; text-align: center;}\
+.manager-shelf > *:first-child > * {background-color: #000; color: #fff;}\
+.manager-shelf > *:nth-child(2n+1):not(:first-child) > * {background-color: #eee;}\
 .manager-shelf > *:not(:first-child) > *:nth-child(2) {text-align: left;}\
 .manager-shelf > *:not(:first-child) > *:nth-child(1) {line-height: 40px;}\
 .notification {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff;}';
@@ -66,7 +67,7 @@ container.innerHTML = '<div class="manager-menu"><span id="mgr-btn-subscribe" cl
 <span id="mgr-btn-meta4" class="manager-button">NCODEをエックスポート</span>\
 <span id="mgr-btn-save" class="manager-button" style="display: none; background-color: #387ec8; color: #fff">書庫更新</span>\
 <span id="mgr-btn-log" class="manager-button" style="display: none;">ログ表示</span></div>\
-<div class="manager-shelf"><div style="background-color: #000; color: #fff;"><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
+<div class="manager-shelf"><div><span>NCODE</span><span>小説タイトル</span><span>更新間隔</span><span>ダウンロード</span></div></div>\
 <div class="manager-logs" style="display: none;"></div>';
 container.className = 'manager-container';
 container.style.cssText = 'display: none;';
