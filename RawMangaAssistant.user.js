@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.14
+// @version         6.15
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -16,10 +16,8 @@
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2.js#sha256-/NyeHAvLqSqeD6YbfeQacGIUFZ9FPn46kWmPNmlEInU=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.6.js#sha256-KJZqM++cM/ynXn4uSmC8eo0PfsXg8lFkZisk8U3zVLs=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
-// @grant           GM_getValue
-// @grant           GM_setValue
 // @grant           GM_xmlhttpRequest
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
@@ -60,13 +58,12 @@ var logo = [];
 var observer;
 var images;
 var watching;
-var {jsonrpc, secret} = GM_getValue('aria2', {jsonrpc: 'http://localhost:6800/jsonrpc', secret: ''});
-var aria2 = new Aria2(jsonrpc, secret);
+var aria2 = new Aria2(localStorage.jsonrpc ?? 'http://localhost:6800/jsonrpc', localStorage.secret ?? '');
 var folder;
-var options = GM_getValue('options', {menu: 'on', top: 300, left: 150});
-var offset;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
+var iconTop = localStorage.offsetTop ? localStorage.offsetTop | 0 : 350;
+var iconLeft = localStorage.offsetLeft ? localStorage.offsetLeft | 0 : 200;
 
 // i18n strings and labels
 var message = {
@@ -203,8 +200,8 @@ function extractMangaTitle(title = '') {
 // Create UI
 var css = document.createElement('style');
 css.innerHTML = '#assistant_button, #assistant_container, #assistant_caution {background-color: #fff; color: #000; position: fixed; z-index: 999999999;}\
-#assistant_button {text-align: center; line-height: 42px; width: 42px !important; height: 42px !important; border: 1px solid darkviolet; top: ' + options.top + 'px; left: ' + options.left + 'px;}\
-#assistant_container {top: ' + options.top + 'px; left: ' + (options.left + 42) + 'px; display: none;}\
+#assistant_button {text-align: center; line-height: 42px; width: 42px !important; height: 42px !important; border: 1px solid darkviolet; top: ' + iconTop + 'px; left: ' + iconLeft + 'px;}\
+#assistant_container {top: ' + iconTop + 'px; left: ' + (iconLeft + 42) + 'px; display: none;}\
 #assistant_container > * {background-color: #fff; width: 220px; border: 1px ridge darkblue; font-size: 14px;}\
 #assistant_container > *:nth-child(-n+2), #assistant_container data {display: none;}\
 #assistant_container.extract > *:nth-child(-n+2), #assistant_container .checked data {display: block;}\
@@ -237,9 +234,8 @@ var dragndrop = new DragNDrop(button);
 dragndrop.ondragend = event => {
     container.style.top = dragndrop.offsetTop + 'px';
     container.style.left = dragndrop.offsetLeft + button.offsetWidth + 'px';
-    options.top = dragndrop.offsetTop;
-    options.left = dragndrop.offsetLeft;
-    GM_setValue('options', options);
+    localStorage.offsetTop = dragndrop.offsetTop;
+    localStorage.offsetLeft = dragndrop.offsetLeft;
 };
 
 container.querySelector('#download').addEventListener('click', event => {
@@ -271,10 +267,9 @@ container.querySelector('#scrolltop').addEventListener('click', event => {
 container.querySelector('#aria2download').addEventListener('click', async event => {
     folder = folder ?? await aria2.message('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
         alert(i18n.aria2.error);
-        jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
-        secret = prompt('Aria2 Secret Token', secret) ?? secret;
-        aria2 = new Aria2(jsonrpc, secret);
-        GM_setValue('aria2', {jsonrpc, secret});
+        localStorage.jsonrpc = prompt('Aria2 JSONRPC URI', localStorage.jsonrpc ?? 'http://localhost:6800/jsonrpc') ?? localStorage.jsonrpc ?? 'http://localhost:6800/jsonrpc';
+        localStorage.secret = prompt('Aria2 Secret Token', localStorage.secret ?? '') ?? localStorage.secret ?? '';
+        aria2 = new Aria2(localStorage.jsonrpc, localStorage.secret);
     });
     if (folder) {
         urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]));
@@ -286,7 +281,7 @@ container.querySelector('#aria2download').addEventListener('click', async event 
 var switchMenu = document.createElement('div');
 [
     {
-        name: 'menu',
+        name: 'contextmenu',
         on: () => {
             button.style.display = 'none';
             document.addEventListener('contextmenu', contextMenuHandler);
@@ -303,7 +298,7 @@ var switchMenu = document.createElement('div');
     menu.setAttribute('name', name);
     menu.innerHTML = '<span><data>✅</data></span><span>' + i18n.menu.label + '</span></div>';
     menu.addEventListener('click', event => {
-        options[name] = options[name] === 'on' ? 'off' : 'on';
+        localStorage[name] = localStorage[name] === 'on' ? 'off' : 'on';
         switchHandler(menu, name, on, off);
         GM_setValue('options', options);
     });
@@ -313,7 +308,7 @@ var switchMenu = document.createElement('div');
 container.appendChild(switchMenu);
 
 function switchHandler(menu, name, on, off) {
-    if (options[name] === 'on') {
+    if (localStorage[name] === 'on') {
         on();
         menu.classList.add('checked');
     }
