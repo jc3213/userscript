@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.16
+// @version         6.17
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -13,7 +13,7 @@
 // @match           *://welovemanga.one/*
 // @match           *://mikaraw.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.6.js#sha256-KJZqM++cM/ynXn4uSmC8eo0PfsXg8lFkZisk8U3zVLs=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.7.js#sha256-Ac56C1xOZL1/1MNdakqJGU3hW0+CbxWIJR1wn8WayFo=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -60,7 +60,7 @@ var images;
 var watching;
 var options = GM_getValue('options', {contextmenu: 'on'});
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200} = options;
-var aria2 = new Aria2(localStorage.jsonrpc ?? 'http://localhost:6800/jsonrpc', localStorage.secret ?? '');
+var aria2 = new Aria2(jsonrpc, secret);
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
