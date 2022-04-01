@@ -56,12 +56,12 @@ css.innerHTML = '#filter-menu input {display: inline-block; width: 170px; margin
 #filter-list > * > *:nth-child(3):not(text) {background-color: #0056b0;}\
 #filter-list > * > *:nth-child(4) {background-color: #056b00;}\
 #filter-list > * > *:nth-child(5) {background-color: #0005cc;}\
-#filter-preview {position: absolute; z-index: 3213; max-height: 800px; width: auto;}';
+#filter-preview {position: fixed; z-index: 3213; max-height: 800px; width: auto;}';
 document.head.appendChild(css);
 
 var menu = document.createElement('div');
 menu.id = 'filter-menu';
-menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.keyword + '"><button class="btn btn-primary">🌐</button>';
+menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.keyword + '" value="' + document.querySelector('#navbar form > input').value + '"><button class="btn btn-primary">🌐</button>';
 document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
@@ -108,8 +108,8 @@ function getFilterResult(data) {
 document.querySelectorAll('table > tbody > tr').forEach((element) => {
     var a = element.querySelectorAll('td:nth-child(2) > a');
     a = a.length === 2 ? a[1] : a[0];
-    var id = a.href.split('/').pop();
-    var name = a.innerHTML;
+    var id = a.href.slice(a.href.lastIndexOf('/') + 1);
+    var name = a.innerText;
     var src = a.href;
     var size = element.querySelector('td:nth-child(4)').innerText;
     var link = element.querySelectorAll('td:nth-child(3) > a');
@@ -133,7 +133,8 @@ async function getPreviewHandler(data, mouse) {
     action[data.id] = true;
     data.type === 'none' ? alert(data.name + '\nNo Preview!') :
     data.type === 'image' ? createPreview(data.url, mouse) :
-    data.type === 'host' ? GM_openInTab(data.url, true) : await xmlNodeHandler(data.src).then(({type, url}) => {
+    data.type === 'host' ? GM_openInTab(data.url, true) :
+    await xmlNodeHandler(data.src).then(({type, url}) => {
         data.type = type;
         data.url = url;
         action[data.id] = false;
