@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.15
+// @version         6.16
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -15,6 +15,7 @@
 // @match           *://weloma.art/*
 // @match           *://weloma.net/*
 // @match           *://mangameta.com/*
+// @match           *://mangagohan.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.6.js#sha256-KJZqM++cM/ynXn4uSmC8eo0PfsXg8lFkZisk8U3zVLs=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
@@ -173,6 +174,11 @@ var manga = {
         image: 'div.chapter-c > img',
         title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
         shortcut: 'div.linkchap > a'
+    },
+    'mangagohan.com': {
+        image: 'div.page-break > img',
+        lazyload: 'data-src',
+        title: {reg: /^(.+)\s\(Raw\s–\sFree\)\s-[^\d]+(\d+)/, sel: 'meta[property="og:title"]', attr: 'content', tl: 1, ch: 2}
     }
 };
 manga['manga1001.com'] = manga['manga1000.com'];
