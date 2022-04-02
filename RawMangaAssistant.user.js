@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.17
+// @version         6.18
 // @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
 // @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
 // @author          jc3213
@@ -12,6 +12,7 @@
 // @match           *://rawdevart.com/*
 // @match           *://welovemanga.one/*
 // @match           *://mikaraw.com/*
+// @match           *://4uview.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.7.js#sha256-Ac56C1xOZL1/1MNdakqJGU3hW0+CbxWIJR1wn8WayFo=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
@@ -36,7 +37,8 @@
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
 // @                mangameta.com
 // @webRequest      {"selector": "*mickeysdim.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*ea1f460c2e.ca65b1531c.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.ca65b1531c.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.592eb4ef33.com/*", "action": "cancel"}
 // @                mangagohan.com
 // @webRequest      {"selector": "*b7om8bdayac6at.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*ietyofedinj89yewtburgh.com/*", "action": "cancel"}
@@ -137,7 +139,7 @@ var manga = {
     'mangameta.com': {
         image: 'div.chapter-c > img',
         title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
-        shortcut: 'div.linkchap > a'
+        shortcut: ['a#prev_chap', 'a#next_chap']
     },
     'mangagohan.com': {
         image: 'div.page-break > img',
@@ -168,6 +170,11 @@ var manga = {
         title: [{reg: /^([^(])+/, sel: '#header-bot li:nth-child(2) a', attr: 'title', nl: 0}, {reg: /([^\s]+)$/, sel: '#header-bot li:nth-child(3) a', attr: 'title', nl: 0}],
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]']
+    },
+    '4uview.com': {
+        image: 'img.chapter-img',
+        title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
+        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     }
 };
 watching = manga[location.host];
