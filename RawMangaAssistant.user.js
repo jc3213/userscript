@@ -14,7 +14,7 @@
 // @match           *://mikaraw.com/*
 // @match           *://4uview.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.2.7.js#sha256-Ac56C1xOZL1/1MNdakqJGU3hW0+CbxWIJR1wn8WayFo=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.8.js#sha256-KwVLV5qt8DpHLL6YkOe+aWMFb92cWtTVuc9ccbT7xTM=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_getValue
 // @grant           GM_setValue
