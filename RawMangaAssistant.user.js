@@ -2,9 +2,9 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.18
-// @description     Assistant for raw manga online (LMangaToro, HakaRaw and etc.)
-// @description:zh  漫画生肉网站 (MangaToro, HakaRaw 等) 助手脚本
+// @version         6.19
+// @description     Assistant for raw manga online website
+// @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
 // @match           *://mangameta.com/*
 // @match           *://mangagohan.com/*
@@ -14,7 +14,7 @@
 // @match           *://mikaraw.com/*
 // @match           *://4uview.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.8.js#sha256-KwVLV5qt8DpHLL6YkOe+aWMFb92cWtTVuc9ccbT7xTM=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.10.js#sha256-BMZovADoJ6OKcNrw1YxIG4iKLGT6tSEYinNfA+aN0qg=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_getValue
 // @grant           GM_setValue
