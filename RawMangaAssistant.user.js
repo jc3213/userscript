@@ -2,12 +2,12 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.19
+// @version         6.20
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
 // @match           *://mangameta.com/*
-// @match           *://mangagohan.com/*
+// @match           *://gokumanga.com/*
 // @match           *://klmag.net/*
 // @match           *://rawdevart.com/*
 // @match           *://welovemanga.one/*
@@ -39,7 +39,7 @@
 // @webRequest      {"selector": "*mickeysdim.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.ca65b1531c.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.592eb4ef33.com/*", "action": "cancel"}
-// @                mangagohan.com
+// @                gokumanga.com
 // @webRequest      {"selector": "*b7om8bdayac6at.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*ietyofedinj89yewtburgh.com/*", "action": "cancel"}
 // @                mikaraw.com
@@ -141,10 +141,10 @@ var manga = {
         title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
         shortcut: ['a#prev_chap', 'a#next_chap']
     },
-    'mangagohan.com': {
+    'gokumanga.com': {
         image: 'div.page-break > img',
         lazyload: 'data-src',
-        title: {reg: /^(.+)\s\(Raw\s–\sFree\)\s-[^\d]+(\d+)/, sel: 'meta[property="og:title"]', attr: 'content', tl: 1, ch: 2}
+        title: {reg: /^(.+)\s-\s\u7b2c(.+)\u8a71/, sel: 'meta[property="og:title"]', attr: 'content', tl: 1, ch: 2}
     },
     'klmag.net': {
         image: 'img.chapter-img',
@@ -191,8 +191,10 @@ function extractMangaTitle(title = '') {
         watching.title.forEach(item => { title += symbol + watching.title[0].reg.exec(document.querySelector(watching.title[0].sel).getAttribute(watching.title[0].attr))[watching.title[0].nl]; });
     }
     else {
-        var result = watching.title.reg.exec(document.querySelector(watching.title.sel).getAttribute(watching.title.attr));
-        title += symbol + result[watching.title.tl] + symbol + result[watching.title.ch];
+        var text = document.querySelector(watching.title.sel).getAttribute(watching.title.attr);
+        var temp = watching.title.reg.exec(text);
+        console.log(text, temp)
+        title += symbol + temp[watching.title.tl] + symbol + temp[watching.title.ch];
     }
     return title.replace(/[:\?\"\']/g, '_');
 }
