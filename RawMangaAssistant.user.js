@@ -2,17 +2,18 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.20
+// @version         6.22
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
 // @match           *://mangameta.com/*
-// @match           *://gokumanga.com/*
-// @match           *://klmag.net/*
+// @match           *://mangagohan.me/*
+// @match           *://klmanga.net/*
 // @match           *://rawdevart.com/*
-// @match           *://welovemanga.one/*
+// @match           *://weloma.art/*
 // @match           *://mikaraw.com/*
-// @match           *://4uview.com/*
+// @match           *://ney5.xyz/*
+// @match           *://mangahatachi.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.10.js#sha256-BMZovADoJ6OKcNrw1YxIG4iKLGT6tSEYinNfA+aN0qg=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
@@ -33,23 +34,25 @@
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // @                mangameta.com / mikaraw.com
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-// @                mangameta.com / klmag.net
+// @                mangameta.com / klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
 // @                mangameta.com
-// @webRequest      {"selector": "*mickeysdim.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.ca65b1531c.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.592eb4ef33.com/*", "action": "cancel"}
-// @                gokumanga.com
+// @webRequest      {"selector": "*.com/*/47871", "action": "cancel"}
+// @webRequest      {"selector": "*.com/*/51016", "action": "cancel"}
+// @                mangagohan.me
 // @webRequest      {"selector": "*b7om8bdayac6at.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*ietyofedinj89yewtburgh.com/*", "action": "cancel"}
 // @                mikaraw.com
 // @webRequest      {"selector": "*puturebraving.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*begasuthy.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*twazzyoidwlfe.com/*", "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// @                klmag.net
-// @webRequest      {"selector": "*cynicaugural.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
+// @                klmanga.net
+// @webRequest      {"selector": "*.com/*50133", "action": "cancel"}
+// @                mangahatachi.com
+// @webRequest      {"selector": "*sinmgaepu3or9a61w.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -141,12 +144,12 @@ var manga = {
         title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
         shortcut: ['a#prev_chap', 'a#next_chap']
     },
-    'gokumanga.com': {
+    'mangagohan.me': {
         image: 'div.page-break > img',
         lazyload: 'data-src',
         title: {reg: /^(.+)\s-\s\u7b2c(.+)\u8a71/, sel: 'meta[property="og:title"]', attr: 'content', tl: 1, ch: 2}
     },
-    'klmag.net': {
+    'klmanga.net': {
         image: 'img.chapter-img',
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
@@ -158,7 +161,7 @@ var manga = {
         lazyload: 'data-src',
         title: {reg: /^Chapter\s([^\s]+)\s\|\s(.+)\sPage/, sel: '#img-container > div > img', attr: 'alt', tl: 2, ch: 1}
     },
-    'welovemanga.one': {
+    'weloma.art': {
         image: 'img.chapter-img',
         lazyload: 'data-srcset',
         title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
@@ -171,7 +174,10 @@ var manga = {
         shortcut: ['#prev_chap', '#next_chap'],
         ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]']
     },
-    '4uview.com': {
+    'mangahatachi.com': {
+        image: 'div.page-break > img',
+    },
+    'ney5.xyz': {
         image: 'img.chapter-img',
         title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
@@ -186,17 +192,22 @@ function longDecimalNumber(input, length = 3) {
 }
 
 function extractMangaTitle(title = '') {
-    var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-    if (Array.isArray(watching.title)) {
-        watching.title.forEach(item => { title += symbol + watching.title[0].reg.exec(document.querySelector(watching.title[0].sel).getAttribute(watching.title[0].attr))[watching.title[0].nl]; });
+    try {
+        var symbol = navigator.platform === 'Win32' ? '\\' : '/';
+        if (Array.isArray(watching.title)) {
+            watching.title.forEach(item => { title += symbol + watching.title[0].reg.exec(document.querySelector(watching.title[0].sel).getAttribute(watching.title[0].attr))[watching.title[0].nl]; });
+        }
+        else {
+            var text = document.querySelector(watching.title.sel).getAttribute(watching.title.attr);
+            var temp = watching.title.reg.exec(text);
+            console.log(text, temp)
+            title += symbol + temp[watching.title.tl] + symbol + temp[watching.title.ch];
+        }
+        return title.replace(/[:\?\"\']/g, '_');
     }
-    else {
-        var text = document.querySelector(watching.title.sel).getAttribute(watching.title.attr);
-        var temp = watching.title.reg.exec(text);
-        console.log(text, temp)
-        title += symbol + temp[watching.title.tl] + symbol + temp[watching.title.ch];
+    catch (error) {
+        return;
     }
-    return title.replace(/[:\?\"\']/g, '_');
 }
 
 // Create UI
