@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.4
+// @version      5.5
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -46,7 +46,7 @@ if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
 var css= document.createElement('style');
 css.innerHTML = '#filter-menu input {display: inline-block; width: 170px; margin-top: 8px;}\
 #filter-menu button {background-color: #056b00; margin-top: -3px;}\
-#filter-list {position: absolute; background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; display: none; overflow-x: hidden; z-index: 3213;}\
+#filter-list {position: absolute; background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; overflow-x: hidden; z-index: 3213;}\
 #filter-list > * {display: grid; grid-template-columns: 700px 70px 70px 70px 70px; position: relative;}\
 #filter-list > * > * {padding: 10px 5px; margin: 1px; color: #fff; border-radius: 5px; text-decoration: none;}\
 #filter-list > * > *:not(:first-child, text) {text-align: center; cursor: pointer; user-select: none;}\
@@ -65,23 +65,39 @@ menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.k
 document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
-    var keys = menu.querySelector('input').value.split(/[\|\/\\\+,:;\s]+/);
-    if (filter && keys.join() === keyword.join()) {
-        popup.style.display = 'none';
+    var value = menu.querySelector('input').value;
+    var keys = value.split(/[\|\/\\\+,:;\s]+/);
+    if (filter && keyword === value) {
         filter = false;
     }
     else {
         popup.innerHTML = '';
-        popup.style.cssText = 'left: ' + (document.documentElement.offsetWidth - 1000) / 2 + 'px; top: ' + document.querySelector('#navbar').offsetHeight + 'px; display: block';
+        popup.style.cssText = 'left: ' + (document.documentElement.offsetWidth - 1000) / 2 + 'px; top: ' + document.querySelector('#navbar').offsetHeight + 'px;';
         queue.forEach(data => keys.filter(key => data.name.includes(key)).length === keys.length && getFilterResult(data) );
-        keyword = keys;
+        keyword = value;
         filter = true;
     }
+    popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
 });
 
 var popup = document.createElement('div');
 popup.id = 'filter-list';
+popup.style.display = 'none';
 document.body.appendChild(popup);
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'ArrowRight') {
+        document.querySelector('li.next > a').click();
+    }
+    if (event.key === 'ArrowLeft') {
+        document.querySelector('li.previous > a').click();
+    }
+});
+
+new MutationObserver(mutations => {
+    popup.style.display = 'none';
+    filter = true;
+}).observe(document.querySelector('form.navbar-form > div'), {subtree: true, attributes: true});
 
 // Show filter result
 function getFilterResult(data) {
