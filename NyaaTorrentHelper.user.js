@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.5
+// @version      6.0
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -12,8 +12,7 @@
 
 'use strict';
 // Variables
-var filter = false;
-var keyword = [];
+var keyword;
 var queue = [];
 var action = {};
 
@@ -46,6 +45,8 @@ if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
 var css= document.createElement('style');
 css.innerHTML = '#filter-menu input {display: inline-block; width: 170px; margin-top: 8px;}\
 #filter-menu button {background-color: #056b00; margin-top: -3px;}\
+#filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
+#filter-extra #remove {background-color: #000;}\
 #filter-list {position: absolute; background-color: #dff0d8; width: 1000px; height: 560px; white-space: nowrap; overflow-y: scroll; overflow-x: hidden; z-index: 3213;}\
 #filter-list > * {display: grid; grid-template-columns: 700px 70px 70px 70px 70px; position: relative;}\
 #filter-list > * > * {padding: 10px 5px; margin: 1px; color: #fff; border-radius: 5px; text-decoration: none;}\
@@ -65,17 +66,22 @@ menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.k
 document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
-    var value = menu.querySelector('input').value;
-    var keys = value.split(/[\|\/\\\+,:;\s]+/);
-    if (filter && keyword === value) {
-        filter = false;
+    if (event.ctrlKey) {
+        var result = '';
+        document.querySelectorAll('table > tbody > tr > td > #batch').forEach(async (batch, index) => {
+            if (batch.checked) {
+                result += parseTorrentInfo(queue[index]) + '\n\n=======================================================\n\n';
+            }
+        });
+        return navigator.clipboard.writeText(result);
     }
-    else {
+    var value = menu.querySelector('input').value;
+    if (keyword !== value) {
         popup.innerHTML = '';
         popup.style.cssText = 'left: ' + (document.documentElement.offsetWidth - 1000) / 2 + 'px; top: ' + document.querySelector('#navbar').offsetHeight + 'px;';
+        var keys = value.split(/[\|\/\\\+,:;\s]+/);
         queue.forEach(data => keys.filter(key => data.name.includes(key)).length === keys.length && getFilterResult(data) );
         keyword = value;
-        filter = true;
     }
     popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
 });
@@ -89,14 +95,13 @@ document.addEventListener('keydown', event => {
     if (event.key === 'ArrowRight') {
         document.querySelector('li.next > a').click();
     }
-    if (event.key === 'ArrowLeft') {
+    else if (event.key === 'ArrowLeft') {
         document.querySelector('li.previous > a').click();
     }
 });
 
 new MutationObserver(mutations => {
     popup.style.display = 'none';
-    filter = true;
 }).observe(document.querySelector('form.navbar-form > div'), {subtree: true, attributes: true});
 
 // Show filter result
@@ -115,20 +120,29 @@ function getFilterResult(data) {
     menu.querySelector('#copy').addEventListener('click', async event => {
         event.target.innerText = '!';
         data = {...data, ...(!data.type && await xmlNodeHandler(data.src))};
-        navigator.clipboard.writeText(i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.url ?? '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet);
+        navigator.clipboard.writeText(parseTorrentInfo(data));
         event.target.innerText = i18n.copy;
     });
 }
 
+function parseTorrentInfo(data) {
+    return i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.url ?? '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet;
+}
+
 // Extract data
-document.querySelectorAll('table > tbody > tr').forEach((element) => {
-    var a = element.querySelectorAll('td:nth-child(2) > a');
+var new_th = document.createElement('th');
+new_th.innerText = 'Helper';
+new_th.className = 'text-center';
+document.querySelector('table > thead > tr').appendChild(new_th);
+
+document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
+    var a = tr.querySelectorAll('td:nth-child(2) > a');
     a = a.length === 2 ? a[1] : a[0];
     var id = a.href.slice(a.href.lastIndexOf('/') + 1);
     var name = a.innerText;
     var src = a.href;
-    var size = element.querySelector('td:nth-child(4)').innerText;
-    var link = element.querySelectorAll('td:nth-child(3) > a');
+    var size = tr.querySelector('td:nth-child(4)').innerText;
+    var link = tr.querySelectorAll('td:nth-child(3) > a');
     var torrent = link.length === 2 ? link[0].href : null;
     var magnet = link.length === 2 ? link[1].href : link[0].href;
     magnet = magnet.slice(0, magnet.indexOf('&'));
@@ -139,6 +153,11 @@ document.querySelectorAll('table > tbody > tr').forEach((element) => {
         await getPreviewHandler(data, {top: event.clientY, left: event.clientX});
         a.style.cssText = 'color: #C33;';
     });
+    var td = document.createElement('td');
+    td.id = 'filter-extra';
+    td.innerHTML = '<input type="checkbox" id="batch"> <input type="button" id="remove">';
+    td.querySelector('#remove').addEventListener('click', event => tr.remove());
+    tr.appendChild(td);
 });
 
 // Preview handler
