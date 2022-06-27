@@ -51,7 +51,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     var src = a.href;
     var size = tr.querySelector('td:nth-child(4)').innerText;
     var link = tr.querySelectorAll('td:nth-child(3) > a');
-    var torrent = link.length === 2 ? link[0].href : null;
+    var torrent = link.length === 2 ? link[0].href : '';
     var magnet = link.length === 2 ? link[1].href : link[0].href;
     magnet = magnet.slice(0, magnet.indexOf('&'));
     var td = document.createElement('td');
@@ -126,11 +126,11 @@ function batchCopy() {
             clearInterval(interval);
             action.copy = false;
         }
-    }, 500);
+    }, 250);
 }
 
-function copyInfo({name, size, url, torrent, magnet}) {
-    return i18n.name + ':\n' + name + ' (' + size + ')\n\n' + i18n.preview + ':\n' + (url ?? '') + '\n\n' + (torrent ? i18n.torrent + ':\n' + torrent + '\n\n' : '') + i18n.magnet + ':\n' + magnet;
+function copyInfo({name, size, url = '', torrent, magnet}) {
+    return i18n.name + ':\n' + name + ' (' + size + ')\n\n' + i18n.preview + ':\n' + url + '\n\n' + i18n.torrent + ':\n' + torrent + '\n\n' + i18n.magnet + ':\n' + magnet;
 }
 
 function filterResult() {
@@ -171,8 +171,8 @@ function fetchPreview({id, src, td}) {
     action[id] = true;
     td.querySelector('span').style.display = 'inline';
     return fetch(src).then(response => response.text()).then(text => {
-        if (text.includes('502 Bad Gateway')) {
-            throw new Error('502 Bad Gateway');
+        if (text.includes('502 Bad Gateway') || text.includes('404 Not Found')) {
+            throw 'Error';
         }
         else {
             action[id] = false;
@@ -190,15 +190,11 @@ function fetchPreview({id, src, td}) {
             }
             return {type: 'none'};
         }
-    }).catch(error => retryFetch(src));
-}
-
-function retryFetch(url) {
-    return new Promise(resolve => {
+    }).catch(error => new Promise(resolve => {
         setTimeout(() => {
-            resolve(fetchPreview(url));
+            resolve(fetchPreview({id, src, td}));
         }, 5000);
-    });
+    }));
 }
 
 // Create preview
