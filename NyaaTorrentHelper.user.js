@@ -58,12 +58,14 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     queue.push(data);
     a.addEventListener('contextmenu', async event => {
         event.preventDefault();
+        td.querySelector('#load').style.display = 'inline';
         await getPreviewHandler(data, {top: event.clientY, left: event.clientX});
         a.style.cssText = 'color: #C33;';
+        td.querySelector('#load').style.display = 'none';
     });
     var td = document.createElement('td');
-    td.id = 'filter-extra';
-    td.innerHTML = '<input type="checkbox" id="batch"> <input type="button" id="remove">';
+    td.className = 'filter-extra';
+    td.innerHTML = '<input type="checkbox" id="batch"> <input type="button" id="remove"> <span id="load">⏳</span>';
     td.querySelector('#remove').addEventListener('click', event => tr.remove());
     tr.appendChild(td);
 });
@@ -76,15 +78,17 @@ document.querySelector('table > thead > tr').appendChild(new_th);
 
 // Create UI
 var css= document.createElement('style');
-css.innerHTML = '#filter-menu input {display: inline-block; width: 170px; margin-top: 8px;}\
-#filter-menu button {background-color: #056b00; margin-top: -3px;}\
-#filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
-#filter-extra #remove {background-color: #000;}';
+css.innerHTML = '.filter-text {display: inline-block; width: 170px !important; margin-top: 8px;}\
+.filter-button {background-color: #056b00; margin-top: -3px;}\
+.filter-extra {position: relative;}\
+.filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
+.filter-extra #remove {background-color: #000;}\
+.filter-extra #load {position: absolute; right: 0px; top: 10px; display: none;}\
+.filter-preview {position: fixed; z-index: 3213; max-height: 800px; width: auto;}';
 document.head.appendChild(css);
 
 var menu = document.createElement('div');
-menu.id = 'filter-menu';
-menu.innerHTML = '<input class="form-control search-bar" placeholder="' + i18n.keyword + '" value="' + document.querySelector('#navbar form > input').value + '"><button class="btn btn-primary">🌐</button>';
+menu.innerHTML = '<input class="form-control search-bar filter-text" placeholder="' + i18n.keyword + '" value="' + document.querySelector('#navbar form > input').value + '"><button class="btn btn-primary filter-button">🌐</button>';
 document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
@@ -111,7 +115,6 @@ menu.querySelector('button').addEventListener('click', event => {
             }
         });
     }
-
 });
 
 document.addEventListener('keydown', event => {
@@ -129,12 +132,12 @@ function parseTorrentInfo(data) {
 
 // Preview handler
 async function getPreviewHandler(data, mouse) {
-    if (action[data.id] || document.getElementById('preview-' + data.id)) {
+    if (action[data.id] || document.getElementById(data.id)) {
         return;
     }
     action[data.id] = true;
     data.type === 'none' ? alert(data.name + '\nNo Preview!') :
-    data.type === 'image' ? createPreview(data.url, mouse) :
+    data.type === 'image' ? createPreview(data, mouse) :
     data.type === 'host' ? GM_openInTab(data.url, true) :
     await xmlNodeHandler(data.src).then(({type, url}) => {
         data.type = type;
@@ -168,9 +171,10 @@ function xmlNodeHandler(url) {
 }
 
 // Create preview
-function createPreview(url, mouse) {
+function createPreview({id, url}, mouse) {
     var image = document.createElement('img');
-    image.id = 'filter-preview';
+    image.className = 'filter-preview';
+    image.id = id;
     image.src = url;
     image.style.cssText = 'top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
     image.addEventListener('click', event => image.remove());
