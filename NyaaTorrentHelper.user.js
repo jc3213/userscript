@@ -60,13 +60,18 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     td.querySelector('[type="button"]').addEventListener('click', event => tr.remove());
     tr.appendChild(td);
     var data = {id, name, src, size, torrent, magnet, tr, td};
-    queue.push(data);
+    queue[index] = data;
     a.addEventListener('contextmenu', async event => {
         event.preventDefault();
-        td.querySelector('span').style.display = 'inline';
-        await getPreviewHandler(data, {top: event.clientY, left: event.clientX});
+        if (action[id] || document.getElementById(id)) {
+            return;
+        }
+        if (!data.type) {
+            var result = await fetchPreview(data);
+            queue[index] = data = {...data, ...result};
+        }
+        getPreview(data, {top: event.clientY, left: event.clientX});
         a.style.cssText = 'color: #C33;';
-        td.querySelector('span').style.display = 'none';
     });
 });
 
@@ -93,24 +98,38 @@ document.querySelector('#navbar').appendChild(menu);
 menu.querySelector('input').addEventListener('keypress', event => event.key === 'Enter' && menu.querySelector('button').click());
 menu.querySelector('button').addEventListener('click', event => {
     if (event.ctrlKey) {
-        var result = '';
-        document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked').forEach(batch => {
-            result += parseTorrentInfo(queue[batch.value]) + '\n\n=======================================================\n\n';
-        });
-        return navigator.clipboard.writeText(result);
+        batchCopy();
     }
-    var value = menu.querySelector('input').value;
-    if (keyword === value) {
+    else {
+        filterResult();
+    }
+});
+
+function batchCopy() {
+    var text = '';
+    return document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked').forEach(async batch => {
+        var data = queue[batch.value];
+        if (!data.type) {
+            var result = await fetchPreview(data);
+            queue[batch.value] = data = {...data, ...result};
+        }
+        navigator.clipboard.writeText(text += parseTorrentInfo(data) + '\n\n=======================================================\n\n');
+    });
+}
+
+function filterResult() {
+    var text = menu.querySelector('input').value;
+    if (keyword === text) {
         if (keyword === '') {
             return;
         }
         filter.forEach(tr => { tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none'; });
     }
-    else if (value === '') {
+    else if (text === '') {
         filter.forEach(tr => { tr.style.display = 'table-row'; });
     }
-    else if (keyword !== value) {
-        var keys = value.split(/[\|\/\\\+,:;\s]+/);
+    else if (keyword !== text) {
+        var keys = text.split(/[\|\/\\\+,:;\s]+/);
         filter = [];
         queue.forEach(({name, tr}) => {
             if (keys.filter(key => name.includes(key)).length === keys.length) {
@@ -118,9 +137,9 @@ menu.querySelector('button').addEventListener('click', event => {
                 filter.push(tr);
             }
         });
-        keyword = value;
+        keyword = text;
     }
-});
+}
 
 document.addEventListener('keydown', event => {
     if (event.key === 'ArrowRight') {
@@ -136,29 +155,16 @@ function parseTorrentInfo({name, size, url, torrent, magnet}) {
 }
 
 // Preview handler
-async function getPreviewHandler(data, mouse) {
-    if (action[data.id] || document.getElementById(data.id)) {
-        return;
-    }
-    action[data.id] = true;
-    data.type === 'none' ? alert(data.name + '\nNo Preview!') :
-    data.type === 'image' ? createPreview(data, mouse) :
-    data.type === 'host' ? GM_openInTab(data.url, true) :
-    await xmlNodeHandler(data.src).then(({type, url}) => {
-        data.type = type;
-        data.url = url;
-        action[data.id] = false;
-        getPreviewHandler(data, mouse);
-    }).catch(error => { action[data.id] = getPreviewHandler(data, mouse); });
-    action[data.id] = false;
-}
-
-function xmlNodeHandler(url) {
-    return fetch(url).then(response => response.text()).then(text => {
+function fetchPreview({id, src, td}) {
+    action[id] = true;
+    td.querySelector('span').style.display = 'inline';
+    return fetch(src).then(response => response.text()).then(text => {
         if (text.includes('502 Bad Gateway')) {
             throw new Error('502 Bad Gateway');
         }
         else {
+            action[id] = false;
+            td.querySelector('span').style.display = 'none';
             var node = document.createElement('div');
             node.innerHTML = text;
             var desc = node.querySelector('#torrent-description').innerText;
@@ -172,11 +178,25 @@ function xmlNodeHandler(url) {
             }
             return {type: 'none'};
         }
+    }).catch(error => retryFetch(src));
+}
+
+function retryFetch(url) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(fetchPreview(url));
+        }, 5000);
     });
 }
 
 // Create preview
-function createPreview({id, url}, mouse) {
+function getPreview(data, mouse) {
+    data.type === 'none' ? alert(data.name + '\nNo Preview!') :
+    data.type === 'image' ? imagePreview(data, mouse) :
+    data.type === 'host' ? GM_openInTab(data.url, true) : null;
+}
+
+function imagePreview(id, url, mouse) {
     var image = document.createElement('img');
     image.className = 'filter-preview';
     image.id = id;
