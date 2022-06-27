@@ -54,20 +54,20 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     var torrent = link.length === 2 ? link[0].href : null;
     var magnet = link.length === 2 ? link[1].href : link[0].href;
     magnet = magnet.slice(0, magnet.indexOf('&'));
-    var data = {id, name, src, size, torrent, magnet, tr};
+    var td = document.createElement('td');
+    td.className = 'filter-extra';
+    td.innerHTML = '<input type="checkbox" value="' + index + '"> <input type="button"> <span>⏳</span>';
+    td.querySelector('[type="button"]').addEventListener('click', event => tr.remove());
+    tr.appendChild(td);
+    var data = {id, name, src, size, torrent, magnet, tr, td};
     queue.push(data);
     a.addEventListener('contextmenu', async event => {
         event.preventDefault();
-        td.querySelector('#load').style.display = 'inline';
+        td.querySelector('span').style.display = 'inline';
         await getPreviewHandler(data, {top: event.clientY, left: event.clientX});
         a.style.cssText = 'color: #C33;';
-        td.querySelector('#load').style.display = 'none';
+        td.querySelector('span').style.display = 'none';
     });
-    var td = document.createElement('td');
-    td.className = 'filter-extra';
-    td.innerHTML = '<input type="checkbox" id="batch"> <input type="button" id="remove"> <span id="load">⏳</span>';
-    td.querySelector('#remove').addEventListener('click', event => tr.remove());
-    tr.appendChild(td);
 });
 
 // Helper Button
@@ -82,8 +82,8 @@ css.innerHTML = '.filter-text {display: inline-block; width: 170px !important; m
 .filter-button {background-color: #056b00; margin-top: -3px;}\
 .filter-extra {position: relative;}\
 .filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
-.filter-extra #remove {background-color: #000;}\
-.filter-extra #load {position: absolute; right: 0px; top: 10px; display: none;}\
+.filter-extra [type="button"] {background-color: #000;}\
+.filter-extra span {position: absolute; right: 0px; top: 10px; display: none;}\
 .filter-preview {position: fixed; z-index: 3213; max-height: 800px; width: auto;}';
 document.head.appendChild(css);
 
@@ -94,26 +94,31 @@ menu.querySelector('input').addEventListener('keypress', event => event.key === 
 menu.querySelector('button').addEventListener('click', event => {
     if (event.ctrlKey) {
         var result = '';
-        document.querySelectorAll('table > tbody > tr > td > #batch').forEach(async (batch, index) => {
-            if (batch.checked) {
-                result += parseTorrentInfo(queue[index]) + '\n\n=======================================================\n\n';
-            }
+        document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked').forEach(batch => {
+            result += parseTorrentInfo(queue[batch.value]) + '\n\n=======================================================\n\n';
         });
         return navigator.clipboard.writeText(result);
     }
     var value = menu.querySelector('input').value;
-    if (filter.length !== 0) {
+    if (keyword === value) {
+        if (keyword === '') {
+            return;
+        }
         filter.forEach(tr => { tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none'; });
+    }
+    else if (value === '') {
+        filter.forEach(tr => { tr.style.display = 'table-row'; });
     }
     else if (keyword !== value) {
         var keys = value.split(/[\|\/\\\+,:;\s]+/);
         filter = [];
-        queue.forEach(data => {
-            if (keys.filter(key => data.name.includes(key)).length === keys.length) {
-                data.tr.style.display = 'none';
-                filter.push(data.tr);
+        queue.forEach(({name, tr}) => {
+            if (keys.filter(key => name.includes(key)).length === keys.length) {
+                tr.style.display = 'none';
+                filter.push(tr);
             }
         });
+        keyword = value;
     }
 });
 
@@ -126,8 +131,8 @@ document.addEventListener('keydown', event => {
     }
 });
 
-function parseTorrentInfo(data) {
-    return i18n.name + ':\n' + data.name + ' (' + data.size + ')\n\n' + i18n.preview + ':\n' + (data.url ?? '') + '\n\n' + (data.torrent ? i18n.torrent + ':\n' + data.torrent + '\n\n' : '') + i18n.magnet + ':\n' + data.magnet;
+function parseTorrentInfo({name, size, url, torrent, magnet}) {
+    return i18n.name + ':\n' + name + ' (' + size + ')\n\n' + i18n.preview + ':\n' + (url ?? '') + '\n\n' + (torrent ? i18n.torrent + ':\n' + torrent + '\n\n' : '') + i18n.magnet + ':\n' + magnet;
 }
 
 // Preview handler
@@ -176,7 +181,7 @@ function createPreview({id, url}, mouse) {
     image.className = 'filter-preview';
     image.id = id;
     image.src = url;
-    image.style.cssText = 'top: ' + (mouse.top + 800 > innerHeight ? innerHeight - 800 : mouse.top) + 'px; left: ' + (mouse.left + 600 > innerWidth ? innerWidth - 600 : mouse.left) + 'px;';
+    image.style.cssText = 'top: ' + mouse.top + 'px; left: ' + mouse.left + 'px;';
     image.addEventListener('click', event => image.remove());
     document.body.appendChild(image);
 }
