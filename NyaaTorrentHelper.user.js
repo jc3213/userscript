@@ -106,15 +106,27 @@ menu.querySelector('button').addEventListener('click', event => {
 });
 
 function batchCopy() {
-    var text = '';
-    return document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked').forEach(async batch => {
+    if (action.copy) {
+        return;
+    }
+    action.copy = true;
+    var array = [];
+    var checked = document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked');
+    checked.forEach(async batch => {
         var data = queue[batch.value];
         if (!data.type) {
             var result = await fetchPreview(data);
             queue[batch.value] = data = {...data, ...result};
         }
-        navigator.clipboard.writeText(text += copyInfo(data) + '\n\n=======================================================\n\n');
+        array.push(copyInfo(data));
     });
+    var interval = setInterval(() => {
+        if (checked.length === array.length) {
+            navigator.clipboard.writeText(array.join('\n\n======================================================\n\n'));
+            clearInterval(interval);
+            action.copy = false;
+        }
+    }, 500);
 }
 
 function copyInfo({name, size, url, torrent, magnet}) {
