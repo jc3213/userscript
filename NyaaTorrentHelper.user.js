@@ -113,8 +113,12 @@ function batchCopy() {
             var result = await fetchPreview(data);
             queue[batch.value] = data = {...data, ...result};
         }
-        navigator.clipboard.writeText(text += parseTorrentInfo(data) + '\n\n=======================================================\n\n');
+        navigator.clipboard.writeText(text += copyInfo(data) + '\n\n=======================================================\n\n');
     });
+}
+
+function copyInfo({name, size, url, torrent, magnet}) {
+    return i18n.name + ':\n' + name + ' (' + size + ')\n\n' + i18n.preview + ':\n' + (url ?? '') + '\n\n' + (torrent ? i18n.torrent + ':\n' + torrent + '\n\n' : '') + i18n.magnet + ':\n' + magnet;
 }
 
 function filterResult() {
@@ -149,10 +153,6 @@ document.addEventListener('keydown', event => {
         document.querySelector('li.previous > a').click();
     }
 });
-
-function parseTorrentInfo({name, size, url, torrent, magnet}) {
-    return i18n.name + ':\n' + name + ' (' + size + ')\n\n' + i18n.preview + ':\n' + (url ?? '') + '\n\n' + (torrent ? i18n.torrent + ':\n' + torrent + '\n\n' : '') + i18n.magnet + ':\n' + magnet;
-}
 
 // Preview handler
 function fetchPreview({id, src, td}) {
