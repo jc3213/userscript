@@ -70,7 +70,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
             var result = await fetchPreview(data);
             queue[index] = data = {...data, ...result};
         }
-        getPreview(data, {top: event.clientY, left: event.clientX});
+        getPreview(data, {top: event.pageY, left: event.pageX});
         a.style.cssText = 'color: #C33;';
     });
 });
@@ -89,7 +89,7 @@ css.innerHTML = '.filter-text {display: inline-block; width: 170px !important; m
 .filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
 .filter-extra [type="button"] {background-color: #000;}\
 .filter-extra span {position: absolute; right: 3px; top: 10px; display: none;}\
-.filter-preview {position: fixed; z-index: 3213; max-height: 800px; width: auto;}';
+.filter-preview {position: absolute; z-index: 3213; max-height: 800px; width: auto;}';
 document.head.appendChild(css);
 
 var menu = document.createElement('div');
