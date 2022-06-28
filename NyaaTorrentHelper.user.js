@@ -88,7 +88,7 @@ css.innerHTML = '.filter-text {display: inline-block; width: 170px !important; m
 .filter-extra {position: relative;}\
 .filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
 .filter-extra [type="button"] {background-color: #000;}\
-.filter-extra span {position: absolute; right: 0px; top: 10px; display: none;}\
+.filter-extra span {position: absolute; right: 3px; top: 10px; display: none;}\
 .filter-preview {position: fixed; z-index: 3213; max-height: 800px; width: auto;}';
 document.head.appendChild(css);
 
@@ -204,12 +204,12 @@ function getPreview(data, mouse) {
     data.type === 'host' ? GM_openInTab(data.url, true) : null;
 }
 
-function imagePreview(id, url, mouse) {
+function imagePreview({id, url}, {top, left}) {
     var image = document.createElement('img');
     image.className = 'filter-preview';
     image.id = id;
     image.src = url;
-    image.style.cssText = 'top: ' + mouse.top + 'px; left: ' + mouse.left + 'px;';
+    image.style.cssText = 'top: ' + top + 'px; left: ' + left + 'px;';
     image.addEventListener('click', event => image.remove());
     document.body.appendChild(image);
 }
