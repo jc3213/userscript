@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         6.22
+// @version         6.23
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -11,7 +11,7 @@
 // @match           *://klmanga.net/*
 // @match           *://rawdevart.com/*
 // @match           *://weloma.art/*
-// @match           *://mikaraw.com/*
+// @match           *://nikaraw.com/*
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
@@ -42,7 +42,7 @@
 // @                mangagohan.me
 // @webRequest      {"selector": "*b7om8bdayac6at.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*ietyofedinj89yewtburgh.com/*", "action": "cancel"}
-// @                mikaraw.com
+// @                nikaraw.com
 // @webRequest      {"selector": "*puturebraving.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*begasuthy.com/*", "action": "cancel"}
@@ -51,6 +51,9 @@
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 // @                klmanga.net
 // @webRequest      {"selector": "*.com/*50133", "action": "cancel"}
+// @webRequest      {"selector": "*educedsteeped.com/*", "action": "cancel"}
+// @                weloma.art
+// @webRequest      {"selector": "*.com/*52076", "action": "cancel"}
 // @                mangahatachi.com
 // @webRequest      {"selector": "*sinmgaepu3or9a61w.com/*", "action": "cancel"}
 // ==/UserScript==
@@ -167,7 +170,7 @@ var manga = {
         title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
-    'mikaraw.com': {
+    'nikaraw.com': {
         image: 'div.chapter-c > img',
         lazyload: 'data-src',
         title: [{reg: /^([^(])+/, sel: '#header-bot li:nth-child(2) a', attr: 'title', nl: 0}, {reg: /([^\s]+)$/, sel: '#header-bot li:nth-child(3) a', attr: 'title', nl: 0}],
