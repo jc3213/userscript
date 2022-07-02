@@ -148,9 +148,12 @@ function filterResult() {
         var keys = text.split(/[\|\/\\\+,:;\s]+/);
         filter = [];
         queue.forEach(({name, tr}) => {
-            if (keys.filter(key => name.includes(key)).length === keys.length) {
+            if (keys.filter(key => name.includes(key)).length !== keys.length) {
                 tr.style.display = 'none';
                 filter.push(tr);
+            }
+            else {
+                tr.style.display = 'table-row';
             }
         });
         keyword = text;
