@@ -30,9 +30,9 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// @                hakaraw.com / rawdevart.com
+// @                nakaraw.com / rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-// @                mangameta.com / mikaraw.com
+// @                mangameta.com / nikaraw.com
 // @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
 // @                mangameta.com / klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
@@ -157,7 +157,7 @@ var manga = {
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['#id-custom_banner', 'div.float-ck']
+        ads: ['center > a > img']
     },
     'rawdevart.com': {
         image: '#img-container > div > img',
