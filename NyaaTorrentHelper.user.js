@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      7.0
+// @version      7.1
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -57,7 +57,15 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     var td = document.createElement('td');
     td.className = 'filter-extra';
     td.innerHTML = '<input type="checkbox" value="' + index + '"> <input type="button"> <span>⏳</span>';
-    td.querySelector('[type="button"]').addEventListener('click', event => tr.remove());
+    td.querySelector('[type="button"]').addEventListener('click', async event => {
+        if (event.ctrlKey) {
+            data = await checkPreview(queue[index]);
+            navigator.clipboard.writeText(copyInfo(data));
+        }
+        else {
+            tr.style.display = 'none';
+        }
+    });
     tr.appendChild(td);
     var data = {id, name, src, size, torrent, magnet, tr, td};
     queue[index] = data;
@@ -66,10 +74,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
         if (action[id] || document.getElementById(id)) {
             return;
         }
-        if (!data.type) {
-            var result = await fetchPreview(data);
-            queue[index] = data = {...data, ...result};
-        }
+        queue[index] = data = await checkPreview(data);
         getPreview(data, {top: event.pageY, left: event.pageX});
         a.style.cssText = 'color: #C33;';
     });
@@ -114,10 +119,7 @@ function batchCopy() {
     var checked = document.querySelectorAll('table > tbody > tr > td > [type="checkbox"]:checked');
     checked.forEach(async batch => {
         var data = queue[batch.value];
-        if (!data.type) {
-            var result = await fetchPreview(data);
-            queue[batch.value] = data = {...data, ...result};
-        }
+        queue[batch.value] = data = await checkPreview(queue[batch.value]);
         array.push(copyInfo(data));
     });
     var interval = setInterval(() => {
@@ -170,6 +172,14 @@ document.addEventListener('keydown', event => {
 });
 
 // Preview handler
+async function checkPreview(data) {
+    if (!data.type) {
+        var result = await fetchPreview(data);
+        data = {...data, ...result};
+    }
+    return data;
+}
+
 function fetchPreview({id, src, td}) {
     action[id] = true;
     td.querySelector('span').style.display = 'inline';
