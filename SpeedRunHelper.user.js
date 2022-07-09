@@ -1,19 +1,21 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.2
+// @version      3.3
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
 // @require      https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
+// @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.scorecardresearch.com/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
 var logger = {};
 var style = {};
+var board = document.querySelector('#leaderboarddiv');
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
@@ -35,10 +37,12 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-minimum #speedrun-restore:nth-child(2), .speedrun-maximum #speedrun-restore:nth-child(4) {display: inline-block;}';
 document.body.append(css);
 
-document.getElementById('leaderboarddiv').addEventListener('contextmenu', event => {
-    event.preventDefault();
-    var row = [...document.querySelectorAll('tr')].find(record => record.contains(event.target));
+document.querySelector('.widget-column').remove();
+
+board.addEventListener('contextmenu', event => {
+    var row = [...board.querySelectorAll('tbody > tr')].find(record => record.contains(event.target));
     if (row) {
+        event.preventDefault();
         var src = row.getAttribute('data-target');
         if (src) {
             var id = src.slice(src.lastIndexOf('/') + 1);
@@ -63,7 +67,7 @@ function viewSpeedrunRecord(id, title, src) {
         fetch(src).then(response => response.text()).then(htmlText => {
             var xml = document.createElement('div');
             xml.innerHTML = htmlText;
-            logger[id] = xml.querySelector('#centerwidget iframe') ?? xml.querySelector('#centerwidget a[rel="noopener"]');
+            logger[id] = xml.querySelector('iframe[class]');
             createRecordWindow(id, title, logger[id]);
             xml.remove();
         });
