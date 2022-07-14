@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.6
+// @version         3.7
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,6 +10,7 @@
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
+var [widescreen, toolbar] = location.pathname.startsWith('/video/') ? ['div.bilibili-player-video-btn-widescreen', '#arc_toolbar_report'] : ['div.squirtle-video-widescreen', '#toolbar_module'];
 var title;
 var video;
 var worker;
@@ -33,11 +34,13 @@ var format = {
 };
 
 var css = document.createElement('style');
-css.innerHTML = '#helper-main {background-color: #fff; position: relative; z-index: 9999; display: inline-block; user-select: none;}\
-#helper-options, #helper-analyse {position: relative; border: 1px solid #000; padding: 5px;}\
+css.innerHTML = '#helper-main {position: relative; z-index: 9999; display: inline-block; user-select: none;}\
+#helper-options, #helper-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 40px; left: 0px; background-color: #fff;}\
+#helper-options {width: 115px;}\
 #helper-options p, #helper-options select, .helper-button {font-size: 16px; text-align: center; padding: 5px;}\
 #helper-options p, #helper-options option:checked {color: #c26; font-weight: bold;}\
 #helper-options select {width: 100%;}\
+#helper-analyse {width: 400px;}\
 #helper-analyse ul {display: inline-block; margin-righ: 3px; vertical-align: top;}\
 #helper-analyse a {display: inline-block; width: 100px;}\
 .helper-button {background-color: #c26; color: #fff; height: 16px; line-height: 16px; padding: 10px 15px; display: inline-block; margin: 0px 3px 3px 0px; cursor: pointer;}\
@@ -64,6 +67,7 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
     }
     analyse.style.display = analyse.style.display === 'none' ? 'block' : 'none';
 });
+
 var options = document.createElement('div');
 options.id = 'helper-options';
 options.innerHTML = '<p>自动宽屏</p><select id="autowide"><option value="0">关闭</option><option value="1">启用</option></select>\
@@ -73,9 +77,11 @@ options.querySelector('#videocodec').value = videocodec;
 options.addEventListener('change', event => {
     localStorage[event.target.id] = event.target.value;
 });
+
 var analyse = document.createElement('div');
 analyse.id = 'helper-analyse';
 menu.append(options, analyse, css);
+
 options.style.display = analyse.style.display = 'none';
 
 new MutationObserver(mutations => {
@@ -88,8 +94,8 @@ new MutationObserver(mutations => {
 }).observe(document.head, {childList: true, subtree: true});
 
 setTimeout(() => {
-    var toolbar = document.querySelector('#arc_toolbar_report') ?? document.querySelector('#toolbar_module');
-    toolbar.append(menu, css);
+    var bar = document.querySelector(toolbar);
+    bar.append(menu, css);
 }, 2000);
 
 function biliVideoTitle(name) {
@@ -99,7 +105,7 @@ function biliVideoTitle(name) {
 
 function biliVideoAutoWide() {
     var observer = setInterval(() => {
-        var wide = document.querySelector('div.bilibili-player-video-btn-widescreen') ?? document.querySelector('div.squirtle-video-widescreen');
+        var wide = document.querySelector(widescreen);
         if (wide) {
             clearInterval(observer);
             if (wide.classList.contains('closed') || wide.classList.contains('active') || autowide === '0' ) {
@@ -111,23 +117,25 @@ function biliVideoAutoWide() {
 }
 
 function biliVideoThumbnail(url) {
-    var menu = createMenuitem('视频封面', url, url.slice(url.lastIndexOf('.')));
-    analyse.querySelector('#helper-thumb').appendChild(menu);
+    var top = document.createElement('ul');
+    var sub = createMenuitem('视频封面', url, url.slice(url.lastIndexOf('.')));
+    top.append(sub);
+    analyse.append(top);
 }
 
 async function biliVideoExtractor(param, key) {
-    var menu = {av1: [], hevc: [], avc: [], aac: []};
-    await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'}).then(response => response.json()).then(({[key]: {dash: {video, audio}}}) => {
-        [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
-            var codec = codecs.slice(0, codecs.indexOf('.'));
-            var array = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av1' ? menu.av1 : menu.aac;
-            var {label, ext} = format[id];
-            array.push(createMenuitem(label, baseUrl, '.' + codec + ext, codec));
-        });
+    var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
+    var response = await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'});
+    var {[key]: {dash: {video, audio}}} = await response.json();
+    [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
+        var codec = codecs.slice(0, codecs.indexOf('.'));
+        var top = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av1' ? menu.av1 : menu.aac;
+        var {label, ext} = format[id];
+        var sub = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
+        top.appendChild(sub);
     });
-    var video = videocodec === '2' && menu.av1.length !== 0 ? menu.av1 : videocodec === '1' && menu.hevc.length !== 0 ? menu.hevc : menu.avc;
-    video.forEach(item => document.querySelector('#helper-video').appendChild(item));
-    menu.aac.forEach(item => document.querySelector('#helper-audio').appendChild(item));
+    var codec = videocodec === '2' && menu.av1.length !== 0 ? menu.av1 : videocodec === '1' && menu.hevc.length !== 0 ? menu.hevc : menu.avc;
+    analyse.append(codec, menu.aac)
 }
 
 function createMenuitem(label, url, ext, codec) {
