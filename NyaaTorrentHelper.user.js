@@ -190,9 +190,8 @@ function fetchPreview({id, src, td}) {
         else {
             action[id] = false;
             td.querySelector('span').style.display = 'none';
-            var node = document.createElement('div');
-            node.innerHTML = text;
-            var desc = node.querySelector('#torrent-description').innerText;
+            var temp = text.slice(text.indexOf('"torrent-description"') + 22);
+            var desc = temp.slice(0, temp.indexOf('</div>'));
             var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(desc);
             if (img) {
                 return {type: 'image', url: img[0]};
