@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.4
+// @version      3.5
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -15,7 +15,6 @@
 'use strict';
 var logger = {};
 var style = {};
-var board = document.querySelector('div[component-name="LatestLeaderboardWidget"]');
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
@@ -39,24 +38,37 @@ document.body.append(css);
 
 document.querySelector('.widget-column').remove();
 
-board.addEventListener('click', event => {
-    if (event.ctrlKey) {
-        var record = [...board.querySelectorAll('a.rounded-sm')].find(record => record.contains(event.target));
-        if (record) {
-            event.preventDefault();
-            var src = record.href;
-            if (src) {
-                var id = src.slice(src.lastIndexOf('/') + 1);
-                var game = record.parentNode.querySelector('div.font-title').innerText;
-                var [style, category, rank, time, player, nation] = record.innerText.split('\n');
-                var title = '<div class="speedrun-title"><span>Rank : ' + rank + '</span> <span>Player : ' + player + '</span> <span>Time : ' + time + '</span>';
-                viewSpeedrunRecord(id, title, src);
-            }
-        }
-    }
-});
+if (document.title.includes('series') || document.title.startsWith('Runs')) {
+    appendEvent('div.maincontent', 'a.rounded-sm', record => {
+        var src = record.href;
+        var game = record.parentNode.querySelector('div.font-title').innerText;
+        var [style, category, rank, time, player, nation] = record.innerText.split('\n');
+        viewSpeedrunRecord(src, rank, player, time);
+    });
+}
+else {
+    appendEvent('#leaderboarddiv', 'tbody > tr', record => {
+        var src = record.getAttribute('data-target');
+        var [rank, player, time, platform, date] = record.innerText.split('\t');
+        rank = rank === '' ? record.childNodes[0].innerHTML : rank;
+        viewSpeedrunRecord(src, rank, player, time);
+    });
+}
 
-function viewSpeedrunRecord(id, title, src) {
+function appendEvent(board, record, callback) {
+    var _board_ = document.querySelector(board);
+    _board_.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        var _record_ = [..._board_.querySelectorAll(record)].find(record => record.contains(event.target));
+        if (_record_) {
+            callback(_record_);
+        }
+    });
+}
+
+function viewSpeedrunRecord(src, rank, player, time) {
+    var id = src.slice(src.lastIndexOf('/') + 1);
+    var title = '<div class="speedrun-title"><span>Rank : ' + rank + '</span> <span>Player : ' + player + '</span> <span>Time : ' + time + '</span>';
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
         style[id] = view.style.cssText = 'top: ' + (130 + view.idx * 30) + 'px; left: ' + ((screen.availWidth - 1280) / 2 + view.idx * 30) + 'px;';
