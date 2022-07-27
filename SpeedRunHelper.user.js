@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.3
+// @version      3.4
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -15,7 +15,7 @@
 'use strict';
 var logger = {};
 var style = {};
-var board = document.querySelector('#leaderboarddiv');
+var board = document.querySelector('div[component-name="LatestLeaderboardWidget"]');
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
@@ -39,18 +39,19 @@ document.body.append(css);
 
 document.querySelector('.widget-column').remove();
 
-board.addEventListener('contextmenu', event => {
-    var row = [...board.querySelectorAll('tbody > tr')].find(record => record.contains(event.target));
-    if (row) {
-        event.preventDefault();
-        var src = row.getAttribute('data-target');
-        if (src) {
-            var id = src.slice(src.lastIndexOf('/') + 1);
-            var cells = row.querySelectorAll('td');
-            var record = row.classList.contains('center-sm') ? {rank: 1, time: 2} : row.classList.contains('height-minimal') ? {rank: 1, player: 2, time: 3} : {rank: 0, player: 1, time: 2};
-            var player = record.player ? cells[record.player].innerText : document.querySelector('.profile-username').innerText;
-            var title = '<div class="speedrun-title"><span>Rank : ' + cells[record.rank].innerHTML + '</span> <span>Player : ' + player + '</span> <span>Time : ' + cells[record.time].innerHTML + '</span>';
-            viewSpeedrunRecord(id, title, src);
+board.addEventListener('click', event => {
+    if (event.ctrlKey) {
+        var record = [...board.querySelectorAll('a.rounded-sm')].find(record => record.contains(event.target));
+        if (record) {
+            event.preventDefault();
+            var src = record.href;
+            if (src) {
+                var id = src.slice(src.lastIndexOf('/') + 1);
+                var game = record.parentNode.querySelector('div.font-title').innerText;
+                var [style, category, rank, time, player, nation] = record.innerText.split('\n');
+                var title = '<div class="speedrun-title"><span>Rank : ' + rank + '</span> <span>Player : ' + player + '</span> <span>Time : ' + time + '</span>';
+                viewSpeedrunRecord(id, title, src);
+            }
         }
     }
 });
