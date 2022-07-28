@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      7.2
+// @version      7.3
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -41,6 +41,16 @@ var i18n = messages[navigator.language] ?? messages['en-US'];
 if (['502 Bad Gateway', '429 Too Many Requests'].includes(document.title)) {
     setTimeout(() => location.reload(), 5000);
 }
+
+// Shortcut
+document.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft') {
+        document.querySelector('ul.pagination > li:first-child > a').click();
+    }
+    if (event.key === 'ArrowRight') {
+        document.querySelector('ul.pagination > li:last-child > a').click();
+    }
+});
 
 // Extract data
 document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
@@ -161,15 +171,6 @@ function filterResult() {
         keyword = text;
     }
 }
-
-document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowRight') {
-        document.querySelector('li.next > a').click();
-    }
-    else if (event.key === 'ArrowLeft') {
-        document.querySelector('li.previous > a').click();
-    }
-});
 
 // Preview handler
 async function checkPreview(data) {
