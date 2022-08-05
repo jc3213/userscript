@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.8
+// @version         3.9
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -30,6 +30,7 @@ var format = {
     '15': {label: '360P 流畅', ext: '.360LQ.mp4'},
     'avc1': '视频编码: H.264',
     'hev1': '视频编码: HEVC',
+    'av01': '视频编码：AV1',
     'mp4a': '音频编码: AAC'
 };
 
@@ -129,7 +130,7 @@ async function biliVideoExtractor(param, key) {
     var {[key]: {dash: {video, audio}}} = await response.json();
     [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
-        var top = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av1' ? menu.av1 : menu.aac;
+        var top = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av01' ? menu.av1 : menu.aac;
         var {label, ext} = format[id];
         var sub = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
         top.appendChild(sub);
