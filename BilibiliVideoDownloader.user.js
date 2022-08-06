@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.9
+// @version         3.10
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
-var [widescreen, toolbar] = location.pathname.startsWith('/video/') ? ['div.bilibili-player-video-btn-widescreen', '#arc_toolbar_report'] : ['div.squirtle-video-widescreen', '#toolbar_module'];
+var [widescreen, widestate, toolbar] = location.pathname.startsWith('/video/') ? ['div.bpx-player-ctrl-wide', 'bpx-state-entered', '#arc_toolbar_report'] : ['div.squirtle-video-widescreen', 'active', '#toolbar_module'];
 var title;
 var video;
 var worker;
@@ -109,7 +109,7 @@ function biliVideoAutoWide() {
         var wide = document.querySelector(widescreen);
         if (wide) {
             clearInterval(observer);
-            if (wide.classList.contains('closed') || wide.classList.contains('active') || autowide === '0' ) {
+            if (wide.classList.contains(widestate) || autowide === '0' ) {
                 return;
             }
             wide.click();
