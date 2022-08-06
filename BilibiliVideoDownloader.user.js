@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.10
+// @version         3.11
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -126,7 +126,7 @@ function biliVideoThumbnail(url) {
 
 async function biliVideoExtractor(param, key) {
     var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
-    var response = await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=4048', {credentials: 'include'});
+    var response = await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'});
     var {[key]: {dash: {video, audio}}} = await response.json();
     [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
@@ -135,7 +135,7 @@ async function biliVideoExtractor(param, key) {
         var sub = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
         top.appendChild(sub);
     });
-    var codec = videocodec === '2' && menu.av1.childNodes.length !== 0 ? menu.av1 : videocodec === '1' && menu.hevc.childNodes.length !== 0 ? menu.hevc : menu.avc;
+    var codec = videocodec === '2' ? menu.av1.childNodes.length !== 0 ? menu.av1 : menu.hevc.childNodes.length !== 0 ? menu.hevc : menu.avc : videocodec === '1' && menu.hevc.childNodes.length !== 0 ? menu.hevc : menu.avc;
     analyse.append(codec, menu.aac)
 }
 
