@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      4.8
+// @version      4.9
 // @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -29,7 +29,7 @@ var scheduler = GM_getValue('scheduler', novelist.today);
 
 // UI作成関連
 var css = document.createElement('style');
-css.innerHTML = '.manager-button {background-color: #fff; text-align: center; vertical-align: middle; padding: 5px; border: 1px outset #000 ; user-select: none ; z-index: 3213; display: inline-block; cursor: pointer; font-weight: bold;}\
+css.innerHTML = '.manager-button {background-color: #fff; text-align: center; padding: 5px; border: 1px outset #000 ; user-select: none ; z-index: 3213; cursor: pointer; font-weight: bold;}\
 .manager-button:hover, .manager-shelf > *:not(:first-child) > *:hover {filter: opacity(75%);}\
 .manager-button:active，.manager-shelf > *:not(:first-child) > *:active {filter: opacity(45%);}\
 .manager-checked {padding: 4px; border: 2px inset #00F;}\
@@ -46,19 +46,23 @@ css.innerHTML = '.manager-button {background-color: #fff; text-align: center; ve
 .notification {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff;}';
 document.head.appendChild(css);
 
-var manager = document.createElement('span');
-manager.innerHTML = '書庫管理';
-manager.className = 'manager-button';
-manager.style.cssText = 'margin: 8px 5px;'
-manager.addEventListener('click', event => {
+var navi = document.querySelector('#head_nav');
+var navi_inner = navi.querySelector('li:last-child');
+var manager = document.createElement('div');
+manager.innerHTML = '<span id="manager" class="manager-button" style="margin-left: 5px;">書庫管理</span><span id="downpdf" class="manager-button" style="margin-left: 5px;">ダウンロード</span>';
+manager.style.cssText = 'position: absolute; top: 15px; left: ' + (navi_inner.offsetLeft + navi_inner.offsetWidth) + 'px;';
+manager.querySelector('#manager').addEventListener('click', event => {
     if (!show) {
         bookmark.forEach(fancyTableItem);
         show = true;
     }
-    container.style.display = manager.classList.contains('manager-checked') ? 'none' : 'block';
-    manager.classList.toggle('manager-checked');
+    container.style.display = event.target.classList.contains('manager-checked') ? 'none' : 'block';
+    event.target.classList.toggle('manager-checked');
 });
-(document.getElementById('head_nav') ?? document.body).appendChild(manager);
+manager.querySelector('#downpdf').addEventListener('click', event => {
+    batchDownloadPreHandler(novelist);
+});
+(navi ?? document.body).appendChild(manager);
 
 var container = document.createElement('div');
 container.innerHTML = '<div class="manager-menu"><span id="mgr-btn-subscribe" class="manager-button">NCODE登録</span>\
