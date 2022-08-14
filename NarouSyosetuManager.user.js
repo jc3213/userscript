@@ -49,7 +49,8 @@ document.head.appendChild(css);
 var navi = document.querySelector('#head_nav');
 var navi_inner = navi.querySelector('li:last-child');
 var manager = document.createElement('div');
-manager.innerHTML = '<span id="manager" class="manager-button" style="margin-left: 5px;">書庫管理</span><span id="downpdf" class="manager-button" style="margin-left: 5px;">ダウンロード</span>';
+manager.innerHTML = '<span id="manager" class="manager-button" style="margin-left: 5px;">書庫管理</span>\
+<span id="downpdf" class="manager-button" style="margin-left: 5px;"><a href="https://pdfnovels.net/' + novelist.ncode + '/main.pdf">ダウンロード</a></span>';
 manager.style.cssText = 'position: absolute; top: 15px; left: ' + (navi_inner.offsetLeft + navi_inner.offsetWidth) + 'px;';
 manager.querySelector('#manager').addEventListener('click', event => {
     if (!show) {
@@ -60,6 +61,7 @@ manager.querySelector('#manager').addEventListener('click', event => {
     event.target.classList.toggle('manager-checked');
 });
 manager.querySelector('#downpdf').addEventListener('click', event => {
+    event.preventDefault();
     batchDownloadPreHandler(novelist);
 });
 (navi ?? document.body).appendChild(manager);
