@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.11
+// @version         3.12
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
-var [widescreen, widestate, toolbar] = location.pathname.startsWith('/video/') ? ['div.bpx-player-ctrl-wide', 'bpx-state-entered', '#arc_toolbar_report'] : ['div.squirtle-video-widescreen', 'active', '#toolbar_module'];
+var [toolbar, widescreen, widestate, next, prev] = location.pathname.startsWith('/video/') ? ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev'] : ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next'];
 var title;
 var video;
 var worker;
@@ -59,7 +59,7 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
     if (worker || videocodec !== localStorage.videocodec) {
         worker = false;
         videocodec = localStorage.videocodec;
-        analyse.innerHTML = '<ul id="helper-thumb"></ul><ul id="helper-video"></ul><ul id="helper-audio"></ul>';
+        analyse.innerHTML = '';
         var {aid, bvid, videoData, elecFullInfo, h1Title, epInfo} = document.defaultView.__INITIAL_STATE__;
         var [title, thumb, playurl, key] = bvid ? [videoData.title, elecFullInfo.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
         biliVideoTitle(title);
@@ -67,6 +67,17 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
         await biliVideoExtractor(playurl, key);
     }
     analyse.style.display = analyse.style.display === 'none' ? 'block' : 'none';
+});
+
+document.addEventListener('keydown', event => {
+    if (event.ctrlKey) {
+        if (event.key === 'ArrowRight') {
+            document.querySelector(next).click();
+        }
+        if (event.key === 'ArrowLeft') {
+            document.querySelector(prev).click();
+        }
+    }
 });
 
 var options = document.createElement('div');
