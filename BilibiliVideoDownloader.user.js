@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.12
+// @version         3.13
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -137,7 +137,7 @@ function biliVideoThumbnail(url) {
 
 async function biliVideoExtractor(param, key) {
     var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
-    var response = await fetch('https://api.bilibili.com/' + param + '&fourk=1&fnval=2000', {credentials: 'include'});
+    var response = await fetch('https://api.bilibili.com/' + param + '&fnval=4050', {credentials: 'include'});
     var {[key]: {dash: {video, audio}}} = await response.json();
     [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
