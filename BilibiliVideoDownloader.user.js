@@ -138,7 +138,8 @@ function biliVideoThumbnail(url) {
 async function biliVideoExtractor(param, key) {
     var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
     var response = await fetch('https://api.bilibili.com/' + param + '&fnval=4050', {credentials: 'include'});
-    var {[key]: {dash: {video, audio}}} = await response.json();
+    var json = await response.json();
+    var {video, audio} = json[key].dash;
     [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
         var top = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av01' ? menu.av1 : menu.aac;
