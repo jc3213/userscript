@@ -15,7 +15,7 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.10.js#sha256-BMZovADoJ6OKcNrw1YxIG4iKLGT6tSEYinNfA+aN0qg=
+// @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/aria2_0.3.13.js#sha256-r3LIgBfC9ZzXT6/iO7seAHC3hpRmTHuy1tXsHTV5UPY=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/dragndrop.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_getValue
 // @grant           GM_setValue
