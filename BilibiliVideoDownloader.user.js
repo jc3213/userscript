@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.13
+// @version         3.14
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -60,8 +60,8 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
         worker = false;
         videocodec = localStorage.videocodec;
         analyse.innerHTML = '';
-        var {aid, bvid, videoData, elecFullInfo, h1Title, epInfo} = document.defaultView.__INITIAL_STATE__;
-        var [title, thumb, playurl, key] = bvid ? [videoData.title, elecFullInfo.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
+        var {aid, bvid, videoData, h1Title, epInfo} = document.defaultView.__INITIAL_STATE__;
+        var [title, thumb, playurl, key] = bvid ? [videoData.title, videoData.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
         biliVideoTitle(title);
         biliVideoThumbnail(thumb);
         await biliVideoExtractor(playurl, key);
@@ -135,9 +135,10 @@ function biliVideoThumbnail(url) {
     analyse.append(top);
 }
 
-async function biliVideoExtractor(param, key) {
+async function biliVideoExtractor(playurl, key) {
+console.log('https://api.bilibili.com/' + playurl + '&fnval=4050');
     var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
-    var response = await fetch('https://api.bilibili.com/' + param + '&fnval=4050', {credentials: 'include'});
+    var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
     var {video, audio} = json[key].dash;
     [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
