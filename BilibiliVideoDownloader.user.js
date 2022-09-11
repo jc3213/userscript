@@ -98,23 +98,22 @@ menu.append(options, analyse, css);
 options.style.display = analyse.style.display = 'none';
 
 var observer = setInterval(() => {
-    var playbar = document.querySelector(toolbar);
     var widebtn = document.querySelector(widescreen);
     if (widebtn) {
         clearInterval(observer);
-        playbar.append(menu, css);
+        document.querySelector(toolbar).append(menu, css);
         if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
             widebtn.click();
         }
-        new MutationObserver(mutations => {
-            if (video !== location.pathname) {
-                video = location.pathname;
-                worker = true;
-                options.style.display = analyse.style.display = 'none';
-            }
-        }).observe(document.head, {childList: true, subtree: true});
     }
 }, 200);
+new MutationObserver(mutations => {
+    if (video !== location.pathname) {
+        video = location.pathname;
+        worker = true;
+        options.style.display = analyse.style.display = 'none';
+    }
+}).observe(document.head, {childList: true, subtree: true});
 
 function biliVideoTitle(name) {
     var multi = document.querySelector('#multi_page li.on > a');
@@ -131,7 +130,6 @@ function biliVideoThumbnail(url) {
 }
 
 async function biliVideoExtractor(playurl, key) {
-console.log('https://api.bilibili.com/' + playurl + '&fnval=4050');
     var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
