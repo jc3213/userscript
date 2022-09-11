@@ -2,11 +2,12 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.14
+// @version         3.16
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
+// @run-at          document-end
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
@@ -60,8 +61,8 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
         worker = false;
         videocodec = localStorage.videocodec;
         analyse.innerHTML = '';
-        var {aid, bvid, videoData, h1Title, epInfo} = document.defaultView.__INITIAL_STATE__;
-        var [title, thumb, playurl, key] = bvid ? [videoData.title, videoData.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [h1Title, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
+        var {videoData, epInfo} = document.defaultView.__INITIAL_STATE__;
+        var [title, thumb, playurl, key] = videoData ? [videoData.title, videoData.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [epInfo.share_copy, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
         biliVideoTitle(title);
         biliVideoThumbnail(thumb);
         await biliVideoExtractor(playurl, key);
@@ -96,41 +97,35 @@ menu.append(options, analyse, css);
 
 options.style.display = analyse.style.display = 'none';
 
-new MutationObserver(mutations => {
-    if (video !== location.pathname) {
-        video = location.pathname;
-        worker = true;
-        options.style.display = analyse.style.display = 'none';
-        biliVideoAutoWide();
+var observer = setInterval(() => {
+    var playbar = document.querySelector(toolbar);
+    var widebtn = document.querySelector(widescreen);
+    if (widebtn) {
+        clearInterval(observer);
+        playbar.append(menu, css);
+        if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
+            widebtn.click();
+        }
+        new MutationObserver(mutations => {
+            if (video !== location.pathname) {
+                video = location.pathname;
+                worker = true;
+                options.style.display = analyse.style.display = 'none';
+            }
+        }).observe(document.head, {childList: true, subtree: true});
     }
-}).observe(document.head, {childList: true, subtree: true});
-
-setTimeout(() => {
-    var bar = document.querySelector(toolbar);
-    bar.append(menu, css);
-}, 2000);
+}, 200);
 
 function biliVideoTitle(name) {
     var multi = document.querySelector('#multi_page li.on > a');
-    title = (name + (multi ? multi.innerText : '')).replace(/[\/\\\?\|\<\>:"']/g, '');
-}
-
-function biliVideoAutoWide() {
-    var observer = setInterval(() => {
-        var wide = document.querySelector(widescreen);
-        if (wide) {
-            clearInterval(observer);
-            if (wide.classList.contains(widestate) || autowide === '0' ) {
-                return;
-            }
-            wide.click();
-        }
-    }, 500);
+    name = multi ? name + multi.innerText : name;
+    title = name.replace(/[\/\\\?\|\<\>:"']/g, '');
 }
 
 function biliVideoThumbnail(url) {
     var top = document.createElement('ul');
-    var sub = createMenuitem('视频封面', url, url.slice(url.lastIndexOf('.')));
+    var fixed = url.replace(/^(https?:)?\/\//, 'https://')
+    var sub = createMenuitem('视频封面', fixed, url.slice(url.lastIndexOf('.')));
     top.append(sub);
     analyse.append(top);
 }
@@ -156,6 +151,12 @@ function createMenuitem(label, url, ext, codec) {
     var li = document.createElement('li');
     var tip = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
     li.innerHTML = '<a href="' + url + '" class="helper-button" target="_blank" download="' + title + ext + '" title="' + tip + '">' + label + '</a>';
-    li.addEventListener('click', event => navigator.clipboard.writeText(title));
+    li.addEventListener('click', event => {
+        if (event.ctrlKey) {
+            event.preventDefault();
+            var aria2 = JSON.stringify({url, options: {out: title + ext, referer: location.href}});
+            navigator.clipboard.writeText(aria2);
+        }
+    });
     return li;
 }
