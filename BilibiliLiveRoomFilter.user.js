@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.6
+// @version         3.7
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -19,9 +19,9 @@ var banned = GM_getValue('banned', []);
 var show = false;
 
 var btnMaker = new Button();
-btnMaker.cssText = '.jsui_button {background-color: #23ade5 !important; border-radius: 3px; font-size: 14px;}';
+btnMaker.cssText = '.jsui_button {background-color: #23ade5 !important; border-radius: 3px; font-size: 14px; border: none !important;}';
 
-var opener = btnMaker.make('管理屏蔽列表', event => {
+var opener = btnMaker.make('管理列表', event => {
     if (!show) {
         banned.forEach(({id, liver}) => makeBanlist(id, liver));
         show = true;
@@ -63,13 +63,16 @@ var manager = new Manager([
 manager.parentNode = container;
 function batchBlock(event) {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
-        manager.entry.value.split('\n').forEach(item => {
-            var rule = item.split(/[\\\/\s,.@#$^&]+/);
-            if (!isNaN(rule[0])) {
-                addBanlist(rule[0], rule[1]);
-            }
-        });
-        saveBanlist();
+        var entry = manager.entry.value.match(/[^\n]+/g);
+        if (entry) {
+            entry.forEach(item => {
+                var rule = item.match(/(\d+)[\\\/\|\s\n\(\)\[\]\{\},.:;'"!@#$%^&*]+(.+)/);
+                if (rule.length === 3) {
+                    addBanlist(rule[1], rule[2]);
+                }
+            });
+            saveBanlist();
+        }
         manager.entry.value = '';
     }
 }
@@ -213,10 +216,10 @@ function addMenuToLiveRoom(element) {
             saveBanlist();
         }
     });
-    var thumb = btnMaker.make('下载封面', event => {
+    var thumb = btnMaker.make('显示封面', event => {
         event.preventDefault();
-        if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
-            fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
+        if (confirm('确定要打开直播《' + name + '》的封面吗？')) {
+            open(url, '_blank');
         }
     });
 
