@@ -2,12 +2,13 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.5
+// @version         3.6
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/manager_0.0.6.js#sha256-HhNRyn4DdiFhZ102HtT2SVXSsfzoWKzHxoZ4xAHJtfs=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/button.js
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/manager_0.0.6.js
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -17,26 +18,21 @@
 var banned = GM_getValue('banned', []);
 var show = false;
 
-var css = document.createElement('style');
-css.innerText = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
-.fancybutton {padding: 5px 10px; text-align: center; font-size: 14px;}\
-.fancybutton {background-color: #23ade5; color: #ffffff; border-radius: 3px; user-select: none; cursor: pointer;}\
-.fancybutton:hover {filter: opacity(60%);}\
-.fancybutton:active {filter: opacity(30%);}\
-.fancymenu {display: none; margin-top: 10px;}\
-.fancymenu * {display: inline-block; width: 38%; margin-left: 10px;}'
-document.head.appendChild(css);
+var btnMaker = new Button();
+btnMaker.cssText = '.jsui_button {background-color: #23ade5 !important; border-radius: 3px; font-size: 14px;}';
 
-var opener = document.createElement('span');
-opener.innerText = '管理屏蔽列表';
-opener.className = 'fancybutton';
-opener.addEventListener('click', event => {
+var opener = btnMaker.make('管理屏蔽列表', event => {
     if (!show) {
         banned.forEach(({id, liver}) => makeBanlist(id, liver));
         show = true;
     }
     container.style.display =container.style.display === 'none' ? 'block' : 'none';
 });
+
+var css = document.createElement('style');
+css.innerText = '.fancybox {background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
+.fancymenu {display: none; margin: 10px 10px 0px 10px; grid-template-columns: 49% 49%; grid-gap: 2%}';
+document.head.appendChild(css);
 
 var upload = document.createElement('input');
 upload.type = 'file';
@@ -125,9 +121,10 @@ function livePlayerInFrame(id) {
 
 function applyFilterToArea({menu, room, list}) {
     setTimeout(() => {
-        document.querySelector(menu).appendChild(opener);
-        document.querySelector(menu).after(container);
-        container.style.top = document.querySelector(menu).offsetTop + 30 + 'px';
+        var where = document.querySelector(menu);
+        where.appendChild(opener);
+        where.after(container);
+        container.style.top = where.offsetTop + 30 + 'px';
         document.querySelectorAll(room).forEach(addMenuToLiveRoom);
         list.forEach(item => {
             new MutationObserver(mutationList => {
@@ -145,10 +142,7 @@ function applyFilterToArea({menu, room, list}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = document.createElement('span');
-    block.innerText = '屏蔽直播间';
-    block.className = 'fancybutton';
-    block.addEventListener('click', event => {
+    var block = btnMaker.make('屏蔽直播间', event => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
             saveBanlist();
@@ -212,21 +206,25 @@ function addMenuToLiveRoom(element) {
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
-    var menu = document.createElement('div');
-    menu.className = 'fancymenu';
-    menu.innerHTML = '<span id="bililive_filter_block" class="fancybutton">屏蔽直播间</span>\
-<span id="bililive_filter_thumb" class="fancybutton">下载封面</span>';
-    menu.addEventListener('click', event => {
+    var block = btnMaker.make('屏蔽直播间', event => {
         event.preventDefault();
-        if (event.target.id === 'bililive_filter_block' && confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+        if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
             saveBanlist();
         }
-        if (event.target.id === 'bililive_filter_thumb' && confirm('确定要下载直播《' + name + '》的封面吗？')) {
+    });
+    var thumb = btnMaker.make('下载封面', event => {
+        event.preventDefault();
+        if (confirm('确定要下载直播《' + name + '》的封面吗？')) {
             fetch(url).then(response => response.blob()).then(blob => blobToFile(blob, id + '_' + name));
         }
     });
+
+    var menu = document.createElement('div');
+    menu.className = 'fancymenu';
+    menu.append(block, thumb);
+
     element.querySelector('div.Item_2A9JA1Uf').appendChild(menu);
-    element.addEventListener('mouseover', event => {menu.style.display = 'block';});
+    element.addEventListener('mouseover', event => {menu.style.display = 'grid';});
     element.addEventListener('mouseout', event => {menu.style.display = 'none';})
 }
