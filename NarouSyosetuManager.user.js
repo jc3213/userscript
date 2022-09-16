@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/metalink4.js/main/metalink4.js#sha256-6oj9bI0kPdhk0XE8OEW9VWwedwSdFxjIirpGaFTAq0A=
+// @require      https://raw.githubusercontent.com/jc3213/metalink4.js/main/src/metalink4_0.2.0.js
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -102,7 +102,7 @@ container.querySelector('#mgr-btn-meta4').addEventListener('click', event => {
         var json = bookmark.map(book => {
             book.last = novelist.now;
             container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
-            return {url: ['https://pdfnovels.net/' + book.ncode + '/main.pdf'], name: book.title + '.pdf', locale: 'ja'};
+            return {url: [{url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf'}], name: book.title + '.pdf', language: 'ja'};
         });
         new Metalink4(json).saveAs('小説家になろう書庫');
         saveBookmarkButton();
