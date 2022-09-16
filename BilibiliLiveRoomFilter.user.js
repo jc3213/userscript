@@ -2,13 +2,13 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         4.0
+// @version         4.1
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-X+QYZ39cUPJZbzK+YC+/iX625pDAFYdSwRmRZCVNIwI=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-KFMpYP6P28YEilGZsW+VcAWc6d8vKoaTW4SZBuXxAkY=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -22,11 +22,12 @@ var css = document.createElement('style');
 css.type = 'text/css';
 css.innerText = '.jsui_manager {border: 1px solid #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .jsui_manager > * {width: 100%; resize: none;}\
-.jsui_button {font-size: 14px; border-width: 0px !important; border-radius: 3px;}\
+.jsui_table {height: 400px; border: none;}\
+.jsui_button {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
 .Item_2A9JA1Uf > .jsui_menu {margin: 10px 10px 0px 10px;}';
 document.head.appendChild(css);
 
-var jsMenu = new JSUI_Menu('#23ade5');
+var jsMenu = new JSUI_Menu();
 var menu = jsMenu.menu([
     {label: '批量屏蔽', onclick: batchBlock},
     {label: '导入列表', onclick: importList},
@@ -38,7 +39,6 @@ var entry = document.createElement('textarea');
 entry.rows = '6';
 
 var jsTable = new JSUI_Table(['直播间ID', '主播昵称']);
-jsTable.cssText = '.jsui_table {height: 400px; border: none;}'
 
 var manager = document.createElement('div');
 manager.className = 'jsui_manager';
