@@ -169,7 +169,10 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    jsTable.add([{label: id, onclick: event => removeBanList(event.target.parentNode, id, liver)}, liver]);
+    jsTable.add([
+        {label: id, onclick: event => removeBanList(event.target.parentNode, id, liver)},
+        liver
+    ]);
 }
 
 function removeBanList(cell, id, liver) {
