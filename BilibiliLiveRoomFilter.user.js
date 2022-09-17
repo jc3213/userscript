@@ -7,8 +7,8 @@
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-JNJVltWNhw5IfbH1dzZG3TuEPUTDGWhmlAjGIWSivyU=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-KFMpYP6P28YEilGZsW+VcAWc6d8vKoaTW4SZBuXxAkY=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-4uEnJMWpOGBw8mlVCtlVfGWKeofIQaSphaTV6KkP/FI=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-IoRecGiToLu0MOgm/MOKaSK4HsW2m8v8f8gj08knlaY=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -23,9 +23,9 @@ css.type = 'text/css';
 css.innerText = '.jsui_manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .jsui_manager > * {width: 100%; resize: none;}\
 .jsui_table {height: 400px; border: none;}\
-.jsui_button {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
+.jsui_menu_btn, .jsui_btn_cell {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
 .Item_2A9JA1Uf > .jsui_menu {margin: 10px 10px 0px 10px;}';
-document.head.appendChild(css);
+document.body.appendChild(css);
 
 var jsMenu = new JSUI_Menu();
 var menu = jsMenu.menu([
@@ -169,16 +169,18 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    jsTable.add([id, liver], event => {
-        if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
-            event.target.parentNode.remove();
-            var index = banned.findIndex(rule => rule.id === id);
-            if (index !== -1) {
-                banned.splice(index, 1);
-            }
-            saveBanlist();
+    jsTable.add([{label: id, onclick: event => removeBanList(event.target.parentNode, id, liver)}, liver]);
+}
+
+function removeBanList(cell, id, liver) {
+    if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
+        cell.remove();
+        var index = banned.findIndex(rule => rule.id === id);
+        if (index !== -1) {
+            banned.splice(index, 1);
         }
-    });
+        saveBanlist();
+    }
 }
 
 function addBanlist(id, liver) {
