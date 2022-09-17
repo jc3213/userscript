@@ -16,7 +16,7 @@
 // @match           *://mangahatachi.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/src/aria2_0.3.13.js#sha256-r3LIgBfC9ZzXT6/iO7seAHC3hpRmTHuy1tXsHTV5UPY=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-JNJVltWNhw5IfbH1dzZG3TuEPUTDGWhmlAjGIWSivyU=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js##sha256-4uEnJMWpOGBw8mlVCtlVfGWKeofIQaSphaTV6KkP/FI=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -215,10 +215,10 @@ function extractMangaTitle(title = '') {
 // Create UI
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui_button {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
+css.innerText = '.jsui_menu_btn {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
 .jsui_manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
 .jsui_manager, #assistant_caution {background-color: #fff; z-index: 999999999; position: fixed;}\
-.jsui_dropdown {border: 1px inset darkviolet; width: 120px;}\
+.jsui_dropdown_menu {border: 1px inset darkviolet; width: 120px;}\
 #assistant_caution {font-size: 16px; color: #000 !important; border: 1px ridge darkviolet; border-radius: 5px; height: 60px; line-height: 60px; text-align: center; padding: 0px 10px;}\
 #assistant_caution > *:last-child {text-align: left; width: fit-content;}';
 
