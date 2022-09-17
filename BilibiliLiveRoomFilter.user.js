@@ -2,12 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         4.1
+// @version         4.2
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-X+QYZ39cUPJZbzK+YC+/iX625pDAFYdSwRmRZCVNIwI=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-JNJVltWNhw5IfbH1dzZG3TuEPUTDGWhmlAjGIWSivyU=
 // @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-KFMpYP6P28YEilGZsW+VcAWc6d8vKoaTW4SZBuXxAkY=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -20,7 +20,7 @@ var show = false;
 
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui_manager {border: 1px solid #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
+css.innerText = '.jsui_manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .jsui_manager > * {width: 100%; resize: none;}\
 .jsui_table {height: 400px; border: none;}\
 .jsui_button {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
@@ -53,6 +53,7 @@ var opener = jsMenu.button('管理列表', event => {
     }
     manager.style.display = manager.style.display === 'none' ? 'block' : 'none';
 });
+opener.style.width = '120px';
 
 var upload = document.createElement('input');
 upload.type = 'file';
