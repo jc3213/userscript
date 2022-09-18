@@ -147,7 +147,7 @@ function fancyTableItem(book, index) {
     input.max = '30';
     input.value = next;
     input.title = next === 0 ? 'は更新しないように設定しました！' : 'は ' + next + ' 日間隔で更新するように設定しました！'
-    input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value));
+    input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
 
     mybook.lastChild.before(input);
     mybook.id = ncode;
@@ -172,7 +172,7 @@ function downloadCurrentNcode(book, title) {
     }
 }
 function changeNcodeUpdatePeriod(book, ncode, title, value) {
-    book.next = parseInt(event.target.value);
+    book.next = value;
     saveBookmarkButton();
     event.target.title = value === 0 ? '自動更新をしません' : value + '日間隔で更新します';
     myFancyLog(ncode, title, value === 0 ? 'は更新しないように設定しました！' : 'は ' + value + ' 日間隔で更新するように設定しました！');
