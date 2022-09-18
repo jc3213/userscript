@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.0
+// @version      5.1
 // @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -36,10 +36,10 @@ var jsTable = new JSUI_Table(['NCODE', '小説タイトル', '更新間隔', '�
 var css = document.createElement('style');
 css.innerHTML = '.jsui_menu_btn {display: block !important; padding: 5px !important;}\
 .jsui_btn_checked {padding: 4px !important; border: 1px inset #00F;}\
-.jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto;}\
+.jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
 .jsui_table > * > *:nth-child(2) {flex: 3;}\
-.jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px;}\
-.notification {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff;}';
+.jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}\
+.jsui_notify {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff; z-index: 55555; padding: 10px;}';
 document.body.appendChild(css);
 
 var navi = document.querySelector('#head_nav');
@@ -143,6 +143,8 @@ function fancyTableItem(book, index) {
     var input = document.createElement('input');
     input.type = 'number';
     input.style.width = '16.666666666666667%';
+    input.min = '0';
+    input.max = '30';
     input.value = next;
     input.title = next === 0 ? 'は更新しないように設定しました！' : 'は ' + next + ' 日間隔で更新するように設定しました！'
     input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value));
@@ -314,7 +316,7 @@ function myFancyLog(ncode, title, result) {
 function myFancyPopup(ncode, title, result) {
     var popup = document.createElement('div');
     popup.innerHTML = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
-    popup.className = 'notification manager-container';
+    popup.className = 'jsui_notify';
     popup.style.height = 'fit-content';
     popup.addEventListener('click', event => removePopup(popup));
     document.body.appendChild(popup);
@@ -327,7 +329,7 @@ function myFancyNcode(ncode, title) {
     ncode && !title ? '<span style="color: darkgreen">' + ncode + '</span>' : '';
 }
 function alignFancyPopup() {
-    document.querySelectorAll('.notification').forEach((element, index) => {
+    document.querySelectorAll('.jsui_notify').forEach((element, index) => {
         element.style.top = (element.offsetHeight + 5) * index + 10 + 'px';
         element.style.left = (innerWidth - element.offsetWidth) / 2 + 'px';
     });
