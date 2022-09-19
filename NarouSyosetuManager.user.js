@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.3
+// @version      5.4
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-OcdXHP3W0HFg5qNgUiIS7ui35e6dkoNUMCJk2W4HT3Y=
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-cqls5oEK/K2Gs8dZbFhByQcBBeUfeaqjwf60dLFyYFo=
+// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
+// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-A45TNLFw+hr8F38gIb9hPRNreQc3r1Yt7y+pkJPWAfc=
 // @require      https://raw.githubusercontent.com/jc3213/metalink4.js/main/src/metalink4_0.2.0.js#sha256-rZ1X/YrJghSCBAxFdbk/qBJf85/p6TzWL3FWUeiA7gc=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -31,6 +32,7 @@ var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', novelist.today);
 var jsMenu = new JSUI_Menu();
 var jsTable = new JSUI_Table(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
+var jsNotify = new JSUI_Notify();
 
 // UI作成関連
 var css = document.createElement('style');
@@ -38,13 +40,8 @@ css.innerHTML = '.jsui_menu_btn {display: block !important; padding: 5px !import
 .jsui_btn_checked {padding: 4px !important; border: 1px inset #00F;}\
 .jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
 .jsui_table > * > *:nth-child(2) {flex: 3;}\
-.jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}\
-.jsui_notify {width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff; z-index: 55555; padding: 10px; margin: 0px auto 5px !important;}';
-
-var notify = document.createElement('div');
-notify.style.cssText = 'position: absolute; top: 20px; left: 0px; width: 100%; z-index: 999999;';
-
-document.body.append(notify, css);
+.jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}';
+document.body.appendChild(css);
 
 var navi = document.querySelector('#head_nav');
 var navi_inner = navi.querySelector('li:last-child');
@@ -311,22 +308,20 @@ function downloadPDFHandler(book) {
 
 // ログ関連
 function myFancyLog(ncode, title, result) {
-    var html = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
+    if (ncode && title) {
+        var html = '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」 <span style="color: violet">' + result + '</span>';
+        var message = 'Nコード【' + ncode + '】、「' + title + '」' + result;
+    }
+    else if (ncode === undefined && title) {
+        html = '<span style="color: darkgreen">' + title + '</span> <span style="color: violet">' + result + '</span>';
+        message = '「' + title + '」' + result;
+    }
+    else if (ncode && title === undefined) {
+        html = '<span style="color: darkgreen">' + ncode + '</span> <span style="color: violet">' + result + '</span>';
+        message = 'Nコード【' + ncode + '】' + result;
+    }
     var log = document.createElement('p');
     log.innerHTML = html;
     logWindow.prepend(log);
-    myFancyPopup(ncode, title, result);
-}
-function myFancyPopup(ncode, title, result) {
-    var popup = document.createElement('div');
-    popup.innerHTML = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
-    popup.className = 'jsui_notify';
-    popup.addEventListener('click', event => popup.remove());
-    notify.appendChild(popup);
-    setTimeout(() => popup.remove(), 5000);
-}
-function myFancyNcode(ncode, title) {
-    return ncode && title ? '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」' :
-        !ncode && title ? '<span style="color: darkgreen">' + title + '</span>' :
-    ncode && !title ? '<span style="color: darkgreen">' + ncode + '</span>' : '';
+    jsNotify.popup({message});
 }
