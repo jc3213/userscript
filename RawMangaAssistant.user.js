@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.1
+// @version         7.2
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,8 +15,9 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-A45TNLFw+hr8F38gIb9hPRNreQc3r1Yt7y+pkJPWAfc=
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/src/aria2_0.3.13.js#sha256-r3LIgBfC9ZzXT6/iO7seAHC3hpRmTHuy1tXsHTV5UPY=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-OcdXHP3W0HFg5qNgUiIS7ui35e6dkoNUMCJk2W4HT3Y=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -74,22 +75,23 @@ var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var jsMenu = new JSUI_Menu();
+var jsNotify = new JSUI_Notify();
 
 // i18n strings and labels
 var message = {
     'en-US': {
         save: {
             label: 'Download',
-            done: 'All %n% images <b>have been successfully downloaded</b>',
-            error: 'Some image <b>can\'t be downloaded</b>'
+            done: 'All %n% images have been successfully downloaded',
+            error: 'Some image can\'t be downloaded'
         },
         copy: {
             label: 'Copy Urls',
-            done: 'All %n% urls have been <b>copied to clipboard</b>'
+            done: 'All %n% urls have been copied to clipboard'
         },
         aria2: {
             label: 'Send to Aria2',
-            done: 'All %n% image urls <b>have been sent to Aria2 RPC</b>',
+            done: 'All %n% image urls have been sent to Aria2 JSON-RPC',
             error: 'JSONRPC: Failed to send request'
         },
         gotop: {
@@ -100,25 +102,25 @@ var message = {
             off: 'Context Menu'
         },
         extract: {
-            start: '<b>Extracting</b> manga source',
-            done: 'A total of %n% image urls <b>have been extracted</b>',
-            fail: '<b>Download function not available</b> due to extraction failure',
-            error: '<b>Can\'t be extracted</b> image extension'
+            start: 'Extracting manga source',
+            done: 'A total of %n% image urls have been extracted',
+            fail: 'Download function not available due to extraction failure',
+            error: 'Can\'t be extracted image extension'
         }
     },
     'zh-CN': {
         save: {
             label: '下载图像',
-            done: '已<b>成功下载</b>全部 %n% 图像',
-            error: '<b>无法下载>%部分图像',
+            done: '已成功下载全部 %n% 图像',
+            error: '无法下载部分图像',
         },
         copy: {
             label: '复制链接',
-            done: '%n% 图像链接已<b>复制到剪切板</b>'
+            done: '%n% 图像链接已复制到剪切板'
         },
         aria2: {
             label: '发送至 Aria2',
-            done: '全部 %n% 图像链接已发送至<b>Aria2 RPC</b>',
+            done: '全部 %n% 图像链接已发送至Aria2 JSON-RPC',
             error: 'JSONRPC: 请求错误'
         },
         gotop: {
@@ -131,10 +133,10 @@ var message = {
             label: '右键菜单',
         },
         extract: {
-            start: '<b>正在解析</b>图像来源',
-            done: '已<b>成功解析</b>全部 %n% 图像来源',
-            fail: '无法解析图像来源，下载功能<b>无法使用</b>',
-            error: '<b>无法解析</b>图像后缀'
+            start: '正在解析图像来源',
+            done: '已成功解析全部 %n% 图像来源',
+            fail: '无法解析图像来源，下载功能无法使用',
+            error: '无法解析图像后缀'
         }
     }
 };
@@ -217,10 +219,9 @@ var css = document.createElement('style');
 css.type = 'text/css';
 css.innerText = '.jsui_menu_btn {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
 .jsui_manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
-.jsui_manager, #assistant_caution {background-color: #fff; z-index: 999999999; position: fixed;}\
+.jsui_manager {background-color: #fff; z-index: 999999999; position: fixed;}\
 .jsui_dropdown_menu {border: 1px inset darkviolet; width: 120px;}\
-#assistant_caution {font-size: 16px; color: #000 !important; border: 1px ridge darkviolet; border-radius: 5px; height: 60px; line-height: 60px; text-align: center; padding: 0px 10px;}\
-#assistant_caution > *:last-child {text-align: left; width: fit-content;}';
+.jsui_notify_popup {color: #000;}';
 
 var float = jsMenu.button('🖱️', event => {
     container.style.display = 'block';
@@ -355,7 +356,6 @@ function extractImage() {
             warning.remove();
             clearInterval(observer);
             if (fail.length === 0) {
-                container.classList.add('extract');
                 notification('extract', 'done');
             }
             else {
@@ -404,23 +404,7 @@ function appendShortcuts() {
 // Notifications
 function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
-    var html = '<span>⚠️</span><span>' + warn.replace('%n%', '<i><u>' + images.length + (url ? '<p>' + url + '</p>' : '') + '</u></i>') + '</span>';
+    var message = '⚠️ ' + warn.replace('%n%', images.length);
     var caution = document.createElement('div');
-    caution.id = 'assistant_caution';
-    caution.innerHTML = html;
-    document.body.appendChild(caution);
-    align_notification();
-    if (action === 'extract' && ['start', 'fail'].includes(status)) {
-        return caution;
-    }
-    setTimeout(() => {
-        caution.remove();
-        align_notification();
-    }, 3000);
-}
-function align_notification() {
-    document.querySelectorAll('#assistant_caution').forEach((element, index) => {
-        element.style.top = index * (element.offsetHeight + 5) + 10 + 'px';
-        element.style.left = (document.documentElement.clientWidth - element.offsetWidth) / 2 + 'px';
-    });
+    return jsNotify.popup({message});
 }
