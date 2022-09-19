@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.5
+// @version      3.6
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/src/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
@@ -95,7 +95,6 @@ function createRecordWindow(id, title, content) {
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.idx = document.querySelectorAll('.speedrun-window').length;
-    container.draggable = 'true';
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-top">' + title + '</div>\
 <div class="speedrun-menu"><span id="speedrun-minimum" class="speedrun-item">➖</span>\
@@ -123,13 +122,12 @@ function createRecordWindow(id, title, content) {
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
-    var dragndrop = new DragNDrop(container, document.querySelector('nav').parentNode.offsetHeight);
-    dragndrop.ondragend = event => {
+    draggableElement(container, position => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
         }
         else {
             container.style.cssText = '';
         }
-    };
+    });
 }
