@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.3
+// @version         7.4
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -18,7 +18,7 @@
 // @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
 // @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-ipix2NKY580tY2Zpnf93Z0C8BC7UVR4wQM1kEhbmOA0=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/src/aria2.js#sha256-LGfZDbCTb8Mer2mpV76Q3P1oZp1Kq/h0wTkXTDGbBFQ=
-// @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/src/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -68,9 +68,10 @@ var logo = [];
 var observer;
 var images;
 var watching;
-var options = GM_getValue('options', {})
+var options = GM_getValue('options', {});
+console.log(options);
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
-var aria2 = new Aria2(jsonrpc, secret);
+var aria2 = new JSLib_Aria2(jsonrpc, secret);
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
@@ -236,14 +237,14 @@ container.className = 'jsui_manager';
 document.body.append(float, container, css);
 
 // Draggable button and menu
-var dragndrop = new DragNDrop(float);
-dragndrop.ondragend = event => {
-    container.style.top = dragndrop.offsetTop + 'px';
-    container.style.left = dragndrop.offsetLeft + float.offsetWidth + 'px';
-    iconTop = iconTop = dragndrop.offsetTop;
-    iconLeft = iconLeft = dragndrop.offsetLeft;
-    GM_setValue('options', {...options, iconTop, iconLeft});
-};
+draggableElement(float, ({offsetTop, offsetLeft}) => {
+    container.style.top = offsetTop + 1 + 'px';
+    container.style.left = offsetLeft + 39 + 'px';
+    iconTop = offsetTop;
+    iconLeft = offsetLeft;
+    options = {...options, iconTop, iconLeft}
+    GM_setValue('options', options);
+});
 
 var downMenu = jsMenu.menu([
     {label: i18n.save.label, onclick: downloadAllUrls},
@@ -278,8 +279,9 @@ async function sendUrlsToAria2() {
         alert(i18n.aria2.error);
         jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
         secret = prompt('Aria2 Secret Token', secret ) ?? secret;
-        aria2 = new Aria2(jsonrpc, secret);
-        GM_setValue('options', {...options, jsonrpc, secret});
+        aria2 = new JSLib_Aria2(jsonrpc, secret);
+        options = {...options, jsonrpc, secret};
+        GM_setValue('options', options);
     });
     if (folder) {
         urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]));
@@ -297,7 +299,8 @@ function scrollToTop() {
 function contextMenuMode() {
     ctxMenu = ctxMenu === 0 ? 1 : 0;
     switchMenuMode();
-    GM_setValue('options', {...options, ctxMenu});
+    options = {...options, ctxMenu};
+    GM_setValue('options', options);
 }
 function switchMenuMode() {
     if (ctxMenu === 1) {
