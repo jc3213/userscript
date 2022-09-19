@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         小説家になろう 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.1
+// @version      5.2
 // @description  小説家になろう の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
@@ -39,8 +39,12 @@ css.innerHTML = '.jsui_menu_btn {display: block !important; padding: 5px !import
 .jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
 .jsui_table > * > *:nth-child(2) {flex: 3;}\
 .jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}\
-.jsui_notify {position: fixed; width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff; z-index: 55555; padding: 10px;}';
-document.body.appendChild(css);
+.jsui_notify {width: fit-content; border-radius: 5px; border: 1px solid #000; background-color: #fff; z-index: 55555; padding: 10px; margin: 0px auto 5px !important;}';
+
+var notify = document.createElement('div');
+notify.style.cssText = 'position: absolute; top: 20px; left: 0px; width: 100%; z-index: 999999;';
+
+document.body.append(notify, css);
 
 var navi = document.querySelector('#head_nav');
 var navi_inner = navi.querySelector('li:last-child');
@@ -317,24 +321,12 @@ function myFancyPopup(ncode, title, result) {
     var popup = document.createElement('div');
     popup.innerHTML = myFancyNcode(ncode, title) + ' <span style="color: violet">' + result + '</span>';
     popup.className = 'jsui_notify';
-    popup.style.height = 'fit-content';
-    popup.addEventListener('click', event => removePopup(popup));
-    document.body.appendChild(popup);
-    alignFancyPopup();
-    setTimeout(() => removePopup(popup), 5000);
+    popup.addEventListener('click', event => popup.remove());
+    notify.appendChild(popup);
+    setTimeout(() => popup.remove(), 5000);
 }
 function myFancyNcode(ncode, title) {
     return ncode && title ? '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」' :
         !ncode && title ? '<span style="color: darkgreen">' + title + '</span>' :
     ncode && !title ? '<span style="color: darkgreen">' + ncode + '</span>' : '';
-}
-function alignFancyPopup() {
-    document.querySelectorAll('.jsui_notify').forEach((element, index) => {
-        element.style.top = (element.offsetHeight + 5) * index + 10 + 'px';
-        element.style.left = (innerWidth - element.offsetWidth) / 2 + 'px';
-    });
-}
-function removePopup(popup) {
-    popup.remove()
-    alignFancyPopup();
 }
