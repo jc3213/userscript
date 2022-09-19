@@ -16,7 +16,7 @@
 // @match           *://mangahatachi.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-A45TNLFw+hr8F38gIb9hPRNreQc3r1Yt7y+pkJPWAfc=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-l+O3NmbpqsqPQjnVzGw+x2Bea9bH07i0ZkMZv9EbsOo=
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/src/aria2_0.3.13.js#sha256-r3LIgBfC9ZzXT6/iO7seAHC3hpRmTHuy1tXsHTV5UPY=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_setValue
