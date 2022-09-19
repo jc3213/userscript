@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.0
+// @version         7.1
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -16,7 +16,7 @@
 // @match           *://mangahatachi.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/aria2.js/main/src/aria2_0.3.13.js#sha256-r3LIgBfC9ZzXT6/iO7seAHC3hpRmTHuy1tXsHTV5UPY=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js##sha256-4uEnJMWpOGBw8mlVCtlVfGWKeofIQaSphaTV6KkP/FI=
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-OcdXHP3W0HFg5qNgUiIS7ui35e6dkoNUMCJk2W4HT3Y=
 // @require         https://raw.githubusercontent.com/jc3213/dragndrop.js/main/src/dragndrop_0.1.0.js#sha256-CH+YUPZysVw/cMUTlFCECh491u7VvspceftzLGzhY3g=
 // @grant           GM_setValue
 // @grant           GM_getValue
