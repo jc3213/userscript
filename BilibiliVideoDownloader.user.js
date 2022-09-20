@@ -7,14 +7,16 @@
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
+// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
 // @run-at          document-end
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
 var [toolbar, widescreen, widestate, next, prev] = location.pathname.startsWith('/video/') ? ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev'] : ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next'];
+var watching;
 var title;
-var video;
 var worker;
+var jsMenu = new JSUI_Menu();
 var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
@@ -36,27 +38,24 @@ var format = {
 };
 
 var css = document.createElement('style');
-css.innerHTML = '#helper-main {position: relative; z-index: 9999; display: inline-block; user-select: none;}\
-#helper-options, #helper-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 40px; left: 0px; background-color: #fff;}\
-#helper-options {width: 115px;}\
-#helper-options p, #helper-options select, .helper-button {font-size: 16px; text-align: center; padding: 5px;}\
-#helper-options p, #helper-options option:checked {color: #c26; font-weight: bold;}\
-#helper-options select {width: 100%;}\
-#helper-analyse {width: 400px;}\
-#helper-analyse ul {display: inline-block; margin-righ: 3px; vertical-align: top;}\
-#helper-analyse a {display: inline-block; width: 100px;}\
-.helper-button {background-color: #c26; color: #fff; height: 16px; line-height: 16px; padding: 10px 15px; display: inline-block; margin: 0px 3px 3px 0px; cursor: pointer;}\
-.helper-button:hover {background-color: #26c;}';
+css.innerHTML = '.jsui_menu_btn {background-color: #c26; color: #fff; font-size: 16px;}\
+.jsui_dropdown_menu {flex: 1;}\
+.jsui_analyse {display: flex; width: 400px;}\
+.jsui_options {width: 150px;}\
+.jsui_options, .jsui_analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
+.jsui_options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
+.jsui_options p, .jsui_options option:checked {color: #c26; font-weight: bold;}';
 
-var menu = document.createElement('div');
-menu.id = 'helper-main';
-menu.innerHTML = '<span id="options" class="helper-button">设置</span><span id="analyse" class="helper-button">解析</span>';
-menu.querySelector('#options').addEventListener('click', event => {
+var menu = jsMenu.menu([
+    {label: '设置', onclick: openOptions},
+    {label: '解析', onclick: analyseVideo}
+]);
+menu.style.cssText = 'position: relative; z-index: 9999; top: -6px; left: -60px; width: 160px;';
+function openOptions() {
     analyse.style.display = 'none';
     options.style.display = options.style.display === 'none' ? 'block' : 'none';
-});
-menu.querySelector('#analyse').addEventListener('click', async event => {
-    options.style.display = 'none';
+}
+async function analyseVideo() {
     if (worker || videocodec !== localStorage.videocodec) {
         worker = false;
         videocodec = localStorage.videocodec;
@@ -67,8 +66,9 @@ menu.querySelector('#analyse').addEventListener('click', async event => {
         biliVideoThumbnail(thumb);
         await biliVideoExtractor(playurl, key);
     }
-    analyse.style.display = analyse.style.display === 'none' ? 'block' : 'none';
-});
+    options.style.display = 'none';
+    analyse.style.display = analyse.style.display === 'none' ? 'flex' : 'none';
+}
 
 document.addEventListener('keydown', event => {
     if (event.ctrlKey) {
@@ -82,17 +82,18 @@ document.addEventListener('keydown', event => {
 });
 
 var options = document.createElement('div');
-options.id = 'helper-options';
+options.className = 'jsui_options';
 options.innerHTML = '<p>自动宽屏</p><select id="autowide"><option value="0">关闭</option><option value="1">启用</option></select>\
 <p>优先编码</p><select id="videocodec"><option value="0">H.264</option><option value="1">HEVC</option><option value="2">AV-1</option></select>';
 options.querySelector('#autowide').value = autowide;
 options.querySelector('#videocodec').value = videocodec;
 options.addEventListener('change', event => {
-    localStorage[event.target.id] = event.target.value;
+    var {id, value} = event.target;
+    localStorage[id] = value;
 });
 
 var analyse = document.createElement('div');
-analyse.id = 'helper-analyse';
+analyse.className = 'jsui_analyse';
 menu.append(options, analyse, css);
 
 options.style.display = analyse.style.display = 'none';
@@ -101,15 +102,15 @@ var observer = setInterval(() => {
     var widebtn = document.querySelector(widescreen);
     if (widebtn) {
         clearInterval(observer);
-        document.querySelector(toolbar).append(menu, css);
+        document.querySelector(toolbar).append(menu);
         if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
             widebtn.click();
         }
     }
 }, 200);
 new MutationObserver(mutations => {
-    if (video !== location.pathname) {
-        video = location.pathname;
+    if (watching !== location.pathname) {
+        watching = location.pathname;
         worker = true;
         options.style.display = analyse.style.display = 'none';
     }
@@ -122,39 +123,34 @@ function biliVideoTitle(name) {
 }
 
 function biliVideoThumbnail(url) {
-    var top = document.createElement('ul');
     var fixed = url.replace(/^(https?:)?\/\//, 'https://')
-    var sub = createMenuitem('视频封面', fixed, url.slice(url.lastIndexOf('.')));
-    top.append(sub);
-    analyse.append(top);
+    var menu = jsMenu.menu([
+        {label: '视频封面', onclick: event => downloadBiliVideo(event, fixed, title + url.slice(url.lastIndexOf('.')))}
+    ], true);
+    analyse.appendChild(menu);
 }
 
 async function biliVideoExtractor(playurl, key) {
-    var menu = {av1: document.createElement('ul'), hevc: document.createElement('ul'), avc: document.createElement('ul'), aac: document.createElement('ul')};
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
+    menu = {avc1: [], hev1: [], av01: [], mp4a: []};
     var {video, audio} = json[key].dash;
-    [...video, ...audio].forEach(({id, mimeType, codecs, baseUrl}) => {
+    [...video, ...audio].forEach(({id, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
-        var top = codec === 'avc1' ? menu.avc : codec === 'hev1' ? menu.hevc : codec === 'av01' ? menu.av1 : menu.aac;
         var {label, ext} = format[id];
-        var sub = createMenuitem(label, baseUrl, '.' + codec + ext, codec);
-        top.appendChild(sub);
+        menu[codec].push({label, onclick: event => downloadBiliVideo(event, baseUrl, title + ext)});
     });
-    var codec = videocodec === '2' ? menu.av1.childNodes.length !== 0 ? menu.av1 : menu.hevc.childNodes.length !== 0 ? menu.hevc : menu.avc : videocodec === '1' && menu.hevc.childNodes.length !== 0 ? menu.hevc : menu.avc;
-    analyse.append(codec, menu.aac)
+    video = jsMenu.menu(videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1, true);
+    audio = jsMenu.menu(menu.mp4a, true);
+    analyse.append(video, audio);
 }
 
-function createMenuitem(label, url, ext, codec) {
-    var li = document.createElement('li');
-    var tip = codec === undefined ? '' : format[codec] ? format[codec] : '未知编码: ' + codec;
-    li.innerHTML = '<a href="' + url + '" class="helper-button" target="_blank" download="' + title + ext + '" title="' + tip + '">' + label + '</a>';
-    li.addEventListener('click', event => {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            var aria2 = JSON.stringify({url, options: {out: title + ext, referer: location.href}});
-            navigator.clipboard.writeText(aria2);
-        }
-    });
-    return li;
+function downloadBiliVideo(event, url, name) {
+    if (event.ctrlKey) {
+        var aria2 = JSON.stringify({url, options: {out: name, referer: location.href}});
+        navigator.clipboard.writeText(aria2);
+    }
+    else {
+        open(url, '_blank');
+    }
 }
