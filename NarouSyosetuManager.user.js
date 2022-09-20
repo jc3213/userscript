@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.6
+// @version      5.7
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
 // @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
 // @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-ipix2NKY580tY2Zpnf93Z0C8BC7UVR4wQM1kEhbmOA0=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/src/meta4.js#sha256-8oJGm7Zsi8y7Xp9xS8YBgJ7J93K7Jo6a8dOWB/j7O2M=
+// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/src/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -102,7 +102,13 @@ function exportAllNovels() {
             container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(novelist.now);
             return {url: [{url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf'}], name: book.title + '.pdf', language: 'ja'};
         });
-        new JSLib_Meta4(json).saveAs('小説家になろう書庫');
+        var metalink = metalink4(json);
+        var blob = new Blob([metalink], {type: 'application/metalink+xml; charset=utf-8'})
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.meta4';
+        a.click();
+        a.remove();
         saveBookmarkButton();
         alert('情報のエックスポートは無事に成功しました！');
     }
