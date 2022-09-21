@@ -7,7 +7,7 @@
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -23,7 +23,7 @@ css.type = 'text/css';
 css.innerText = '.jsui_manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
 .jsui_manager > * {width: 100%; resize: none;}\
 .jsui_table {height: 400px; border: none;}\
-.jsui_menu_btn, .jsui_cell_btn {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
+.jsui_menu_item, .jsui_cell_btn {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
 .Item_2A9JA1Uf > .jsui_basic_menu {margin: 10px 10px 0px 10px;}';
 document.body.appendChild(css);
 
@@ -46,7 +46,7 @@ manager.style.display = 'none';
 manager.append(menu, entry, jsTable.table);
 document.body.appendChild(manager);
 
-var opener = jsMenu.button('管理列表', event => {
+var opener = jsMenu.item('管理列表', event => {
     if (!show) {
         banned.forEach(({id, liver}) => makeBanlist(id, liver));
         show = true;
@@ -155,7 +155,7 @@ function applyFilterToArea({menu, room, list}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = jsMenu.button('屏蔽直播间', event => {
+    var block = jsMenu.item('屏蔽直播间', event => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
             saveBanlist();
