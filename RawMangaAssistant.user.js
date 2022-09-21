@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.4
+// @version         7.6
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,10 +15,10 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
-// @require         https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-ipix2NKY580tY2Zpnf93Z0C8BC7UVR4wQM1kEhbmOA0=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/src/aria2.js#sha256-LGfZDbCTb8Mer2mpV76Q3P1oZp1Kq/h0wTkXTDGbBFQ=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/src/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/lib/aria2.js#sha256-3mm3pLgUtNGzHaFHvoclOtHCz+K6juHsJfNAIor+6n8=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/lib/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -69,9 +69,8 @@ var observer;
 var images;
 var watching;
 var options = GM_getValue('options', {});
-console.log(options);
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
-var aria2 = new JSLib_Aria2(jsonrpc, secret);
+var aria2 = new Aria2(jsonrpc, secret);
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
@@ -279,7 +278,7 @@ async function sendUrlsToAria2() {
         alert(i18n.aria2.error);
         jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
         secret = prompt('Aria2 Secret Token', secret ) ?? secret;
-        aria2 = new JSLib_Aria2(jsonrpc, secret);
+        aria2 = new Aria2(jsonrpc, secret);
         options = {...options, jsonrpc, secret};
         GM_setValue('options', options);
     });
