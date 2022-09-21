@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.8
+// @version      5.9
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
@@ -36,7 +36,7 @@ var jsNotify = new JSUI_Notify();
 
 // UI作成関連
 var css = document.createElement('style');
-css.innerHTML = '.jsui_menu_btn {display: block !important; padding: 5px !important;}\
+css.innerHTML = '.jsui_menu_item {display: block !important; padding: 5px !important;}\
 .jsui_btn_checked {padding: 4px !important; border: 1px inset #00F;}\
 .jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
 .jsui_table > * > *:nth-child(2) {flex: 3;}\
@@ -80,7 +80,7 @@ var submenu = jsMenu.menu([
 function subscribeCurrentNovel() {
     var book = bookmark.find(book => book.ncode === novelist.myncode);
     if (book) {
-        myFancyPopup(book.ncode, book.title, 'は既に書庫に登録しています！');
+        jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」は既に書庫に登録しています！'});
         validate[book.ncode] = book.title;
     }
     else if (novelist.myncode === novelist.ncode) {
@@ -196,13 +196,13 @@ function saveBookmarkButton() {
 // NCODE検証&登録
 function validateNcode(ncode) {
     if (validate[ncode]) {
-        validate[ncode] === '検証中' ? myFancyPopup('', 'Nコード' + ncode, 'は既に検証しています、何度もクリックしないでください！') :
-        validate[ncode] === 'エラー' ? myFancyPopup('', 'Nコード' + ncode, 'は存在しないか既にサーバーから削除されています！') :
+        validate[ncode] === '検証中' ? jsNotify.popup({message: 'Nコード【' + ncode + '】は既に検証しています、何度もクリックしないでください！'}) :
+        validate[ncode] === 'エラー' ? jsNotify.popup({message: 'Nコード【' + ncode + '】は存在しないか既にサーバーから削除されています！'}) :
         subscribeNcode(ncode, validate[ncode]);
         return;
     }
     validate[ncode] = '検証中';
-    myFancyPopup('', 'Nコード' + ncode, 'を検証しています、しばらくお待ちください！');
+    jsNotify.popup({message: 'Nコード【' + ncode + '】を検証しています、しばらくお待ちください！'});
     GM_xmlhttpRequest({
         url: 'https://ncode.syosetu.com/' + ncode,
         method: 'GET',
@@ -227,19 +227,19 @@ if (novelist.today !== scheduler) {
 }
 function bookmarkSyncPreHandler(start) {
     updateObserver(bookmark.length, () => {
-        myFancyPopup('', '登録した全てのNコード', 'を更新しています！');
+        jsNotify.popup({message: '登録した全てのNコードを更新しています！'});
         if (typeof start === 'function') {
             start();
         }
     }, () => {
         GM_setValue('bookmark', bookmark);
-        myFancyPopup('', '登録した全てのNコード', 'の更新が完了しました！');
+        jsNotify.popup({message: '登録した全てのNコードの更新が完了しました！'});
         logWindow.innerHTML = '';
     });
 }
 function updateObserver(queue, start, end) {
     if (sync) {
-        return myFancyPopup('', '', '更新スケジュールを処理しています、何度もクリックしないでください！');
+        return jsNotify.popup({message: '更新スケジュールを処理しています、何度もクリックしないでください！'});
     }
     sync = true;
     if (typeof start === 'function') {
@@ -259,12 +259,12 @@ function updateObserver(queue, start, end) {
 function updateFancyBookmark(book) {
     if (book.next === 0) {
         session.push(book.ncode);
-        return myFancyPopup(book.ncode, book.title, 'は更新しないように設定しています！！');
+        return jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」は更新しないように設定しています！！'});
     }
     var next = book.next - (novelist.now - book.last) / 86400000;
     if (next > 0) {
         next = next >= 1 ? (next | 0) + '日' : (next * 24 | 0) + '時間';
-        myFancyPopup(book.ncode, book.title, 'は <b>' + next + '</b> 後に更新する予定です！');
+        jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」は ' + next + ' 後に更新する予定です！'});
         session.push(book.ncode);
     }
     else {
@@ -273,10 +273,10 @@ function updateFancyBookmark(book) {
 }
 function batchDownloadPreHandler(book) {
     if (download[book.ncode] === 'ダウンロード') {
-        return myFancyPopup(book.ncode, book.title, 'はまだ処理しています、しばらくお待ちください！');
+        return jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」はまだ処理しています、しばらくお待ちください！'});
     }
     download[book.ncode] = 'ダウンロード';
-    myFancyPopup(book.ncode, book.title, 'のダウンロードを開始しました！');
+    jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」のダウンロードを開始しました！'});
     GM_xmlhttpRequest({
         url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf',
         method: 'GET',
@@ -301,7 +301,7 @@ function batchDownloadPreHandler(book) {
     });
 }
 function downloadPDFHandler(book) {
-    myFancyPopup(book.ncode, book.title, 'の縦書きPDFは只今生成中です、 60秒後に再試行します！');
+    jsNotify.popup({message: 'Nコード【' + book.ncode + '】、「' + book.title + '」の縦書きPDFは只今生成中です、 60秒後に再試行します！'});
     var timer = 60;
     var retry = setInterval(() => {
         timer --;
