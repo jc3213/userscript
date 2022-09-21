@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.6
+// @version      3.7
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/src/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
