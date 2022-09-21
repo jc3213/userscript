@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.7
+// @version      5.8
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
-// @require      https://raw.githubusercontent.com/jc3213/jsui/main/src/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/src/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/lib/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
