@@ -5,7 +5,7 @@
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.net/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @noframes
 // ==/UserScript==
 
