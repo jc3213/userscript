@@ -27,8 +27,8 @@ autoBtn.innerText = autorun === '1' ? '✅自动' : '自动';
 
 var css = document.createElement('style');
 css.innerHTML = '.jsui_basic_menu {width: 160px;}\
-.jsui_menu_btn {font-weight: bold; border-radius: 5px; background-color: #000; padding: 2px 10px; margin: 4px 0px;}\
-.jsui_menu_btn:last-child {flex: 1.5;}\
+.jsui_menu_item {font-weight: bold; border-radius: 5px; background-color: #000; padding: 2px 10px; margin: 4px 0px;}\
+.jsui_menu_item:last-child {flex: 1.5;}\
 iframe {position: absolute; top: 200px; left: 100px; height: 400px; width: 400px; display: none;}';
 
 var headbar = document.querySelector('#toptb > .wp');
