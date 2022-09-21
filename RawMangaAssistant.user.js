@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.6
+// @version         7.7
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,9 +15,9 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-DsH2PJCMq/NhU59epDuDnAZ9CSGYy+059t0xZ/0N98Q=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-3mm3pLgUtNGzHaFHvoclOtHCz+K6juHsJfNAIor+6n8=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -217,13 +217,13 @@ function extractMangaTitle(title = '') {
 // Create UI
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui_menu_btn {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
+css.innerText = '.jsui_menu_item {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
 .jsui_manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
 .jsui_manager {background-color: #fff; z-index: 999999999; position: fixed;}\
 .jsui_dropdown_menu {border: 1px inset darkviolet; width: 120px;}\
 .jsui_notify_popup {color: #000;}';
 
-var float = jsMenu.button('🖱️', event => {
+var float = jsMenu.item('🖱️', event => {
     container.style.display = 'block';
 });
 float.style.cssText = 'position: fixed; top: ' + iconTop + 'px; left: ' + iconLeft + 'px; width: 38px; height: 38px; z-index: 999999999; border: 1px inset darkviolet;';
