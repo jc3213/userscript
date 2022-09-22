@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.7
+// @version      3.8
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-I+9R7QJ2ncxpL+q4yHyRReyIn3hR6Sg0I4F3GnBox0Y=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
@@ -122,12 +122,13 @@ function createRecordWindow(id, title, content) {
     container.querySelector('#speedrun-close').addEventListener('click', event => {
         container.remove();
     });
-    draggableElement(container, position => {
+    var draggable = new DraggableElement(container, true);
+    draggable.ondragdrop = position => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
         }
         else {
             container.style.cssText = '';
         }
-    });
+    }
 }
