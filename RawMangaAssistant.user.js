@@ -18,7 +18,7 @@
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-I+9R7QJ2ncxpL+q4yHyRReyIn3hR6Sg0I4F3GnBox0Y=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-BfVr9hVLIALu8WPYC2szjPH8ce55nFutDNcLNeH4J0Y=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
