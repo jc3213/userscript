@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.7
+// @version         7.8
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -18,7 +18,7 @@
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-ttGznYlzdVyciXIQQ63rO0vKhx6OfpuvdCDkBFF2AcI=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-I+9R7QJ2ncxpL+q4yHyRReyIn3hR6Sg0I4F3GnBox0Y=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -236,14 +236,15 @@ container.className = 'jsui_manager';
 document.body.append(float, container, css);
 
 // Draggable button and menu
-draggableElement(float, ({offsetTop, offsetLeft}) => {
-    container.style.top = offsetTop + 1 + 'px';
-    container.style.left = offsetLeft + 39 + 'px';
-    iconTop = offsetTop;
-    iconLeft = offsetLeft;
+var draggable = new DraggableElement(float, true);
+draggable.ondragdrop = ({top, left}) => {
+    container.style.top = top + 1 + 'px';
+    container.style.left = left + 39 + 'px';
+    iconTop = top;
+    iconLeft = left;
     options = {...options, iconTop, iconLeft}
     GM_setValue('options', options);
-});
+};
 
 var downMenu = jsMenu.menu([
     {label: i18n.save.label, onclick: downloadAllUrls},
