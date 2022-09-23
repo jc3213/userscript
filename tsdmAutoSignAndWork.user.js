@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.6
+// @version      1.1.0
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.net/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
 // @noframes
 // ==/UserScript==
 
@@ -15,7 +15,7 @@ var working = {};
 var today = new Date();
 var date = today.getFullYear() + today.getMonth() + today.getDate();
 var now = today.getTime();
-var jsMenu = new JSUI_Menu();
+var jsMenu = new FlexMenu();
 
 var smenu = jsMenu.menu([
     {label: '签到', onclick: autoSign},
@@ -26,17 +26,24 @@ var autoBtn = smenu.childNodes[2];
 autoBtn.innerText = autorun === '1' ? '✅自动' : '自动';
 
 var css = document.createElement('style');
-css.innerHTML = '.jsui_basic_menu {width: 160px;}\
-.jsui_menu_item {font-weight: bold; border-radius: 5px; background-color: #000; padding: 2px 10px; margin: 4px 0px;}\
-.jsui_menu_item:last-child {flex: 1.5;}\
+css.innerHTML = '.jsui-basic-menu {width: 160px;}\
+.jsui-menu-item {font-weight: bold; border-radius: 5px; background-color: #000; padding: 2px 10px; margin: 4px 0px;}\
+.jsui-menu-item:last-child {flex: 1.5;}\
 iframe {position: absolute; top: 200px; left: 100px; height: 400px; width: 400px; display: none;}';
 
 var headbar = document.querySelector('#toptb > .wp');
 headbar.append(smenu, css);
 
 if (autorun === '1') {
-    today > signed && autoSign();
-    now > worked ? autoWork() : setTimeout(autoWork, worked - now);
+    if (date > signed) {
+        autoSign();
+    }
+    if (now > worked) {
+        autoWork();
+    }
+    else {
+        setTimeout(autoWork, worked - now);
+    }
 }
 
 function switchAuto() {
@@ -53,8 +60,8 @@ async function autoSign() {
     var idoc = await startWork('/plugin.php?id=dsu_paulsign:sign');
     var iwin = idoc.defaultView;
     if (idoc.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)')) {
-        localStorage.signed = signed = today;
         popup.innerText = idoc.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)').innerText;
+        localStorage.signed = signed = date;
         endWork(iwin, popup, 'sign');
     }
     else {
@@ -63,8 +70,8 @@ async function autoSign() {
         idoc.getElementById('todaysay').value = '每日签到';
         setTimeout(() => {
             iwin.showWindow('qwindow', 'qiandao', 'post', '0');
-            localStorage.signed = signed = today;
             popup.innerText = '已完成签到';
+            localStorage.signed = signed = date;
             endWork(iwin, popup, 'sign');
         }, 3000);
     }
@@ -83,8 +90,8 @@ async function autoWork() {
         var clock = text.match(/\d+/g);
         var next = (clock[0] | 0) * 3600000 + (clock[1] | 0) * 60000 + (clock[2] | 0) * 1000;
         popup.innerText = text;
-        endWork(iwin, popup, 'work');
         localStorage.worked = worked = Date.now() + next;
+        endWork(iwin, popup, 'sign');
     }
     else {
         popup.innerText = '开始打工...';
@@ -95,10 +102,10 @@ async function autoWork() {
         });
         setTimeout(() => {
             idoc.querySelector('#stopad > a').click();
-            localStorage.worked = worked = Date.now() + 21600000;
             setTimeout(autoWork, 21600000);
             popup.innerText = '已完成打工';
-            endWork(iwin, popup, 'work');
+            localStorage.worked = worked = Date.now() + 21600000;
+            endWork(iwin, popup, 'sign');
         }, 3000);
     }
 }
@@ -117,6 +124,7 @@ function startWork(url) {
         iframe.src = url;
         iframe.addEventListener('load', event => resolve(iframe.contentDocument));
         document.body.append(iframe);
+        iframe.contentWindow.setTimeout = () => void 0;
     });
 }
 
