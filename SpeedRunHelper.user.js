@@ -5,7 +5,7 @@
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-BfVr9hVLIALu8WPYC2szjPH8ce55nFutDNcLNeH4J0Y=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-wq4YGzbelVrEDNviQ4C0efZwm3LuclyxxY3ZY2xnM4c=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
@@ -66,12 +66,21 @@ function appendEvent(board, record, callback) {
     });
 }
 
+function cssTextGetter(offset) {
+    var top = 130 + offset;
+    var left = (document.documentElement.clientWidth - 1280) / 2 + offset;
+    if (left < 0) {
+        left = 0;
+    }
+    return 'top: ' + top + 'px; left: ' + left + 'px;';
+}
+
 async function viewSpeedrunRecord(src, rank, player, time) {
     var id = src.slice(src.lastIndexOf('/') + 1);
     var title = '<div>Rank : ' + rank + '</div><div>Player : ' + player + '</div><div>Time : ' + time + '</div>';
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
-        view.style.cssText = style[id] = 'top: ' + (130 + view.offset) + 'px; left: ' + ((document.documentElementclientWidth - 1280) / 2 + view.offset) + 'px;';
+        view.style.cssText = style[id] = cssTextGetter(view.offset);
     }
     else if (logger[id]) {
         createRecordWindow(id, title, top, logger[id]);
@@ -94,6 +103,7 @@ function createRecordWindow(id, title, top, content) {
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.offset = document.querySelectorAll('.speedrun-window').length * 30;
+    console.log(((document.documentElement.clientWidth - 1280) / 2 + container.offset), container.offset);
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-menu"><div>' + title + '</div>\
 <div><div id="speedrun-minimum" class="speedrun-item">➖</div>\
@@ -101,7 +111,7 @@ function createRecordWindow(id, title, top, content) {
 <div id="speedrun-maximum" class="speedrun-item">🔲</div>\
 <div id="speedrun-restore" class="speedrun-item">🔳</div>\
 <div id="speedrun-close" class="speedrun-item">❌</div></div></div>';
-    container.style.cssText = style[id] = 'top: ' + (130 + container.offset) + 'px; left: ' + ((document.documentElementclientWidth - 1280) / 2 + container.offset) + 'px;';
+    container.style.cssText = style[id] = cssTextGetter(container.offset);
     container.appendChild(content);
     container.querySelector('#speedrun-minimum').addEventListener('click', event => {
         container.classList.add('speedrun-minimum');
@@ -121,7 +131,7 @@ function createRecordWindow(id, title, top, content) {
         container.remove();
     });
     document.body.appendChild(container);
-    var draggable = new DraggableElement(container, true);
+    var draggable = new DraggableElement(container);
     draggable.ondragdrop = position => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
