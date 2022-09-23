@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      5.9
+// @version      1.4.5
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -30,17 +30,17 @@ var show = false;
 var log = false;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', novelist.today);
-var jsMenu = new JSUI_Menu();
-var jsTable = new JSUI_Table(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
-var jsNotify = new JSUI_Notify();
+var jsMenu = new FlexMenu();
+var jsTable = new FlexTable(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
+var jsNotify = new Notify();
 
 // UI作成関連
 var css = document.createElement('style');
-css.innerHTML = '.jsui_menu_item {display: block !important; padding: 5px !important;}\
-.jsui_btn_checked {padding: 4px !important; border: 1px inset #00F;}\
-.jsui_table, .jsui_logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
-.jsui_table > * > *:nth-child(2) {flex: 3;}\
-.jsui_manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}';
+css.innerHTML = '.jsui-menu-item {display: block !important; padding: 5px !important;}\
+.jsui-menu-checked {padding: 4px !important; border: 1px inset #00F;}\
+.jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}\
+.jsui-table > * > *:nth-child(2) {flex: 3;}\
+.jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}';
 document.body.appendChild(css);
 
 var navi = document.querySelector('#head_nav');
@@ -56,8 +56,8 @@ function openBookShelf() {
         bookmark.forEach(fancyTableItem);
         show = true;
     }
-    container.style.display = event.target.classList.contains('jsui_btn_checked') ? 'none' : 'block';
-    event.target.classList.toggle('jsui_btn_checked');
+    container.style.display = event.target.classList.contains('jsui-menu-checked') ? 'none' : 'block';
+    event.target.classList.toggle('jsui-menu-checked');
 }
 function openPDFNovel() {
     open('https://pdfnovels.net/' + novelist.ncode + '/main.pdf', '_blank');
@@ -67,7 +67,7 @@ if (navi) {
 }
 
 var container = document.createElement('div');
-container.className = 'jsui_manager';
+container.className = 'jsui-manager';
 container.style.cssText = 'display: none;';
 
 var submenu = jsMenu.menu([
@@ -120,8 +120,8 @@ function saveAllChanges() {
     jsTable.table.style.display = 'block';
 }
 function toggleLogging(event) {
-    jsTable.table.style.display = event.target.classList.contains('jsui_btn_checked') ? 'block' : 'none';
-    event.target.classList.toggle('jsui_btn_checked');
+    jsTable.table.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
+    event.target.classList.toggle('jsui-menu-checked');
 }
 
 var saveBtn = submenu.childNodes[3];
@@ -132,7 +132,7 @@ var input = document.createElement('input');
 input.addEventListener('change', event => novelist.myncode = event.target.value ?? novelist.ncode);
 
 var logWindow = document.createElement('div');
-logWindow.className = 'jsui_logging';
+logWindow.className = 'jsui-logging';
 
 submenu.prepend(input);
 container.prepend(submenu, jsTable.table, logWindow);
