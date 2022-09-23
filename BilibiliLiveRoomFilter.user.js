@@ -2,13 +2,13 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         4.8
+// @version         1.5.10
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-he3P3lqMaUzv58vquTVe3Rvy3pf1fi+ZeSZqCg2c9mQ=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -20,14 +20,14 @@ var show = false;
 
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui_manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
-.jsui_manager > * {width: 100%; resize: none;}\
-.jsui_table {height: 400px; border: none;}\
-.jsui_menu_item, .jsui_cell_btn {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
-.Item_2A9JA1Uf > .jsui_basic_menu {margin: 10px 10px 0px 10px;}';
+css.innerText = '.jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
+.jsui-manager > * {width: 100%; resize: none;}\
+.jsui-table {height: 400px; border: none;}\
+.jsui-menu-item, .jsui-click-cell {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
+.Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}';
 document.body.appendChild(css);
 
-var jsMenu = new JSUI_Menu();
+var jsMenu = new FlexMenu();
 var menu = jsMenu.menu([
     {label: '批量屏蔽', onclick: batchBlock},
     {label: '导入列表', onclick: importList},
@@ -38,10 +38,10 @@ var menu = jsMenu.menu([
 var entry = document.createElement('textarea');
 entry.rows = '6';
 
-var jsTable = new JSUI_Table(['直播间ID', '主播昵称']);
+var jsTable = new FlexTable(['直播间ID', '主播昵称']);
 
 var manager = document.createElement('div');
-manager.className = 'jsui_manager';
+manager.className = 'jsui-manager';
 manager.style.display = 'none';
 manager.append(menu, entry, jsTable.table);
 document.body.appendChild(manager);
