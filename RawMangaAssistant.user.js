@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         7.8
+// @version         1.7.10
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,10 +15,10 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-wq4YGzbelVrEDNviQ4C0efZwm3LuclyxxY3ZY2xnM4c=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -74,8 +74,8 @@ var aria2 = new Aria2(jsonrpc, secret);
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
-var jsMenu = new JSUI_Menu();
-var jsNotify = new JSUI_Notify();
+var jsMenu = new FlexMenu();
+var jsNotify = new Notify();
 
 // i18n strings and labels
 var message = {
@@ -217,11 +217,11 @@ function extractMangaTitle(title = '') {
 // Create UI
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui_menu_item {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
-.jsui_manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
-.jsui_manager {background-color: #fff; z-index: 999999999; position: fixed;}\
-.jsui_dropdown_menu {border: 1px inset darkviolet; width: 120px;}\
-.jsui_notify_popup {color: #000;}';
+css.innerText = '.jsui-menu-item {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
+.jsui-manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
+.jsui-manager {background-color: #fff; z-index: 999999999; position: fixed;}\
+.jsui-drop-menu {border: 1px inset darkviolet; width: 120px;}\
+.jsui-notify-popup {color: #000;}';
 
 var float = jsMenu.item('🖱️', event => {
     container.style.display = 'block';
@@ -232,12 +232,12 @@ document.addEventListener('click', event => {
 });
 
 var container = document.createElement('div');
-container.className = 'jsui_manager';
+container.className = 'jsui-manager';
 document.body.append(float, container, css);
 
 // Draggable button and menu
-var draggable = new DraggableElement(float);
-draggable.ondragdrop = ({top, left}) => {
+var dragdrop = new DragDrop(float);
+dragdrop.ondragend = ({top, left}) => {
     container.style.top = top + 1 + 'px';
     container.style.left = left + 39 + 'px';
     iconTop = top;
