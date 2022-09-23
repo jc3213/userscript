@@ -2,12 +2,12 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         3.18
+// @version         1.4.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
 // @run-at          document-end
 // ==/UserScript==
 
@@ -18,7 +18,7 @@ var [toolbar, widescreen, widestate, next, prev, offset] = location.pathname.sta
 var watching;
 var title;
 var worker;
-var jsMenu = new JSUI_Menu();
+var jsMenu = new FlexMenu();
 var format = {
     '30280': {label: '音频 高码率', ext: '.192k.aac'},
     '30232': {label: '音频 中码率', ext: '.128k.aac'},
@@ -40,13 +40,13 @@ var format = {
 };
 
 var css = document.createElement('style');
-css.innerHTML = '.jsui_menu_item {background-color: #c26; color: #fff; font-size: 16px;}\
-.jsui_dropdown_menu {flex: 1;}\
-.jsui_analyse {display: flex; width: 400px;}\
-.jsui_options {width: 150px;}\
-.jsui_options, .jsui_analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
-.jsui_options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
-.jsui_options p, .jsui_options option:checked {color: #c26; font-weight: bold;}';
+css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}\
+.jsui-drop-menu {flex: 1;}\
+.jsui-analyse {display: flex; width: 400px;}\
+.jsui-options {width: 150px;}\
+.jsui-options, .jsui-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
+.jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
+.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}';
 
 var menu = jsMenu.menu([
     {label: '设置', onclick: openOptions},
@@ -84,7 +84,7 @@ document.addEventListener('keydown', event => {
 });
 
 var options = document.createElement('div');
-options.className = 'jsui_options';
+options.className = 'jsui-options';
 options.innerHTML = '<p>自动宽屏</p><select id="autowide"><option value="0">关闭</option><option value="1">启用</option></select>\
 <p>优先编码</p><select id="videocodec"><option value="0">H.264</option><option value="1">HEVC</option><option value="2">AV-1</option></select>';
 options.querySelector('#autowide').value = autowide;
@@ -95,7 +95,7 @@ options.addEventListener('change', event => {
 });
 
 var analyse = document.createElement('div');
-analyse.className = 'jsui_analyse';
+analyse.className = 'jsui-analyse';
 menu.append(options, analyse, css);
 
 options.style.display = analyse.style.display = 'none';
