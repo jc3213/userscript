@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      3.8
+// @version      1.2.0
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-wq4YGzbelVrEDNviQ4C0efZwm3LuclyxxY3ZY2xnM4c=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
@@ -24,16 +24,16 @@ css.innerHTML = '#widget {display: none !important;}\
 .speedrun-menu {background-color: #52698A; width: 100%; user-select: none; height: 20px; display: grid; grid-template-columns: auto 66px;}\
 .speedrun-menu > * {display: flex;}\
 .speedrun-menu > * > * {flex: 1;}\
-.speedrun-item {background-color: #fff; color: #000; cursor: pointer; display: inline-block; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}\
+.speedrun-item {background-color: #fff; color: #000; cursor: pointer; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}\
 .speedrun-item:hover {filter: opacity(60%);}\
 .speedrun-item:active {filter: opacity(30%);}\
 #speedrun-minimum {line-height: 30px;}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 25% !important; height: 20px !important; z-index: 99999;}\
 .speedrun-minimum iframe {display: none !important;}\
-.speedrun-maximum {top: 0px; left: 0px; width: ' + (screen.availWidth - 52) + 'px !important; height: ' + (screen.availHeight - 64) + 'px !important; z-index: 999999;}\
+.speedrun-maximum {top: 0px; left: 0px; width: ' + document.documentElement.clientWidth + 'px !important; height: ' + document.documentElement.clientHeight + 'px !important; z-index: 999999;}\
 .speedrun-maximum iframe {width: 100% !important; height: calc(100% - 20px) !important;}\
 #speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
-.speedrun-minimum #speedrun-restore:nth-child(2), .speedrun-maximum #speedrun-restore:nth-child(4) {display: inline-block;}';
+.speedrun-minimum #speedrun-restore:nth-child(2), .speedrun-maximum #speedrun-restore:nth-child(4) {display: block;}';
 document.body.append(css);
 
 document.querySelector('.widget-column').remove();
@@ -131,8 +131,8 @@ function createRecordWindow(id, title, top, content) {
         container.remove();
     });
     document.body.appendChild(container);
-    var draggable = new DraggableElement(container);
-    draggable.ondragdrop = position => {
+    var dragdrop = new DragDrop(container);
+    dragdrop.ondragend = position => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
         }
