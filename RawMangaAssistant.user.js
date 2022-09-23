@@ -18,7 +18,7 @@
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-ixdHSPslP3BToG69zFl5XIhdFJV034oi4yajJK1hvSE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-Cras2dh1/vJid5qUF5zZmNlt7hXmYpC9kQEZ+5yY5cM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-BfVr9hVLIALu8WPYC2szjPH8ce55nFutDNcLNeH4J0Y=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/draggable.js#sha256-wq4YGzbelVrEDNviQ4C0efZwm3LuclyxxY3ZY2xnM4c=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -236,7 +236,7 @@ container.className = 'jsui_manager';
 document.body.append(float, container, css);
 
 // Draggable button and menu
-var draggable = new DraggableElement(float, true);
+var draggable = new DraggableElement(float);
 draggable.ondragdrop = ({top, left}) => {
     container.style.top = top + 1 + 'px';
     container.style.left = left + 39 + 'px';
