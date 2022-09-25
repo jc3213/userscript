@@ -2,12 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.10
+// @version         1.5.11
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -28,12 +28,14 @@ css.innerText = '.jsui-manager {border: 2px outset #000; width: 500px; backgroun
 document.body.appendChild(css);
 
 var jsMenu = new FlexMenu();
-var menu = jsMenu.menu([
-    {label: '批量屏蔽', onclick: batchBlock},
-    {label: '导入列表', onclick: importList},
-    {label: '导出列表', onclick: exportList},
-    {label: '清空列表', onclick: batchUnblock}
-]);
+var menu = jsMenu.menu({
+    items: [
+        {text: '批量屏蔽', onclick: batchBlock},
+        {text: '导入列表', onclick: importList},
+        {text: '导出列表', onclick: exportList},
+        {text: '清空列表', onclick: batchUnblock}
+    ]
+});
 
 var entry = document.createElement('textarea');
 entry.rows = '6';
@@ -46,12 +48,15 @@ manager.style.display = 'none';
 manager.append(menu, entry, jsTable.table);
 document.body.appendChild(manager);
 
-var opener = jsMenu.item('管理列表', event => {
-    if (!show) {
-        banned.forEach(({id, liver}) => makeBanlist(id, liver));
-        show = true;
+var opener = jsMenu.item({
+    text: '管理列表',
+    onclick: event => {
+        if (!show) {
+            banned.forEach(({id, liver}) => makeBanlist(id, liver));
+            show = true;
+        }
+        manager.style.display = manager.style.display === 'none' ? 'block' : 'none';
     }
-    manager.style.display = manager.style.display === 'none' ? 'block' : 'none';
 });
 opener.style.width = '120px';
 
@@ -73,9 +78,9 @@ upload.addEventListener('change', event => {
 
 function batchBlock(event) {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
-        var entry = manager.entry.value.match(/[^\n]+/g);
-        if (entry) {
-            entry.forEach(item => {
+        var list = entry.value.match(/[^\n]+/g);
+        if (list) {
+            list.forEach(item => {
                 var rule = item.match(/(\d+)[\\\/\|\s\n\(\)\[\]\{\},.:;'"!@#$%^&*]+(.+)/);
                 if (rule.length === 3) {
                     addBanlist(rule[1], rule[2]);
@@ -83,7 +88,7 @@ function batchBlock(event) {
             });
             saveBanlist();
         }
-        manager.entry.value = '';
+        entry.value = '';
     }
 }
 function exportList(event) {
@@ -155,11 +160,14 @@ function applyFilterToArea({menu, room, list}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = jsMenu.item('屏蔽直播间', event => {
-        if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-            addBanlist(id, liver);
-            saveBanlist();
-            open(area, '_self');
+    var block = jsMenu.item({
+        text: '屏蔽直播间',
+        onclick: event => {
+            if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+                addBanlist(id, liver);
+                saveBanlist();
+                open(area, '_self');
+            }
         }
     });
     domPlayer.querySelector('div.upper-row > div.right-ctnr').prepend(block);
@@ -224,10 +232,12 @@ function addMenuToLiveRoom(element) {
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
-    var menu = jsMenu.menu([
-        {label: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
-        {label: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
-    ]);
+    var menu = jsMenu.menu({
+        items: [
+            {text: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
+            {text: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
+        ]
+    });
     menu.style.display = 'none';
 
     element.querySelector('div.Item_2A9JA1Uf').appendChild(menu);
