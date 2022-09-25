@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.5
+// @version      1.4.6
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        *://ncode.syosetu.com/n*
 // @match        *://novel18.syosetu.com/n*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
@@ -46,10 +46,12 @@ document.body.appendChild(css);
 var navi = document.querySelector('#head_nav');
 var navi_inner = navi.querySelector('li:last-child');
 
-var manager = jsMenu.menu([
-    {label: '書庫管理', onclick: openBookShelf},
-    {label: 'PDF小説', onclick: openPDFNovel}
-]);
+var manager = jsMenu.menu({
+    items: [
+        {text: '書庫管理', onclick: openBookShelf},
+        {text: 'PDF小説', onclick: openPDFNovel}
+    ]
+});
 manager.style.cssText = 'line-height: 40px; font-weight: bold;';
 function openBookShelf() {
     if (!show) {
@@ -70,13 +72,15 @@ var container = document.createElement('div');
 container.className = 'jsui-manager';
 container.style.cssText = 'display: none;';
 
-var submenu = jsMenu.menu([
-    {label: 'NCODE登録', onclick: subscribeCurrentNovel},
-    {label: 'NCODE更新', onclick: updateAllNovels},
-    {label: 'NCODE保存', onclick: exportAllNovels},
-    {label: '書庫更新', onclick: saveAllChanges},
-    {label: 'ログ表示', onclick: toggleLogging}
-]);
+var submenu = jsMenu.menu({
+    items: [
+        {text: 'NCODE登録', onclick: subscribeCurrentNovel},
+        {text: 'NCODE保存', onclick: exportAllNovels},
+        {text: 'PDFダウンロード', onclick: downloadAllPDfs},
+        {text: '書庫更新', onclick: saveAllChanges, attributes: [{name: 'id', value: 'jsui-save-btn'}]},
+        {text: 'ログ表示', onclick: toggleLogging, attributes: [{name: 'id', value: 'jsui-log-btn'}]}
+    ]
+});
 function subscribeCurrentNovel() {
     var book = bookmark.find(book => book.ncode === novelist.myncode);
     if (book) {
@@ -90,7 +94,7 @@ function subscribeCurrentNovel() {
         validateNcode(novelist.myncode);
     }
 }
-function updateAllNovels() {
+function downloadAllPDfs() {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         bookmarkSyncPreHandler(() => bookmark.forEach(batchDownloadPreHandler));
     }
@@ -124,8 +128,8 @@ function toggleLogging(event) {
     event.target.classList.toggle('jsui-menu-checked');
 }
 
-var saveBtn = submenu.childNodes[3];
-var logBtn = submenu.childNodes[4];
+var saveBtn = submenu.querySelector('#jsui-save-btn');
+var logBtn = submenu.querySelector('#jsui-log-btn')
 saveBtn.style.cssText = 'display: none !important';
 
 var input = document.createElement('input');
