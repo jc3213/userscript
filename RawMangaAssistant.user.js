@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.10
+// @version         1.7.11
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,7 +15,7 @@
 // @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/menu.js#sha256-rqc3iH2Kcl/OD7aLRrpgVeCmsY4QP1XVqb702NoPAFU=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
@@ -223,8 +223,11 @@ css.innerText = '.jsui-menu-item {height: 36px; line-height: 26px; background-co
 .jsui-drop-menu {border: 1px inset darkviolet; width: 120px;}\
 .jsui-notify-popup {color: #000;}';
 
-var float = jsMenu.item('🖱️', event => {
-    container.style.display = 'block';
+var float = jsMenu.item({
+    text: '🖱️',
+    onclick: event => {
+        container.style.display = 'block';
+    }
 });
 float.style.cssText = 'position: fixed; top: ' + iconTop + 'px; left: ' + iconLeft + 'px; width: 38px; height: 38px; z-index: 999999999; border: 1px inset darkviolet;';
 document.addEventListener('click', event => {
@@ -246,11 +249,13 @@ dragdrop.ondragend = ({top, left}) => {
     GM_setValue('options', options);
 };
 
-var downMenu = jsMenu.menu([
-    {label: i18n.save.label, onclick: downloadAllUrls},
-    {label: i18n.copy.label, onclick: copyAllUrls},
-    {label: i18n.aria2.label, onclick: sendUrlsToAria2}
-], true);
+var downMenu = jsMenu.menu({
+    items: [
+        {text: i18n.save.label, onclick: downloadAllUrls},
+        {text: i18n.copy.label, onclick: copyAllUrls},
+        {text: i18n.aria2.label, onclick: sendUrlsToAria2}
+    ], dropdown: true
+});
 downMenu.style.display = 'none';
 function downloadAllUrls() {
     urls.forEach((url, index) => {
@@ -289,10 +294,12 @@ async function sendUrlsToAria2() {
     }
 }
 
-var modeMenu = jsMenu.menu([
-    {label: i18n.gotop.label, onclick: scrollToTop},
-    {label: i18n.menu.on, onclick: contextMenuMode}
-], true);
+var modeMenu = jsMenu.menu({
+    items: [
+        {text: i18n.gotop.label, onclick: scrollToTop},
+        {text: i18n.menu.on, onclick: contextMenuMode}
+    ], dropdown: true
+});
 function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
