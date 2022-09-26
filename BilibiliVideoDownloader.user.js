@@ -14,7 +14,7 @@
 var {autowide = '0', videocodec = '0'} = localStorage;
 var [toolbar, widescreen, widestate, next, prev, offset] = location.pathname.startsWith('/video/') ?
     ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px; left: -60px;'] :
-    ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', '', 'left: 20px;'];
+    ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
 var watching;
 var title;
 var worker;
