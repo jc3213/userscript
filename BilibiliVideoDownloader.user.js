@@ -122,8 +122,8 @@ new MutationObserver(mutations => {
 
 function biliVideoTitle(name) {
     var multi = document.querySelector('#multi_page li.on > a');
-    name = multi ? name + multi.innerText : name;
-    title = name.replace(/[\/\\\?\|\<\>:"']/g, '');
+    name = multi ? name + '-' + multi.innerText : name;
+    title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
 }
 
 function biliVideoThumbnail(url) {
