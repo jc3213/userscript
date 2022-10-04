@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.2
+// @version         1.4.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -41,10 +41,10 @@ var format = {
 
 var css = document.createElement('style');
 css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}\
-.jsui-drop-menu {flex: 1;}\
-.jsui-analyse {display: flex; width: 400px;}\
+.jsui-drop-menu {width: 150px;}\
+.jsui-analyse {display: flex;}\
 .jsui-options {width: 150px;}\
-.jsui-options, .jsui-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
+.jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}';
 
@@ -54,7 +54,7 @@ var menu = jsMenu.menu({
         {text: '解析', onclick: analyseVideo}
     ]
 });
-menu.style.cssText = 'position: relative; z-index: 9999; width: 160px; ' + offset;
+menu.style.cssText = 'position: relative; width: 160px; ' + offset;
 function openOptions() {
     analyse.style.display = 'none';
     options.style.display = options.style.display === 'none' ? 'block' : 'none';
