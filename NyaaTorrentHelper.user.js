@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      7.3
+// @version      0.7.4
 // @description  Nyaa Torrent right click to open available open preview in new tab
 // @author       jc3213
 // @connect      *
@@ -66,14 +66,14 @@ document.querySelectorAll('table > tbody > tr').forEach((tr, index) => {
     magnet = magnet.slice(0, magnet.indexOf('&'));
     var td = document.createElement('td');
     td.className = 'filter-extra';
-    td.innerHTML = '<input type="checkbox" value="' + index + '"> <input type="button"> <span>⏳</span>';
-    td.querySelector('[type="button"]').addEventListener('click', async event => {
+    td.innerHTML = '<input type="checkbox" value="' + index + '"><div id="copyorremove">🛰️</div><div id="waiting">⏱️</div>';
+    td.querySelector('#copyorremove').addEventListener('click', async event => {
         if (event.ctrlKey) {
-            data = await checkPreview(queue[index]);
-            navigator.clipboard.writeText(copyInfo(data));
+            tr.style.display = 'none';
         }
         else {
-            tr.style.display = 'none';
+            data = await checkPreview(queue[index]);
+            navigator.clipboard.writeText(copyInfo(data));
         }
     });
     tr.appendChild(td);
@@ -98,13 +98,15 @@ document.querySelector('table > thead > tr').appendChild(new_th);
 
 // Create UI
 var css= document.createElement('style');
-css.innerHTML = '.filter-text {display: inline-block; width: 170px !important; margin-top: 8px;}\
-.filter-button {background-color: #056b00; margin-top: -3px;}\
-.filter-extra {position: relative; width: 75px !important;}\
-.filter-extra * {margin: 0px 3px; width: 16px; height: 16px;}\
-.filter-extra [type="button"] {background-color: #000;}\
-.filter-extra span {position: absolute; right: 3px; top: 10px; display: none;}\
-.filter-preview {position: absolute; z-index: 3213; max-height: 800px; width: auto;}';
+css.innerHTML = `.filter-text {display: inline-block; width: 170px !important; margin-top: 8px;}
+.filter-button {background-color: #056b00; margin-top: -3px;}
+.filter-extra {display: flex; gap: 3px;}
+.filter-extra > * {flex: 1; text-align: center;}
+.filter-extra > *:nth-child(n+2) {line-height: 24px;}
+.filter-extra > *:nth-child(-n+2) {cursor: pointer;}
+.filter-extra > *:first-child {height: 16px;}
+.filter-extra > *:last-child {opacity: 0; cursor: default;}
+.filter-preview {position: absolute; z-index: 3213; max-height: 800px; width: auto;}`;
 document.head.appendChild(css);
 
 var menu = document.createElement('div');
@@ -183,14 +185,14 @@ async function checkPreview(data) {
 
 function fetchPreview({id, src, td}) {
     action[id] = true;
-    td.querySelector('span').style.display = 'inline';
+    td.querySelector('#waiting').style.opacity = '1.0';
     return fetch(src).then(response => response.text()).then(text => {
         if (text.includes('502 Bad Gateway') || text.includes('404 Not Found')) {
             throw 'Error';
         }
         else {
             action[id] = false;
-            td.querySelector('span').style.display = 'none';
+            td.querySelector('#waiting').style.opacity = '0';
             var temp = text.slice(text.indexOf('"torrent-description"') + 22);
             var desc = temp.slice(0, temp.indexOf('</div>'));
             var img = /https?:\/\/[^\)\]]+\.(jpg|png)/g.exec(desc);
