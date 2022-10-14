@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 'use strict';
-var {signed = '0', worked = '0', autorun = '0'} = localStorage;
+var {signed = '0', worked = '0'} = localStorage;
 var working = {};
 var today = new Date();
 var date = today.getFullYear() + today.getMonth() + today.getDate();
