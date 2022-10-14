@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.1.1
+// @version      1.2.0
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.net/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @noframes
 // ==/UserScript==
 
@@ -15,44 +14,29 @@ var working = {};
 var today = new Date();
 var date = today.getFullYear() + today.getMonth() + today.getDate();
 var now = today.getTime();
-var jsMenu = new FlexMenu();
-
-var submenu = jsMenu.menu({
-    items: [
-        {text: '签到', onclick: autoSign},
-        {text: '打工', onclick: autoWork},
-        {text: '自动', onclick: switchAuto}
-    ], dropdown: true
-});
-var autoBtn = submenu.childNodes[2];
-autoBtn.innerText = autorun === '1' ? '✅自动' : '自动';
 
 var css = document.createElement('style');
-css.innerHTML = '.jsui-drop-menu {display: none; position: absolute; margin-top: 40px; z-index: 99999;}\
-.jsui-menu-item {background-color: #fff; padding: 10px; width: 100px; border: 1px #000 solid; margin: 0px;}\
-#mn_Nfded:hover .jsui-drop-menu {display: block;}\
-iframe {position: absolute; top: 200px; left: 100px; height: 400px; width: 400px; display: none;}';
+css.innerHTML = `iframe {position: absolute; top: 200px; left: 100px; height: 400px; width: 400px; display: none;}`;
+document.head.appendChild(css);
 
-var menu = document.querySelector('#mn_Nfded');
-menu.onmouseover = null;
-menu.append(submenu, css);
-
-if (autorun === '1') {
-    if (date > signed) {
-        autoSign();
-    }
-    if (now > worked) {
-        autoWork();
-    }
-    else {
-        setTimeout(autoWork, worked - now);
-    }
+if (date > signed) {
+    autoSign();
+}
+if (now > worked) {
+    autoWork();
+}
+else {
+    setTimeout(autoWork, worked - now);
 }
 
-function switchAuto() {
-    localStorage.autorun = autorun = autorun === '1' ? '0' : '1';
-    autoBtn.innerText = autorun === '1' ? '✅自动' : '自动';
-}
+document.querySelector('#mn_Nfded_menu > :nth-child(1) > a').addEventListener('click', event => {
+    event.preventDefault();
+    autoWork();
+});
+document.querySelector('#mn_Nfded_menu > :nth-child(2) > a').addEventListener('click', event => {
+    event.preventDefault();
+    autoSign();
+});
 
 async function autoSign() {
     if (working.sign) {
