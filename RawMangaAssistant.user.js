@@ -2,17 +2,14 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.11
+// @version         1.8.0
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
-// @match           *://mangameta.com/*
-// @match           *://mangagohan.me/*
+// @match           *://mangaraw.ru/*
 // @match           *://klmanga.net/*
 // @match           *://rawdevart.com/*
 // @match           *://weloma.art/*
-// @match           *://nikaraw.com/*
-// @match           *://ney5.xyz/*
 // @match           *://mangahatachi.com/*
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
@@ -32,30 +29,18 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// @                nakaraw.com / rawdevart.com
+// @                rawdevart.com
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-// @                mangameta.com / nikaraw.com
-// @webRequest      {"selector": "*.realsrv.com/*", "action": "cancel"}
-// @                mangameta.com / klmanga.net
+// @                klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
-// @                mangameta.com
-// @webRequest      {"selector": "*.com/*/47871", "action": "cancel"}
-// @webRequest      {"selector": "*.com/*/51016", "action": "cancel"}
-// @                mangagohan.me
-// @webRequest      {"selector": "*b7om8bdayac6at.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*ietyofedinj89yewtburgh.com/*", "action": "cancel"}
-// @                nikaraw.com
-// @webRequest      {"selector": "*puturebraving.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.4dsply.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*begasuthy.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*twazzyoidwlfe.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*gheraosonger.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*educedsteeped.com/*", "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// @                klmanga.net
-// @webRequest      {"selector": "*.com/*50133", "action": "cancel"}
-// @webRequest      {"selector": "*educedsteeped.com/*", "action": "cancel"}
 // @                weloma.art
 // @webRequest      {"selector": "*.com/*52076", "action": "cancel"}
+// @                mangaraw.ru
+// @webRequest      {"selector": "*saimifoa.net/*", "action": "cancel"}
 // @                mangahatachi.com
 // @webRequest      {"selector": "*sinmgaepu3or9a61w.com/*", "action": "cancel"}
 // ==/UserScript==
@@ -144,16 +129,6 @@ var i18n = message[navigator.language] ?? message['en-US'];
 
 // Supported sites
 var manga = {
-    'mangameta.com': {
-        image: 'div.chapter-c > img',
-        title: {reg: /^(.+)(!?\s-\sRAW\s-)\sChapter\s([^\s]+)/, sel: 'a.chapter-title', attr: 'title', tl: 1, ch: 3},
-        shortcut: ['a#prev_chap', 'a#next_chap']
-    },
-    'mangagohan.me': {
-        image: 'div.page-break > img',
-        lazyload: 'data-src',
-        title: {reg: /^(.+)\s-\s\u7b2c(.+)\u8a71/, sel: 'meta[property="og:title"]', attr: 'content', tl: 1, ch: 2}
-    },
     'klmanga.net': {
         image: 'img.chapter-img',
         lazyload: 'data-aload',
@@ -172,20 +147,14 @@ var manga = {
         title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     },
-    'nikaraw.com': {
-        image: 'div.chapter-c > img',
+    'mangaraw.ru': {
+        image: 'div.card-wrap > img',
         lazyload: 'data-src',
-        title: [{reg: /^([^(])+/, sel: '#header-bot li:nth-child(2) a', attr: 'title', nl: 0}, {reg: /([^\s]+)$/, sel: '#header-bot li:nth-child(3) a', attr: 'title', nl: 0}],
-        shortcut: ['#prev_chap', '#next_chap'],
-        ads: ['div[style*="z-index: 300000;"]', 'div[style*="float: left;"]']
+        title: {reg: /^(.+)\s\u2013\s\u3010\u7b2c(.+)\u8a71\u3011/, sel: 'img[data-ll-status]', attr: 'alt', tl: 1, ch: 2},
+        shortcut: 'div.chapter-select > div > a'
     },
     'mangahatachi.com': {
         image: 'div.page-break > img',
-    },
-    'ney5.xyz': {
-        image: 'img.chapter-img',
-        title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
     }
 };
 watching = manga[location.host];
