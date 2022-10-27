@@ -376,7 +376,9 @@ function appendShortcuts() {
     document.addEventListener('keydown', event => {
         var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
         var shortcut = button[index];
-        shortcut && shortcut.click();
+        if (shortcut) {
+            shortcut.click();
+        }
     });
 }
 
