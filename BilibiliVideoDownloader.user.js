@@ -2,23 +2,21 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.3
+// @version         1.4.4
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @run-at          document-end
+// @grant           GM_webRequest
+// @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
-var [toolbar, widescreen, widestate, next, prev, offset] = location.pathname.startsWith('/video/') ?
-    ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px; left: -60px;'] :
-    ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
-var watching;
+var watch = location.pathname;
+var worker = true;
 var title;
-var worker;
-var jsMenu = new FlexMenu();
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.aac'},
     '30232': {text: '音频 中码率', ext: '.128k.aac'},
@@ -38,6 +36,13 @@ var format = {
     'av01': '视频编码：AV1',
     'mp4a': '音频编码: AAC'
 };
+var jsMenu = new FlexMenu();
+if (watch.startsWith('/video/')) {
+    var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
+}
+else {
+    [toolbar, widescreen, widestate, next, prev, offset] = ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
+}
 
 var css = document.createElement('style');
 css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}\
@@ -65,10 +70,14 @@ async function analyseVideo() {
         videocodec = localStorage.videocodec;
         analyse.innerHTML = '';
         var {videoData, epInfo} = document.defaultView.__INITIAL_STATE__;
-        var [title, thumb, playurl, key] = videoData ? [videoData.title, videoData.pic, 'x/player/playurl?avid=' + videoData.aid + '&cid=' + videoData.cid, 'data'] : [epInfo.share_copy, epInfo.cover, 'pgc/player/web/playurl?ep_id=' + epInfo.id, 'result'];
-        biliVideoTitle(title);
-        biliVideoThumbnail(thumb);
-        await biliVideoExtractor(playurl, key);
+        if (videoData !== undefined) {
+            var {title, pic, aid, cid} = videoData;
+            await biliVideoExtractor(title, pic, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
+        }
+        else if (epInfo !== undefined) {
+            var {share_copy, cover, id} = epInfo
+            await biliVideoExtractor(share_copy, cover, 'pgc/player/web/playurl?ep_id=' + id, 'result');
+        }
     }
     options.style.display = 'none';
     analyse.style.display = analyse.style.display === 'none' ? 'flex' : 'none';
@@ -113,30 +122,23 @@ var observer = setInterval(() => {
     }
 }, 200);
 new MutationObserver(mutations => {
-    if (watching !== location.pathname) {
-        watching = location.pathname;
+    if (watch !== location.pathname) {
+        watch = location.pathname;
         worker = true;
         options.style.display = analyse.style.display = 'none';
     }
 }).observe(document.head, {childList: true, subtree: true});
 
-function biliVideoTitle(name) {
+async function biliVideoExtractor(name, image, playurl, key) {
     var multi = document.querySelector('#multi_page li.on > a');
     name = multi ? name + '-' + multi.innerText : name;
     title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
-}
-
-function biliVideoThumbnail(url) {
-    var fixed = url.replace(/^(https?:)?\/\//, 'https://')
-    var menu = jsMenu.menu({
+    var fixed = image.replace(/^(https?:)?\/\//, 'https://');
+    var thumb = jsMenu.menu({
         items: [
-            {text: '视频封面', onclick: event => downloadBiliVideo(event, fixed, title + url.slice(url.lastIndexOf('.')))}
+            {text: '视频封面', onclick: event => downloadBiliVideo(event, fixed, title + image.slice(image.lastIndexOf('.')))}
         ], dropdown: true
     });
-    analyse.appendChild(menu);
-}
-
-async function biliVideoExtractor(playurl, key) {
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
     menu = {avc1: [], hev1: [], av01: [], mp4a: []};
@@ -149,7 +151,7 @@ async function biliVideoExtractor(playurl, key) {
     var items = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
     video = jsMenu.menu({items, dropdown: true});
     audio = jsMenu.menu({items: menu.mp4a, dropdown: true});
-    analyse.append(video, audio);
+    analyse.append(thumb, video, audio);
 }
 
 function downloadBiliVideo(event, url, name) {
