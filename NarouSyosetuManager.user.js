@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.6
+// @version      1.4.7
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
-// @match        *://ncode.syosetu.com/n*
-// @match        *://novel18.syosetu.com/n*
+// @match        *://ncode.syosetu.com/*
+// @match        *://novel18.syosetu.com/*
 // @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/5d21dd5c4447cea574583549bd7c13260baa8604/ui/notify.js#sha256-YQUMIdyRZH9SGsNGZsoy/d1hl18aCcuTWGKLrK3CNQ8=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -32,7 +32,7 @@ var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', novelist.today);
 var jsMenu = new FlexMenu();
 var jsTable = new FlexTable(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
-var jsNotify = new Notify();
+var jsNotify = new SimpleNotify();
 
 // UI作成関連
 var css = document.createElement('style');
@@ -333,5 +333,5 @@ function myFancyLog(ncode, title, result) {
     var log = document.createElement('p');
     log.innerHTML = html;
     logWindow.prepend(log);
-    jsNotify.popup({message});
+    jsNotify.popup({message, timeout: 3000});
 }
