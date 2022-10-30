@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.0
+// @version         1.8.1
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -14,7 +14,7 @@
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/notify.js#sha256-i/70OyNApw1FzPnn8N71FJYz07l2Yn7lecjoljhGGHE=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/5d21dd5c4447cea574583549bd7c13260baa8604/ui/notify.js#sha256-YQUMIdyRZH9SGsNGZsoy/d1hl18aCcuTWGKLrK3CNQ8=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -60,7 +60,7 @@ var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var jsMenu = new FlexMenu();
-var jsNotify = new Notify();
+var jsNotify = new SimpleNotify();
 
 // i18n strings and labels
 var message = {
@@ -387,5 +387,5 @@ function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
     var message = '⚠️ ' + warn.replace('%n%', images.length);
     var caution = document.createElement('div');
-    return jsNotify.popup({message});
+    return jsNotify.popup({message, timeout: 5000});
 }
