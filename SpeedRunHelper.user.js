@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.2.0
+// @version      1.2.1
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        *://www.speedrun.com/*
@@ -15,6 +15,7 @@
 'use strict';
 var logger = {};
 var style = {};
+var {clientWidth, clientHeight} = document.documentElement;
 
 var css = document.createElement('style');
 css.innerHTML = '#widget {display: none !important;}\
@@ -30,7 +31,7 @@ css.innerHTML = '#widget {display: none !important;}\
 #speedrun-minimum {line-height: 30px;}\
 .speedrun-minimum {bottom: 0px; left: 0px; width: 25% !important; height: 20px !important; z-index: 99999;}\
 .speedrun-minimum iframe {display: none !important;}\
-.speedrun-maximum {top: 0px; left: 0px; width: ' + document.documentElement.clientWidth + 'px !important; height: ' + document.documentElement.clientHeight + 'px !important; z-index: 999999;}\
+.speedrun-maximum {top: 0px; left: 0px; width: ' + clientWidth + 'px !important; height: ' + clientHeight + 'px !important; z-index: 999999;}\
 .speedrun-maximum iframe {width: 100% !important; height: calc(100% - 20px) !important;}\
 #speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}\
 .speedrun-minimum #speedrun-restore:nth-child(2), .speedrun-maximum #speedrun-restore:nth-child(4) {display: block;}';
@@ -47,10 +48,10 @@ if (document.title.includes('series') || document.title.startsWith('Runs')) {
     });
 }
 else {
-    appendEvent('#leaderboarddiv', 'tbody > tr', record => {
-        var src = record.getAttribute('data-target');
+    appendEvent('[component-name="GameLeaderboardWidget"]', 'tr', record => {
+        var src = record.querySelector('a').href;
         var [rank, player, time, platform, date] = record.innerText.split('\t');
-        rank = rank === '' ? record.childNodes[0].innerHTML : rank;
+        rank = rank === '' ? record.querySelector('img').outerHTML : rank;
         viewSpeedrunRecord(src, rank, player, time);
     });
 }
@@ -58,9 +59,9 @@ else {
 function appendEvent(board, record, callback) {
     var _board_ = document.querySelector(board);
     _board_.addEventListener('contextmenu', event => {
-        event.preventDefault();
         var _record_ = [..._board_.querySelectorAll(record)].find(record => record.contains(event.target));
         if (_record_) {
+            event.preventDefault();
             callback(_record_);
         }
     });
@@ -103,7 +104,6 @@ function createRecordWindow(id, title, top, content) {
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
     container.offset = document.querySelectorAll('.speedrun-window').length * 30;
-    console.log(((document.documentElement.clientWidth - 1280) / 2 + container.offset), container.offset);
     container.className = 'speedrun-window';
     container.innerHTML = '<div class="speedrun-menu"><div>' + title + '</div>\
 <div><div id="speedrun-minimum" class="speedrun-item">➖</div>\
