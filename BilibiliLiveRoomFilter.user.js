@@ -8,7 +8,7 @@
 // @author          jc3213
 // @match           *://live.bilibili.com/*
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/6e8299ee68f0f348b18555e630659b956e4b1eff/ui/table.js#sha256-msKM/rriyAS7GLu0lc83nod5bqISOr13qphExljfiHE=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
