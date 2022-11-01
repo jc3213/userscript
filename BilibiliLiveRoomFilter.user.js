@@ -2,13 +2,13 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.11
+// @version         1.5.12
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/6e8299ee68f0f348b18555e630659b956e4b1eff/ui/table.js#sha256-msKM/rriyAS7GLu0lc83nod5bqISOr13qphExljfiHE=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -40,7 +40,8 @@ var menu = jsMenu.menu({
 var entry = document.createElement('textarea');
 entry.rows = '6';
 
-var jsTable = new FlexTable(['直播间ID', '主播昵称']);
+var jsTable = new FlexTable();
+jsTable.head = ['直播间ID', '主播昵称'];
 
 var manager = document.createElement('div');
 manager.className = 'jsui-manager';
@@ -177,10 +178,7 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    jsTable.add([
-        {label: id, onclick: event => removeBanList(event.target.parentNode, id, liver)},
-        liver
-    ]);
+    jsTable.add([id, liver], [event => removeBanList(event.target.parentNode, id, liver)]);
 }
 
 function removeBanList(cell, id, liver) {
