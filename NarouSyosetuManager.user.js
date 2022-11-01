@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.0
+// @version      1.5.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
 // @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/table.js#sha256-WmCs3pdqngVKyIEt0hi/OFyjXgaY4pNERV5yrtEC1DI=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/6e8299ee68f0f348b18555e630659b956e4b1eff/ui/table.js#sha256-msKM/rriyAS7GLu0lc83nod5bqISOr13qphExljfiHE=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/5d21dd5c4447cea574583549bd7c13260baa8604/ui/notify.js#sha256-YQUMIdyRZH9SGsNGZsoy/d1hl18aCcuTWGKLrK3CNQ8=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
@@ -26,13 +26,13 @@ if (navi === undefined) {
 }
 
 var {pathname} = location;
+var title = document.querySelector('p.novel_title') ?? document.querySelector('a.margin_r20');
 var novelcode = /n\d+\w+/g.exec(pathname)[0];
-var novelname = document.title;
+var novelname = title.innerText;
+var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
-var novelist = {now: Date.now()};
-novelist.myncode = novelcode;
 var validate = {};
 var download = {};
 var session = [];
@@ -42,7 +42,7 @@ var log = false;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
 var jsMenu = new FlexMenu();
-var jsTable = new FlexTable(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
+var jsTable = new FlexTable();
 var jsNotify = new SimpleNotify();
 
 // UI作成関連
@@ -103,16 +103,16 @@ var submenu = jsMenu.menu({
     ]
 });
 function subscribeCurrentNovel() {
-    var book = bookmark.find(book => book.ncode === novelist.myncode);
+    var book = bookmark.find(book => book.ncode === myncode);
     if (book) {
         myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」は既に書庫に登録しています！');
         validate[book.ncode] = book.title;
     }
-    else if (novelist.myncode === novelcode) {
+    else if (myncode === novelcode) {
         subscribeNcode(novelcode, novelname);
     }
     else {
-        validateNcode(novelist.myncode);
+        validateNcode(myncode);
     }
 }
 function downloadAllPDfs() {
@@ -154,22 +154,21 @@ var logBtn = submenu.querySelector('#jsui-log-btn')
 saveBtn.style.cssText = 'display: none !important';
 
 var input = document.createElement('input');
-input.addEventListener('change', event => novelist.myncode = event.target.value ?? novelcode);
+input.addEventListener('change', event => myncode = event.target.value ?? novelcode);
 
 var logWindow = document.createElement('div');
 logWindow.className = 'jsui-logging';
 
 submenu.prepend(input);
+jsTable.head = ['NCODE', '小説タイトル', '更新間隔', 'ダウンロード'];
 container.prepend(submenu, jsTable.table, logWindow);
 document.body.appendChild(container);
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
-    var mybook = jsTable.add([
-        {label: ncode, onclick: event => removeNcodeFromShelf(mybook, index, ncode, title)},
-        {label: title, onclick: event => openNcodeInNewPage(ncode, title)},
-        {label: generateTimeFormat(book.last), onclick: event => downloadCurrentNcode(book, title)}
+    var mybook = jsTable.add([ncode, title, '', generateTimeFormat(book.last)], [
+        event => removeNcodeFromShelf(mybook, index, ncode, title), event => openNcodeInNewPage(ncode, title), event => downloadCurrentNcode(book, title)
     ]);
 
     var input = document.createElement('input');
@@ -181,7 +180,7 @@ function fancyTableItem(book, index) {
     input.title = next === 0 ? 'は更新しないように設定しました！' : 'は ' + next + ' 日間隔で更新するように設定しました！'
     input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
 
-    mybook.lastChild.before(input);
+    mybook.childNodes[2].replaceWith(input);
     mybook.id = ncode;
 }
 
