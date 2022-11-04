@@ -8,7 +8,7 @@
 // @match        https://novel18.syosetu.com/*
 // @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/5d21dd5c4447cea574583549bd7c13260baa8604/ui/notify.js#sha256-YQUMIdyRZH9SGsNGZsoy/d1hl18aCcuTWGKLrK3CNQ8=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
