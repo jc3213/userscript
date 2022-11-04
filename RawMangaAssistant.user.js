@@ -14,7 +14,7 @@
 // @connect         *
 // @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/5d21dd5c4447cea574583549bd7c13260baa8604/ui/notify.js#sha256-YQUMIdyRZH9SGsNGZsoy/d1hl18aCcuTWGKLrK3CNQ8=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/main/js/aria2.js#sha256-BBoId7zWSYryl5klQYG2HHenzbLyIoejdTBy0ezNDPI=
 // @grant           GM_setValue
 // @grant           GM_getValue
