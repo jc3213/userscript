@@ -6,7 +6,7 @@
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/255d4a789026021d2fb483d814404860f35b64d7/ui/menu.js#sha256-Vs65COcfG8hp0kukCGVDdKXd1cgYg4XqRy4zduUIqkM=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/26d0c608525e24c69d2431bef8f66d39a2c88dcd/ui/menu.js#sha256-aSV5VfIYSjCzj/Vq1QhRjcMLlq2eyNFl3peSHXaztFo=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
