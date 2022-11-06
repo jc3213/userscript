@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.1
+// @version      1.5.2
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/255d4a789026021d2fb483d814404860f35b64d7/ui/menu.js#sha256-Vs65COcfG8hp0kukCGVDdKXd1cgYg4XqRy4zduUIqkM=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
@@ -26,6 +26,7 @@ if (navi === undefined) {
 }
 
 var {pathname} = location;
+var {clearfix} = localStorage;
 var title = document.querySelector('p.novel_title') ?? document.querySelector('a.margin_r20');
 var novelcode = /n\d+\w+/g.exec(pathname)[0];
 var novelname = title.innerText;
@@ -47,8 +48,8 @@ var jsNotify = new SimpleNotify();
 
 // UI作成関連
 var css = document.createElement('style');
-css.innerHTML = `.jsui-menu-item {display: block !important; padding: 5px !important;}
-.jsui-menu-checked {padding: 4px !important; border: 1px inset #00F;}
+css.innerHTML = `.jsui-menu-item {border-width: 0px;}
+.jsui-menu-item:active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}
 .jsui-table > * > *:nth-child(2) {flex: 3;}
 .jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
@@ -59,7 +60,6 @@ css.innerHTML = `.jsui-menu-item {display: block !important; padding: 5px !impor
 .novel_bn:last-child {margin-top: 100px !important;}`;
 document.body.appendChild(css);
 
-document.querySelector('#novel_color').style.width = ''
 document.addEventListener('keydown', event => {
     if (event.keyCode === 37) {
         document.querySelector('div.novel_bn > a:nth-child(1)').click();
@@ -68,6 +68,25 @@ document.addEventListener('keydown', event => {
         document.querySelector('div.novel_bn > a:nth-child(2)').click();
     }
 });
+
+var content = jsMenu.item({text: '本文のみを見る', onclick: toggleRemoveHeader});
+content.style.cssText = 'display: inline-block !important; padding: 3px 5px; border-width: 1px; margin-left: 5px;';
+document.querySelector('div.novel_bn').appendChild(content);
+function toggleRemoveHeader() {
+    localStorage.clearfix = clearfix = clearfix === '0' ? '1' : '0';
+    removeHeaderFooter();
+}
+function removeHeaderFooter() {
+    if (clearfix === '1') {
+        content.classList.add('jsui-menu-checked');
+        document.querySelector('#novel_p').style.display = document.querySelector('#novel_a').style.display = 'none';
+    }
+    else {
+        content.classList.remove('jsui-menu-checked');
+        document.querySelector('#novel_p').style.display = document.querySelector('#novel_a').style.display = 'block';
+    }
+};
+removeHeaderFooter();
 
 var manager = jsMenu.menu({
     items: [
