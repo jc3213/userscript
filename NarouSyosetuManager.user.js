@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.2
+// @version      1.5.3
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -79,11 +79,11 @@ function toggleRemoveHeader() {
 function removeHeaderFooter() {
     if (clearfix === '1') {
         content.classList.add('jsui-menu-checked');
-        document.querySelector('#novel_p').style.display = document.querySelector('#novel_a').style.display = 'none';
+        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
     }
     else {
         content.classList.remove('jsui-menu-checked');
-        document.querySelector('#novel_p').style.display = document.querySelector('#novel_a').style.display = 'block';
+        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
     }
 };
 removeHeaderFooter();
