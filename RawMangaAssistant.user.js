@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.1
+// @version         1.8.2
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -29,14 +29,16 @@
 // @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// @                rawdevart.com
-// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // @                klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*anciengoddize.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*gheraosonger.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*educedsteeped.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*ec0853b8bb.27a25cc598.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*735a0662e8.ff9ffc838f.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*aa7aaa451a.7b3937119b.com/*", "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
+// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // @                weloma.art
 // @webRequest      {"selector": "*.com/*52076", "action": "cancel"}
 // @                mangaraw.ru
@@ -49,7 +51,6 @@
 // Initial variables
 var urls = [];
 var fail = [];
-var logo = [];
 var observer;
 var images;
 var watching;
@@ -134,7 +135,8 @@ var manga = {
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['center > a > img']
+        ads: ['center > a > img'],
+        logo: [-1]
     },
     'rawdevart.com': {
         image: '#img-container > div > img',
@@ -310,12 +312,12 @@ if (watching) {
     if (watching.ads) {
         removeAdsElement();
     }
-    images = document.querySelectorAll(watching.image);
+    images = [...document.querySelectorAll(watching.image)];
     if (images.length > 0) {
         extractImage();
-        if (watching.shortcut) {
-            appendShortcuts();
-        }
+    }
+    if (watching.shortcut) {
+        appendShortcuts();
     }
 }
 
@@ -331,7 +333,7 @@ function extractImage() {
     warning = notification('extract', 'start');
     downMenu.style.display = 'block';
     observer = setInterval(() => {
-        if (images.length === urls.length + fail.length + logo.length) {
+        if (images.length === urls.length + fail.length) {
             warning.remove();
             clearInterval(observer);
             if (fail.length === 0) {
@@ -342,14 +344,17 @@ function extractImage() {
             }
         }
     }, 250);
+    if (watching.logo) {
+        watching.logo.forEach(el => {
+            var pos = el >= 0 ? el: images.length + el;
+            images[pos].remove();
+            images.splice(pos, 1);
+        });
+    }
     images.forEach((element, index) => {
         var src = element.getAttribute(watching.lazyload) ?? element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        if (watching.logo && watching.logo.includes(url)) {
-            logo.push(url);
-            element.remove();
-        }
-        else if (watching.fallback && watching.fallback.includes(url)) {
+        if (watching.fallback && watching.fallback.includes(url)) {
             new MutationObserver(mutation => {
                 mutation.forEach(event => {
                     if (event.attributeName === 'src') {
