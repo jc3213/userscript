@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.2
+// @version         1.8.3
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -33,9 +33,7 @@
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*anciengoddize.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*gheraosonger.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*ec0853b8bb.27a25cc598.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*735a0662e8.ff9ffc838f.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*aa7aaa451a.7b3937119b.com/*", "action": "cancel"}
+// @webRequest      {"selector": {"include":"*://*.*.com/*.js", "exclude": null}, "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
