@@ -2,13 +2,12 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.4
+// @version         1.4.5
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
-// @run-at          document-end
+// @require         https://raw.githubusercontent.com/jc3213/jslib/9b140156a3b2190cf59dc3ff479f4ab61687dfec/ui/menu.js#sha256-1nO5024DhoyaoA4irujLR4ZvhmxeZF8e9uHwspVgvps=
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // ==/UserScript==
@@ -18,23 +17,23 @@ var watch = location.pathname;
 var worker = true;
 var title;
 var format = {
-    '30280': {text: '音频 高码率', ext: '.192k.aac'},
-    '30232': {text: '音频 中码率', ext: '.128k.aac'},
-    '30216': {text: '音频 低码率', ext: '.64k.aac'},
-    '127': {text: '8K 超高清', ext: '.8K-UHD.mp4'},
-    '120': {text: '4K 超清', ext: '.4K-UHD.mp4'},
-    '116': {text: '1080P 60帧', ext: '.1080HQ.mp4'},
-    '112': {text: '1080P 高码率', ext: '.1080Hbr.mp4'},
+    '30280': {text: '音频 高码率', ext: '.192k.m4a'},
+    '30232': {text: '音频 中码率', ext: '.128k.m4a'},
+    '30216': {text: '音频 低码率', ext: '.64k.m4a'},
+    '127': {text: '8K 超高清', ext: '.8k.mp4'},
+    '120': {text: '4K 超清', ext: '.4k.mp4'},
+    '116': {text: '1080P 60帧', ext: '.1080f60.mp4'},
+    '112': {text: '1080P 高码率', ext: '.1080hbr.mp4'},
     '80': {text: '1080P 高清', ext: '.1080.mp4'},
-    '74': {text: '720P 60帧', ext: '.720HQ.mp4'},
+    '74': {text: '720P 60帧', ext: '.720f60.mp4'},
     '64': {text: '720P 高清', ext: '.720.mp4'},
     '32': {text: '480P 清晰', ext: '.480.mp4'},
     '16': {text: '360P 流畅', ext: '.360.mp4'},
-    '15': {text: '360P 流畅', ext: '.360LQ.mp4'},
-    'avc1': '视频编码: H.264',
-    'hev1': '视频编码: HEVC',
-    'av01': '视频编码：AV1',
-    'mp4a': '音频编码: AAC'
+    '15': {text: '360P 流畅', ext: '.360lq.mp4'},
+    'avc1': {title: '视频编码: H.264', alt: '.h264'},
+    'hev1': {title: '视频编码: HEVC', alt: '.h265'},
+    'av01': {title: '视频编码：AV1', alt: '.av1'},
+    'mp4a': {title: '音频编码: AAC', alt: '.aac'}
 };
 var jsMenu = new FlexMenu();
 if (watch.startsWith('/video/')) {
@@ -86,9 +85,11 @@ async function analyseVideo() {
 document.addEventListener('keydown', event => {
     if (event.ctrlKey) {
         if (event.key === 'ArrowRight') {
+            event.preventDefault();
             document.querySelector(next).click();
         }
         if (event.key === 'ArrowLeft') {
+            event.preventDefault();
             document.querySelector(prev).click();
         }
     }
@@ -146,7 +147,8 @@ async function biliVideoExtractor(name, image, playurl, key) {
     [...video, ...audio].forEach(({id, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
         var {text, ext} = format[id];
-        menu[codec].push({text, onclick: event => downloadBiliVideo(event, baseUrl, title + ext), attributes: [{name: 'title', value: format[codec]}]});
+        var {title, alt} = format[codec];
+        menu[codec].push({text, onclick: event => downloadBiliVideo(event, baseUrl, alt + ext), attributes: [{name: 'title', value: title}]});
     });
     var items = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
     video = jsMenu.menu({items, dropdown: true});
@@ -154,9 +156,9 @@ async function biliVideoExtractor(name, image, playurl, key) {
     analyse.append(thumb, video, audio);
 }
 
-function downloadBiliVideo(event, url, name) {
+function downloadBiliVideo(event, url, ext) {
     if (event.ctrlKey) {
-        var aria2 = JSON.stringify({url, options: {out: name, referer: location.href}});
+        var aria2 = JSON.stringify({url, options: {out: title + ext, referer: location.href}});
         navigator.clipboard.writeText(aria2);
     }
     else {
