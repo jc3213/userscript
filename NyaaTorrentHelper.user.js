@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.1
+// @version      0.8.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        https://*.nyaa.si/*
@@ -177,7 +177,7 @@ async function printPreview(id) {
         working[id] = false;
     }
     else if (site) {
-        open(site, '_blank');
+        GM_openInTab(site);
         working[id] = false;
     }
     else {
