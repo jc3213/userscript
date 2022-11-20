@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.0
+// @version      1.6.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -36,9 +36,8 @@ var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
 var validate = {};
 var download = {};
-var sync = false;
-var show = false;
-var log = false;
+var changed = false;
+var shelf = false;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
 var jsMenu = new FlexMenu();
@@ -48,10 +47,11 @@ var jsNotify = new SimpleNotify();
 // UI作成関連
 var css = document.createElement('style');
 css.innerHTML = `.jsui-menu-item {border-width: 0px;}
-.jsui-menu-item:active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
-.jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}
+.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
+.jsui-menu-disabled {padding: 2px;}
+.jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
 .jsui-table > :nth-child(n+2) > :nth-child(1) {line-height: 44px;}
-.jsui-table > * > :nth-child(2) {flex: 3;}
+.jsui-table > * > :not(:nth-child(2)) {flex: none; width: 120px;}
 .jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
@@ -100,9 +100,9 @@ var manager = jsMenu.menu({
 manager.style.cssText = 'line-height: 40px; font-weight: bold;';
 navi.appendChild(manager);
 function openBookShelf() {
-    if (!show) {
+    if (shelf === false) {
         bookmark.forEach(fancyTableItem);
-        show = true;
+        shelf = true;
     }
     container.style.display = event.target.classList.contains('jsui-menu-checked') ? 'none' : 'block';
     event.target.classList.toggle('jsui-menu-checked');
@@ -132,12 +132,13 @@ function subscribeNcode(ncode, title) {
     myFancyLog(ncode, title, 'は書庫に登録しました！');
 }
 async function subscribeCurrentNovel() {
-    var book = bookmark.find(book => book.ncode === myncode);
+    var book = bookmark.find(({ncode}) => ncode === myncode);
     if (book) {
-        myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」は既に書庫に登録しています！');
-        validate[book.ncode] = book.title;
+        var {ncode, title} = book;
+        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は既に書庫に登録しています！');
+        validate[ncode] = title;
     }
-    if (myncode === novelcode) {
+    else if (myncode === novelcode) {
         subscribeNcode(novelcode, novelname);
     }
     else {
@@ -154,7 +155,7 @@ async function subscribeCurrentNovel() {
         else {
             var tl = text.indexOf('<title>');
             var te = text.indexOf('</title>');
-            var title = text.slice(tl + 7, te);
+            title = text.slice(tl + 7, te);
             subscribeNcode(myncode, title)
         }
     }
@@ -189,19 +190,21 @@ function exportAllNovels() {
     }
 }
 function saveAllChanges() {
-    GM_setValue('bookmark', bookmark);
-    saveBtn.style.cssText = 'display: none !important';
-    logWindow.innerHTML = '';
-    jsTable.table.style.display = 'block';
+    if (changed) {
+        GM_setValue('bookmark', bookmark);
+        saveBtn.classList.add('jsui-menu-disabled');
+        changed = false;
+        jsTable.table.style.display = 'block';
+    }
 }
 function toggleLogging(event) {
     jsTable.table.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
-    event.target.classList.toggle('jsui-menu-checked');
+    logBtn.classList.toggle('jsui-menu-checked');
 }
 
 var saveBtn = submenu.querySelector('#jsui-save-btn');
 var logBtn = submenu.querySelector('#jsui-log-btn')
-saveBtn.style.cssText = 'display: none !important';
+saveBtn.classList.add('jsui-menu-disabled');
 
 var input = document.createElement('input');
 input.addEventListener('change', event => {
@@ -225,7 +228,7 @@ function fancyTableItem(book, index) {
 
     var input = document.createElement('input');
     input.type = 'number';
-    input.style.width = '16.666666666666667%';
+    input.style.width = '126px';
     input.min = '0';
     input.max = '30';
     input.value = next;
@@ -235,7 +238,6 @@ function fancyTableItem(book, index) {
     mybook.lastChild.before(input);
     mybook.id = ncode;
 }
-
 function removeNcodeFromShelf(mybook, index, ncode, title) {
     if (confirm('【 ' + title + ' 】を書庫から削除しますか？')) {
         mybook.remove();
@@ -270,10 +272,11 @@ function generateTimeFormat(ms) {
     return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
 }
 function saveBookmarkButton() {
-    saveBtn.style.display = logBtn.style.display = 'block';
+    saveBtn.classList.remove('jsui-menu-disabled');
+    changed = true;
 }
 
-// PDF自動更新関連
+// ブックマーク自動更新
 if (today !== scheduler) {
     var update = bookmark.map(book => {
         var {ncode, title, next, last} = ncode;
@@ -293,6 +296,8 @@ if (today !== scheduler) {
         GM_setValue('scheduler', today);
     });
 }
+
+// ダウンロード関連
 async function downloadPDFHelper(book) {
     var {ncode, title} = book;
     if (download[ncode] === 'ダウンロード') {
