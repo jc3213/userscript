@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.2
+// @version      0.8.3
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        https://*.nyaa.si/*
@@ -136,6 +136,7 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
     // UI
     var td = document.createElement('td');
     td.className = 'text-center';
+    td.style.width = '39px';
     td.innerHTML = '<input type="checkbox" value="' + id + '">';
     tr.appendChild(td);
     //
