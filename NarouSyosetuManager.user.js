@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.3
+// @version      1.6.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
 // @require      https://raw.githubusercontent.com/jc3213/jslib/9b140156a3b2190cf59dc3ff479f4ab61687dfec/ui/menu.js#sha256-1nO5024DhoyaoA4irujLR4ZvhmxeZF8e9uHwspVgvps=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/39c093071d6c63d23b190801289cc663b2030e62/ui/table.js#sha256-dBp2g4nHZuDF0G+q6H8L7AEuSuM89+WDdMOeR7mXAg4=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
@@ -36,7 +36,6 @@ var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
 var validate = {};
 var download = {};
-var session = [];
 var sync = false;
 var show = false;
 var log = false;
@@ -51,7 +50,8 @@ var css = document.createElement('style');
 css.innerHTML = `.jsui-menu-item {border-width: 0px;}
 .jsui-menu-item:active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 10px;}
-.jsui-table > * > *:nth-child(2) {flex: 3;}
+.jsui-table > :nth-child(n+2) > :nth-child(1) {line-height: 44px;}
+.jsui-table > * > :nth-child(2) {flex: 3;}
 .jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
@@ -69,24 +69,27 @@ document.addEventListener('keydown', event => {
     }
 });
 
-var content = jsMenu.item({text: '本文のみを見る', onclick: toggleRemoveHeader});
-content.style.cssText = 'display: inline-block !important; padding: 3px 5px; border-width: 1px; margin-left: 5px;';
-document.querySelector('div.novel_bn').appendChild(content);
-function toggleRemoveHeader() {
-    localStorage.clearfix = clearfix = clearfix === '0' ? '1' : '0';
+var noveltitle = document.querySelector('div.novel_bn');
+if (noveltitle) {
+    var content = jsMenu.item({text: '本文のみを見る', onclick: toggleRemoveHeader});
+    content.style.cssText = 'display: inline-block !important; padding: 3px 5px; border-width: 1px; margin-left: 5px;';
+    noveltitle.appendChild(content);
+    function toggleRemoveHeader() {
+        localStorage.clearfix = clearfix = clearfix === '0' ? '1' : '0';
+        removeHeaderFooter();
+    }
+    function removeHeaderFooter() {
+        if (clearfix === '1') {
+            content.classList.add('jsui-menu-checked');
+            document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
+        }
+        else {
+            content.classList.remove('jsui-menu-checked');
+            document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
+        }
+    };
     removeHeaderFooter();
 }
-function removeHeaderFooter() {
-    if (clearfix === '1') {
-        content.classList.add('jsui-menu-checked');
-        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
-    }
-    else {
-        content.classList.remove('jsui-menu-checked');
-        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
-    }
-};
-removeHeaderFooter();
 
 var manager = jsMenu.menu({
     items: [
@@ -121,22 +124,50 @@ var submenu = jsMenu.menu({
         {text: 'ログ表示', onclick: toggleLogging, attributes: [{name: 'id', value: 'jsui-log-btn'}]}
     ]
 });
-function subscribeCurrentNovel() {
+function subscribeNcode(ncode, title) {
+    var book = {ncode, title, last: 0, next: 0};
+    fancyTableItem(book, bookmark.length);
+    bookmark.push(book);
+    saveBookmarkButton();
+    myFancyLog(ncode, title, 'は書庫に登録しました！');
+}
+async function subscribeCurrentNovel() {
     var book = bookmark.find(book => book.ncode === myncode);
     if (book) {
         myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」は既に書庫に登録しています！');
         validate[book.ncode] = book.title;
     }
-    else if (myncode === novelcode) {
+    if (myncode === novelcode) {
         subscribeNcode(novelcode, novelname);
     }
     else {
-        validateNcode(myncode);
+        if (validate[myncode]) {
+            return myFancyPopup('Nコード【' + myncode + '】が存在しません');;
+        }
+        validate[myncode] = '検証中';
+        myFancyPopup('Nコード【' + myncode + '】を検証しています、しばらくお待ちください！');
+        var res = await fetch('/' + myncode);
+        var text = await res.text();
+        if (text.includes('class="nothing"')) {
+            validate[myncode] = 'が存在しません';
+        }
+        else {
+            var tl = text.indexOf('<title>');
+            var te = text.indexOf('</title>');
+            var title = text.slice(tl + 7, te);
+            subscribeNcode(myncode, title)
+        }
     }
 }
 function downloadAllPDfs() {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
-        bookmarkSyncPreHandler(() => bookmark.forEach(batchDownloadPreHandler));
+        if (download.all) {
+            return;
+        }
+        var session = bookmark.map(downloadPDFHelper);
+        Promise.all(session).then(array => {
+            myFancyPopup('全ての小説の縦書きPDFのダウンロードがかんりょうしました！');
+        });
     }
 }
 function exportAllNovels() {
@@ -173,7 +204,9 @@ var logBtn = submenu.querySelector('#jsui-log-btn')
 saveBtn.style.cssText = 'display: none !important';
 
 var input = document.createElement('input');
-input.addEventListener('change', event => myncode = event.target.value ?? novelcode);
+input.addEventListener('change', event => {
+    myncode = event.target.value ?? novelcode;
+});
 
 var logWindow = document.createElement('div');
 logWindow.className = 'jsui-logging';
@@ -186,7 +219,7 @@ document.body.appendChild(container);
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
-    var mybook = jsTable.add([ncode, title, '', generateTimeFormat(book.last)], [
+    var mybook = jsTable.add([ncode, title, generateTimeFormat(book.last)], [
         event => removeNcodeFromShelf(mybook, index, ncode, title), event => openNcodeInNewPage(ncode, title), event => downloadCurrentNcode(book, title)
     ]);
 
@@ -199,7 +232,7 @@ function fancyTableItem(book, index) {
     input.title = next === 0 ? 'は更新しないように設定しました！' : 'は ' + next + ' 日間隔で更新するように設定しました！'
     input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
 
-    mybook.childNodes[2].replaceWith(input);
+    mybook.lastChild.before(input);
     mybook.id = ncode;
 }
 
@@ -218,7 +251,11 @@ function openNcodeInNewPage(ncode, title) {
 }
 function downloadCurrentNcode(book, title) {
     if (confirm(title + ' をダウンロードしますか？')) {
-        updateObserver(1, () => batchDownloadPreHandler(book), saveBookmarkButton);
+        downloadPDFHelper(book).then(result => {
+            if (result === 'ok') {
+                saveBookmarkButton();
+            }
+        });
     }
 }
 function changeNcodeUpdatePeriod(book, ncode, title, value) {
@@ -236,123 +273,70 @@ function saveBookmarkButton() {
     saveBtn.style.display = logBtn.style.display = 'block';
 }
 
-// NCODE検証&登録
-function validateNcode(ncode) {
-    if (validate[ncode]) {
-        validate[ncode] === '検証中' ? myFancyPopup('Nコード【' + ncode + '】は既に検証しています、何度もクリックしないでください！') :
-        validate[ncode] === 'エラー' ? myFancyPopup('Nコード【' + ncode + '】は存在しないか既にサーバーから削除されています！') :
-        subscribeNcode(ncode, validate[ncode]);
-        return;
-    }
-    validate[ncode] = '検証中';
-    myFancyPopup('Nコード【' + ncode + '】を検証しています、しばらくお待ちください！');
-    GM_xmlhttpRequest({
-        url: 'https://ncode.syosetu.com/' + ncode,
-        method: 'GET',
-        onload: (details) => {
-            validate[ncode] = details.responseXML.title;
-            subscribeNcode(ncode, validate[ncode]);
-        }
-    });
-}
-function subscribeNcode(ncode, title) {
-    var book = {ncode, title, last: 0, next: 0};
-    fancyTableItem(book, bookmark.length);
-    bookmark.push(book);
-    saveBookmarkButton();
-    myFancyLog(ncode, title, 'は書庫に登録しました！');
-}
-
 // PDF自動更新関連
 if (today !== scheduler) {
-    bookmarkSyncPreHandler(() => bookmark.forEach(updateFancyBookmark));
-    GM_setValue('scheduler', today);
-}
-function bookmarkSyncPreHandler(start) {
-    updateObserver(bookmark.length, () => {
-        myFancyPopup('登録した全てのNコードを更新しています！');
-        if (typeof start === 'function') {
-            start();
+    var update = bookmark.map(book => {
+        var {ncode, title, next, last} = ncode;
+        if (next === 0) {
+            return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は更新しないように設定しています！！');
         }
-    }, () => {
-        GM_setValue('bookmark', bookmark);
-        myFancyPopup('登録した全てのNコードの更新が完了しました！');
-        logWindow.innerHTML = '';
+        var update = next - (timeline - last) / 86400000;
+        if (update > 0) {
+            update = update >= 1 ? (next | 0) + '日' : (update * 24 | 0) + '時間';
+            return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は ' + update + ' 後に更新する予定です！');
+        }
+        else {
+            return downloadPDFHelper(book);
+        }
+    });
+    Promise.all(update).then(result => {
+        GM_setValue('scheduler', today);
     });
 }
-function updateObserver(queue, start, end) {
-    if (sync) {
-        return myFancyPopup('更新スケジュールを処理しています、何度もクリックしないでください！');
+async function downloadPDFHelper(book) {
+    var {ncode, title} = book;
+    if (download[ncode] === 'ダウンロード') {
+        return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
     }
-    sync = true;
-    if (typeof start === 'function') {
-        start();
-    }
-    var observer = setInterval(() => {
-        if (session.length === queue) {
-            session = [];
-            sync = false;
-            clearInterval(observer);
-            if (typeof end === 'function') {
-                end();
-            }
-        }
-    }, 1000);
-}
-function updateFancyBookmark(book) {
-    if (book.next === 0) {
-        session.push(book.ncode);
-        return myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」は更新しないように設定しています！！');
-    }
-    var next = book.next - (timeline - book.last) / 86400000;
-    if (next > 0) {
-        next = next >= 1 ? (next | 0) + '日' : (next * 24 | 0) + '時間';
-        myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」は ' + next + ' 後に更新する予定です！');
-        session.push(book.ncode);
+    download[ncode] = 'ダウンロード';
+    myFancyPopup('Nコード【' + ncode + '】、「' + title + '」のダウンロードを開始しました！');
+    var details = await promisedXMLRequest('https://pdfnovels.net/' + book.ncode + '/main.pdf');
+    if (details.response.type === 'application/pdf') {
+        var url = URL.createObjectURL(details.response);
+        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+        book.last = timeline;
+        delete download[ncode];
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = title;
+        a.click();
+        return 'ok';
     }
     else {
-        batchDownloadPreHandler(book);
+        download[ncode] = 'リトライ';
+        return waitForRetryDownload(book);
     }
 }
-function batchDownloadPreHandler(book) {
-    if (download[book.ncode] === 'ダウンロード') {
-        return myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」はまだ処理しています、しばらくお待ちください！');
-    }
-    download[book.ncode] = 'ダウンロード';
-    myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」のダウンロードを開始しました！');
-    GM_xmlhttpRequest({
-        url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf',
-        method: 'GET',
-        responseType: 'blob',
-        onload: (details) => {
-            if (details.response.type === 'application/pdf') {
-                var a = document.createElement('a');
-                a.href = URL.createObjectURL(details.response);
-                a.download = book.title;
-                a.click();
-                book.last = timeline;
-                container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(timeline);
-                myFancyLog(book.ncode, book.title, 'のダウンロードは完了しました！');
-                delete download[book.ncode];
-                session.push(book.ncode)
-            }
-            else {
-                download[book.ncode] = 'リトライ';
-                downloadPDFHandler(book);
-            }
-        }
+function promisedXMLRequest(url) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+            url,
+            method: 'GET',
+            responseType: 'blob',
+            onload: resolve,
+            onerror: reject
+        });
     });
 }
-function downloadPDFHandler(book) {
-    myFancyPopup('Nコード【' + book.ncode + '】、「' + book.title + '」の縦書きPDFは只今生成中です、 60秒後に再試行します！');
-    var timer = 60;
-    var retry = setInterval(() => {
-        timer --;
-        if (timer === 0) {
-            batchDownloadPreHandler(book);
-            clearInterval(retry);
-        }
-    }, 1000);
+function waitForRetryDownload(book) {
+    return new Promise(resolve => {
+        var {ncode, title} = book;
+        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」の縦書きPDFは只今生成中です、 60秒後に再試行します！');
+        setTimeout(async () => {
+            var blob = await downloadPDFHelper(book);
+            resolve(blob);
+        }, 60000);
+    });
 }
 
 // ログ関連
