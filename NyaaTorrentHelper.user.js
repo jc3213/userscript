@@ -1,15 +1,18 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.3
+// @version      0.8.4
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        https://*.nyaa.si/*
-// @exclude      *://*.nyaa.si/view/*
 // @grant        GM_openInTab
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*://*.realsrv.com/*", "action": "cancel"}
 // ==/UserScript==
+
+if (location.pathname.startsWith('/view/')) {
+    return;
+}
 
 var torrents = {};
 var working = {};
