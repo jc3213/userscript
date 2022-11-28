@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.4
+// @version      0.8.5
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        https://*.nyaa.si/*
@@ -159,8 +159,8 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
 });
 
 async function getInformation(id) {
-    var {site, image, name, torrent, magnet, url} = torrents[id];
-    var txtl = i18n.name + ':\n' + name;
+    var {site, image, name, size, torrent, magnet, url} = torrents[id];
+    var txtl = i18n.name + ':\n' + name + ' (' + size + ')';
     var txtr = torrent ? '\n' + i18n.torrent + ':\n' + torrent + '\n' + i18n.magnet + ':\n' + magnet : '\n' + i18n.magnet + ':\n' + magnet;
     if (image === undefined && site === undefined) {
         var data = await getPreview(id, url);
