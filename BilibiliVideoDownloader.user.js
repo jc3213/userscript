@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.5
+// @version         1.4.6
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,6 +10,7 @@
 // @require         https://raw.githubusercontent.com/jc3213/jslib/9b140156a3b2190cf59dc3ff479f4ab61687dfec/ui/menu.js#sha256-1nO5024DhoyaoA4irujLR4ZvhmxeZF8e9uHwspVgvps=
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
+// @run-at          document-idle
 // ==/UserScript==
 
 var {autowide = '0', videocodec = '0'} = localStorage;
@@ -158,8 +159,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
 
 function downloadBiliVideo(event, url, ext) {
     if (event.ctrlKey) {
-        var aria2 = JSON.stringify({url, options: {out: title + ext, referer: location.href}});
-        navigator.clipboard.writeText(aria2);
+        postMessage({ aria2c: 'Download With Aria2', type: 'download', message: {url, options: {out: title + ext, referer: location.href }} });
     }
     else {
         open(url, '_blank');
