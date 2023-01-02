@@ -2,12 +2,12 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.6
+// @version         1.4.7
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/9b140156a3b2190cf59dc3ff479f4ab61687dfec/ui/menu.js#sha256-1nO5024DhoyaoA4irujLR4ZvhmxeZF8e9uHwspVgvps=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // @run-at          document-idle
