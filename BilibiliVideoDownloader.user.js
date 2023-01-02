@@ -36,7 +36,7 @@ var format = {
     'av01': {title: '视频编码：AV1', alt: '.av1'},
     'mp4a': {title: '音频编码: AAC', alt: '.aac'}
 };
-var jsMenu = new FlexMenu();
+var jsUI = new JSUI();
 if (watch.startsWith('/video/')) {
     var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
 }
@@ -53,7 +53,7 @@ css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}';
 
-var menu = jsMenu.menu({
+var menu = jsUI.menulist({
     items: [
         {text: '设置', onclick: openOptions},
         {text: '解析', onclick: analyseVideo}
@@ -136,7 +136,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
     name = multi ? name + '-' + multi.innerText : name;
     title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
     var fixed = image.replace(/^(https?:)?\/\//, 'https://');
-    var thumb = jsMenu.menu({
+    var thumb = jsUI.menulist({
         items: [
             {text: '视频封面', onclick: event => downloadBiliVideo(event, fixed, title + image.slice(image.lastIndexOf('.')))}
         ], dropdown: true
@@ -152,8 +152,8 @@ async function biliVideoExtractor(name, image, playurl, key) {
         menu[codec].push({text, onclick: event => downloadBiliVideo(event, baseUrl, alt + ext), attributes: [{name: 'title', value: title}]});
     });
     var items = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
-    video = jsMenu.menu({items, dropdown: true});
-    audio = jsMenu.menu({items: menu.mp4a, dropdown: true});
+    video = jsUI.menulist({items, dropdown: true});
+    audio = jsUI.menulist({items: menu.mp4a, dropdown: true});
     analyse.append(thumb, video, audio);
 }
 
