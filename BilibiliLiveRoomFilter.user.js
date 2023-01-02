@@ -2,12 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.12
+// @version         1.5.13
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -27,8 +27,8 @@ css.innerText = '.jsui-manager {border: 2px outset #000; width: 500px; backgroun
 .Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}';
 document.body.appendChild(css);
 
-var jsMenu = new FlexMenu();
-var menu = jsMenu.menu({
+var jsUI = new JSUI();
+var menu = jsUI.menulist({
     items: [
         {text: '批量屏蔽', onclick: batchBlock},
         {text: '导入列表', onclick: importList},
@@ -49,7 +49,7 @@ manager.style.display = 'none';
 manager.append(menu, entry, jsTable.table);
 document.body.appendChild(manager);
 
-var opener = jsMenu.item({
+var opener = jsUI.menuitem({
     text: '管理列表',
     onclick: event => {
         if (!show) {
@@ -130,7 +130,7 @@ function livePlayerInFrame(id) {
     var observer = setInterval(() => {
         try {
             var player = document.querySelector('#player-ctnr iframe').contentDocument.querySelector('#head-info-vm > div > div.rows-ctnr');
-            player.append(jsMenu.css, css);
+            player.append(jsUI.css, css);
             banInsideLiveRoom(player, id);
             clearInterval(observer);
         }
@@ -161,7 +161,7 @@ function applyFilterToArea({menu, room, list}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = jsMenu.item({
+    var block = jsUI.menuitem({
         text: '屏蔽直播间',
         onclick: event => {
             if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
@@ -230,7 +230,7 @@ function addMenuToLiveRoom(element) {
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
-    var menu = jsMenu.menu({
+    var menu = jsUI.menulist({
         items: [
             {text: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
             {text: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
