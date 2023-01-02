@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.2
+// @version      1.6.3
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -37,10 +37,18 @@ var validate = {};
 var download = {};
 var changed = false;
 var shelf = false;
+var aria2c;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
 var jsUI = new JSUI();
 var jsTable = new FlexTable();
+
+addEventListener('message', event => {
+    var {extension_name} = event.data;
+    if (extension_name === 'Download With Aria2') {
+        aria2c = true;
+    }
+});
 
 // UI作成関連
 var css = document.createElement('style');
@@ -159,6 +167,11 @@ async function subscribeCurrentNovel() {
 }
 function downloadAllPDfs() {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
+        if (aria2c) {
+            var {aria2} = convertBookmark();
+            postMessage({aria2c: 'Download With Aria2', type: 'download', message: { json: aria2 } });
+            return;
+        }
         if (download.all) {
             return;
         }
@@ -170,13 +183,9 @@ function downloadAllPDfs() {
 }
 function exportAllNovels() {
     if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        var json = bookmark.map(book => {
-            book.last = timeline;
-            container.querySelector('#' + book.ncode).lastChild.innerHTML = generateTimeFormat(timeline);
-            return {url: [{url: 'https://pdfnovels.net/' + book.ncode + '/main.pdf'}], name: book.title + '.pdf', language: 'ja'};
-        });
-        var metalink = metalink4(json);
-        var blob = new Blob([metalink], {type: 'application/metalink+xml; charset=utf-8'})
+        var {meta4} = convertBookmark();
+        var text = metalink4(meta4);
+        var blob = new Blob([text], {type: 'application/metalink+xml; charset=utf-8'})
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.meta4';
@@ -197,6 +206,20 @@ function saveAllChanges() {
 function toggleLogging(event) {
     jsTable.table.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
     logBtn.classList.toggle('jsui-menu-checked');
+}
+function convertBookmark() {
+    var meta4 = [];
+    var aria2 = [];
+    bookmark.forEach(book => {
+        var {ncode, title} = book;
+        var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
+        var name = book.title + '.pdf';
+        book.last = timeline;
+        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+        aria2.push({url, options: {out: name}});
+        meta4.push({url: [{url}], name, language: 'ja'});
+    });
+    return {meta4, aria2};
 }
 
 var saveBtn = submenu.querySelector('#jsui-save-btn');
