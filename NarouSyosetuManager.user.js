@@ -1,14 +1,13 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.1
+// @version      1.6.2
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/9b140156a3b2190cf59dc3ff479f4ab61687dfec/ui/menu.js#sha256-1nO5024DhoyaoA4irujLR4ZvhmxeZF8e9uHwspVgvps=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/39c093071d6c63d23b190801289cc663b2030e62/ui/table.js#sha256-dBp2g4nHZuDF0G+q6H8L7AEuSuM89+WDdMOeR7mXAg4=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -40,15 +39,13 @@ var changed = false;
 var shelf = false;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
-var jsMenu = new FlexMenu();
+var jsUI = new JSUI();
 var jsTable = new FlexTable();
-var jsNotify = new SimpleNotify();
 
 // UI作成関連
 var css = document.createElement('style');
 css.innerHTML = `.jsui-menu-item {border-width: 0px;}
 .jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
-.jsui-menu-disabled {padding: 2px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
 .jsui-table > :nth-child(n+2) > :nth-child(1) {line-height: 44px;}
 .jsui-table > * > :not(:nth-child(2)) {flex: none; width: 120px;}
@@ -71,8 +68,8 @@ document.addEventListener('keydown', event => {
 
 var noveltitle = document.querySelector('div.novel_bn');
 if (noveltitle) {
-    var content = jsMenu.item({text: '本文のみを見る', onclick: toggleRemoveHeader});
-    content.style.cssText = 'display: inline-block !important; padding: 3px 5px; border-width: 1px; margin-left: 5px;';
+    var content = jsUI.menuitem({text: '本文のみを見る', onclick: toggleRemoveHeader});
+    content.style.cssText = 'display: inline-block !important; margin-left: 5px;';
     noveltitle.appendChild(content);
     function toggleRemoveHeader() {
         localStorage.clearfix = clearfix = clearfix === '0' ? '1' : '0';
@@ -91,7 +88,7 @@ if (noveltitle) {
     removeHeaderFooter();
 }
 
-var manager = jsMenu.menu({
+var manager = jsUI.menulist({
     items: [
         {text: '書庫管理', onclick: openBookShelf},
         {text: 'PDF小説', onclick: openPDFNovel}
@@ -115,7 +112,7 @@ var container = document.createElement('div');
 container.className = 'jsui-manager';
 container.style.cssText = 'display: none;';
 
-var submenu = jsMenu.menu({
+var submenu = jsUI.menulist({
     items: [
         {text: 'NCODE登録', onclick: subscribeCurrentNovel},
         {text: 'NCODE保存', onclick: exportAllNovels},
@@ -364,5 +361,5 @@ function myFancyLog(ncode, title, result) {
     myFancyPopup(message);
 }
 function myFancyPopup(message) {
-    jsNotify.popup({message, timeout: 3000});
+    jsUI.notification({message, timeout: 3000});
 }
