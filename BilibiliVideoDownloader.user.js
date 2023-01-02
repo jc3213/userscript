@@ -2,12 +2,12 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.8
+// @version         1.4.9
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
 // @grant           GM_webRequest
 // @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // @run-at          document-idle
@@ -62,12 +62,10 @@ css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}';
 
-var menu = jsUI.menulist({
-    items: [
-        {text: '设置', onclick: openOptions},
-        {text: '解析', onclick: analyseVideo}
-    ]
-});
+var menu = jsUI.menulist([
+    {text: '设置', onclick: openOptions},
+    {text: '解析', onclick: analyseVideo}
+]);
 menu.style.cssText = 'position: relative; width: 160px; ' + offset;
 function openOptions() {
     analyse.style.display = 'none';
@@ -145,11 +143,9 @@ async function biliVideoExtractor(name, image, playurl, key) {
     name = multi ? name + '-' + multi.innerText : name;
     title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
     var fixed = image.replace(/^(https?:)?\/\//, 'https://');
-    var thumb = jsUI.menulist({
-        items: [
-            {text: '视频封面', onclick: event => downloadBiliVideo(fixed, title + image.slice(image.lastIndexOf('.')))}
-        ], dropdown: true
-    });
+    var thumb = jsUI.menulist([
+        {text: '视频封面', onclick: event => downloadBiliVideo(fixed, image.slice(image.lastIndexOf('.')))}
+    ], true);
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
     menu = {avc1: [], hev1: [], av01: [], mp4a: []};
@@ -160,9 +156,9 @@ async function biliVideoExtractor(name, image, playurl, key) {
         var {title, alt} = format[codec];
         menu[codec].push({text, onclick: event => downloadBiliVideo(event, baseUrl, alt + ext), attributes: [{name: 'title', value: title}]});
     });
-    var items = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
-    video = jsUI.menulist({items, dropdown: true});
-    audio = jsUI.menulist({items: menu.mp4a, dropdown: true});
+    var vid = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
+    video = jsUI.menulist(vid, true);
+    audio = jsUI.menulist(menu.mp4a, true);
     analyse.append(thumb, video, audio);
 }
 
