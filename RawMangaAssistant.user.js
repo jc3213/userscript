@@ -2,20 +2,19 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.4
+// @version         1.8.5
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
-// @match           *://mangaraw.ru/*
-// @match           *://klmanga.net/*
-// @match           *://rawdevart.com/*
-// @match           *://weloma.art/*
-// @match           *://mangahatachi.com/*
+// @match           https://mangaraw.ru/*
+// @match           https://klmanga.net/*
+// @match           https://rawdevart.com/*
+// @match           https://weloma.art/*
+// @match           https://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/7d4380aa6dfc2fcc830791497fb3dc959cf3e49d/ui/menu.js#sha256-/1vgY/GegKrXhrdVf0ttWNavDrD5WyqgbAMMt7MK4SM=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/26bdf18ec342013e1bdb27c20bd7633859d9cc72/ui/notify.js#sha256-7be5JjqTLPgG4In14VPg/1ZRxaAMg8uADYBd3mtSmsY=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/js/aria2.js#sha256-ec7cbh5Q0xlLUETJEtPJCV2PvqFATCREK5/mtPFOA4Q=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -31,9 +30,10 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 // @                klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*anciengoddize.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*gheraosonger.com/*", "action": "cancel"}
-// @webRequest      {"selector": {"include":"*://*.*.com/*.js", "exclude": null}, "action": "cancel"}
+// @webRequest      {"selector": "*palakahone.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*hangdogferfel.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*pavymoieter.com/*", "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
@@ -58,8 +58,7 @@ var aria2 = new Aria2(jsonrpc, secret);
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
-var jsMenu = new FlexMenu();
-var jsNotify = new SimpleNotify();
+var jsUI = new JSUI();
 
 // i18n strings and labels
 var message = {
@@ -186,13 +185,13 @@ function extractMangaTitle(title = '') {
 // Create UI
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui-menu-item {height: 36px; line-height: 26px; background-color: #fff; color: #000 !important;}\
+css.innerText = '.jsui-menu-item {height: 36px; line-height: 28px; background-color: #fff; color: #000 !important; border-width: 0px;}\
 .jsui-manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
 .jsui-manager {background-color: #fff; z-index: 999999999; position: fixed;}\
 .jsui-drop-menu {border: 1px inset darkviolet; width: 120px;}\
 .jsui-notify-popup {color: #000;}';
 
-var float = jsMenu.item({
+var float = jsUI.menuitem({
     text: '🖱️',
     onclick: event => {
         container.style.display = 'block';
@@ -218,7 +217,7 @@ dragdrop.ondragend = ({top, left}) => {
     GM_setValue('options', options);
 };
 
-var downMenu = jsMenu.menu({
+var downMenu = jsUI.menulist({
     items: [
         {text: i18n.save.label, onclick: downloadAllUrls},
         {text: i18n.copy.label, onclick: copyAllUrls},
@@ -263,7 +262,7 @@ async function sendUrlsToAria2() {
     }
 }
 
-var modeMenu = jsMenu.menu({
+var modeMenu = jsUI.menulist({
     items: [
         {text: i18n.gotop.label, onclick: scrollToTop},
         {text: i18n.menu.on, onclick: contextMenuMode}
@@ -390,5 +389,5 @@ function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
     var message = '⚠️ ' + warn.replace('%n%', images.length);
     var caution = document.createElement('div');
-    return jsNotify.popup({message, timeout: 5000});
+    return jsUI.notification({message, timeout: 5000});
 }
