@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.5
+// @version         1.8.6
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -12,9 +12,8 @@
 // @match           https://weloma.art/*
 // @match           https://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
 // @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/js/aria2.js#sha256-ec7cbh5Q0xlLUETJEtPJCV2PvqFATCREK5/mtPFOA4Q=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -207,23 +206,20 @@ container.className = 'jsui-manager';
 document.body.append(float, container, css);
 
 // Draggable button and menu
-var dragdrop = new DragDrop(float);
-dragdrop.ondragend = ({top, left}) => {
+jsUI.dragndrop(float, ({top, left}) => {
     container.style.top = top + 1 + 'px';
     container.style.left = left + 39 + 'px';
     iconTop = top;
     iconLeft = left;
     options = {...options, iconTop, iconLeft}
     GM_setValue('options', options);
-};
-
-var downMenu = jsUI.menulist({
-    items: [
-        {text: i18n.save.label, onclick: downloadAllUrls},
-        {text: i18n.copy.label, onclick: copyAllUrls},
-        {text: i18n.aria2.label, onclick: sendUrlsToAria2}
-    ], dropdown: true
 });
+
+var downMenu = jsUI.menulist([
+    {text: i18n.save.label, onclick: downloadAllUrls},
+    {text: i18n.copy.label, onclick: copyAllUrls},
+    {text: i18n.aria2.label, onclick: sendUrlsToAria2}
+], true);
 downMenu.style.display = 'none';
 function downloadAllUrls() {
     urls.forEach((url, index) => {
@@ -262,12 +258,10 @@ async function sendUrlsToAria2() {
     }
 }
 
-var modeMenu = jsUI.menulist({
-    items: [
-        {text: i18n.gotop.label, onclick: scrollToTop},
-        {text: i18n.menu.on, onclick: contextMenuMode}
-    ], dropdown: true
-});
+var modeMenu = jsUI.menulist([
+    {text: i18n.gotop.label, onclick: scrollToTop},
+    {text: i18n.menu.on, onclick: contextMenuMode}
+], true);
 function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
