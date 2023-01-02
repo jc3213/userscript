@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.7
+// @version         1.4.8
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -17,6 +17,7 @@ var {autowide = '0', videocodec = '0'} = localStorage;
 var watch = location.pathname;
 var worker = true;
 var title;
+var aria2c;
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
     '30232': {text: '音频 中码率', ext: '.128k.m4a'},
@@ -37,6 +38,14 @@ var format = {
     'mp4a': {title: '音频编码: AAC', alt: '.aac'}
 };
 var jsUI = new JSUI();
+
+addEventListener('message', event => {
+    var {extension_name} = event.data;
+    if (extension_name === 'Download With Aria2') {
+        aria2c = true;
+    }
+});
+
 if (watch.startsWith('/video/')) {
     var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
 }
@@ -138,7 +147,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
     var fixed = image.replace(/^(https?:)?\/\//, 'https://');
     var thumb = jsUI.menulist({
         items: [
-            {text: '视频封面', onclick: event => downloadBiliVideo(event, fixed, title + image.slice(image.lastIndexOf('.')))}
+            {text: '视频封面', onclick: event => downloadBiliVideo(fixed, title + image.slice(image.lastIndexOf('.')))}
         ], dropdown: true
     });
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
@@ -157,8 +166,8 @@ async function biliVideoExtractor(name, image, playurl, key) {
     analyse.append(thumb, video, audio);
 }
 
-function downloadBiliVideo(event, url, ext) {
-    if (event.ctrlKey) {
+function downloadBiliVideo(url, ext) {
+    if (aria2c) {
         postMessage({ aria2c: 'Download With Aria2', type: 'download', message: {url, options: {out: title + ext, referer: location.href }} });
     }
     else {
