@@ -1,18 +1,19 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.3
+// @version      1.6.4
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/39c093071d6c63d23b190801289cc663b2030e62/ui/table.js#sha256-dBp2g4nHZuDF0G+q6H8L7AEuSuM89+WDdMOeR7mXAg4=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
+// @grant        GM_download
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.microad.net/*", "action": "cancel"}
 // @webRequest   {"selector": "*.microad.jp/*", "action": "cancel"}
@@ -96,12 +97,10 @@ if (noveltitle) {
     removeHeaderFooter();
 }
 
-var manager = jsUI.menulist({
-    items: [
-        {text: '書庫管理', onclick: openBookShelf},
-        {text: 'PDF小説', onclick: openPDFNovel}
-    ]
-});
+var manager = jsUI.menulist([
+    {text: '書庫管理', onclick: openBookShelf},
+    {text: 'PDF小説', onclick: openPDFNovel}
+]);
 manager.style.cssText = 'line-height: 40px; font-weight: bold;';
 navi.appendChild(manager);
 function openBookShelf() {
@@ -120,15 +119,13 @@ var container = document.createElement('div');
 container.className = 'jsui-manager';
 container.style.cssText = 'display: none;';
 
-var submenu = jsUI.menulist({
-    items: [
-        {text: 'NCODE登録', onclick: subscribeCurrentNovel},
-        {text: 'NCODE保存', onclick: exportAllNovels},
-        {text: 'PDFダウンロード', onclick: downloadAllPDfs},
-        {text: '書庫更新', onclick: saveAllChanges, attributes: [{name: 'id', value: 'jsui-save-btn'}]},
-        {text: 'ログ表示', onclick: toggleLogging, attributes: [{name: 'id', value: 'jsui-log-btn'}]}
-    ]
-});
+var submenu = jsUI.menulist([
+    {text: 'NCODE登録', onclick: subscribeCurrentNovel},
+    {text: 'NCODE保存', onclick: exportAllNovels},
+    {text: 'PDFダウンロード', onclick: downloadAllPDfs},
+    {text: '書庫更新', onclick: saveAllChanges, attributes: [{name: 'id', value: 'jsui-save-btn'}]},
+    {text: 'ログ表示', onclick: toggleLogging, attributes: [{name: 'id', value: 'jsui-log-btn'}]}
+]);
 function subscribeNcode(ncode, title) {
     var book = {ncode, title, last: 0, next: 0};
     fancyTableItem(book, bookmark.length);
@@ -167,11 +164,6 @@ async function subscribeCurrentNovel() {
 }
 function downloadAllPDfs() {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
-        if (aria2c) {
-            var {aria2} = convertBookmark();
-            postMessage({aria2c: 'Download With Aria2', type: 'download', message: { json: aria2 } });
-            return;
-        }
         if (download.all) {
             return;
         }
@@ -183,7 +175,14 @@ function downloadAllPDfs() {
 }
 function exportAllNovels() {
     if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        var {meta4} = convertBookmark();
+        var meta4 = bookmark.map(book => {
+            var {ncode, title} = book;
+            var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
+            var name = book.title + '.pdf';
+            book.last = timeline;
+            container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+            return {url: [{url}], name, language: 'ja'};
+        });
         var text = metalink4(meta4);
         var blob = new Blob([text], {type: 'application/metalink+xml; charset=utf-8'})
         var a = document.createElement('a');
@@ -206,20 +205,6 @@ function saveAllChanges() {
 function toggleLogging(event) {
     jsTable.table.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
     logBtn.classList.toggle('jsui-menu-checked');
-}
-function convertBookmark() {
-    var meta4 = [];
-    var aria2 = [];
-    bookmark.forEach(book => {
-        var {ncode, title} = book;
-        var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
-        var name = book.title + '.pdf';
-        book.last = timeline;
-        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
-        aria2.push({url, options: {out: name}});
-        meta4.push({url: [{url}], name, language: 'ja'});
-    });
-    return {meta4, aria2};
 }
 
 var saveBtn = submenu.querySelector('#jsui-save-btn');
@@ -320,20 +305,26 @@ if (today !== scheduler) {
 // ダウンロード関連
 async function downloadPDFHelper(book) {
     var {ncode, title} = book;
+    var url = 'https://pdfnovels.net/' + book.ncode + '/main.pdf';
+    var name = title + '.pdf';
+    if (aria2c) {
+        postMessage({aria2c: 'Download With Aria2', type: 'download', message: { url, options: {out: name} } });
+        return;
+    }
     if (download[ncode] === 'ダウンロード') {
         return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
     }
     download[ncode] = 'ダウンロード';
     myFancyPopup('Nコード【' + ncode + '】、「' + title + '」のダウンロードを開始しました！');
-    var details = await promisedXMLRequest('https://pdfnovels.net/' + book.ncode + '/main.pdf');
+    var details = await promisedXMLRequest(url);
     if (details.response.type === 'application/pdf') {
-        var url = URL.createObjectURL(details.response);
+        var href = URL.createObjectURL(details.response);
         container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
         book.last = timeline;
         delete download[ncode];
         var a = document.createElement('a');
-        a.href = url;
-        a.download = title;
+        a.href = href;
+        a.download = name;
         a.click();
         return 'ok';
     }
