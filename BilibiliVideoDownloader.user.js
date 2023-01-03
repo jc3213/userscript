@@ -9,6 +9,7 @@
 // @match           *://www.bilibili.com/video/*
 // @require         https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
 // @grant           GM_webRequest
+// @grant           GM_download
 // @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // @run-at          document-idle
 // ==/UserScript==
@@ -167,6 +168,6 @@ function downloadBiliVideo(url, ext) {
         postMessage({ aria2c: 'Download With Aria2', type: 'download', message: {url, options: {out: title + ext, referer: location.href }} });
     }
     else {
-        open(url, '_blank');
+        GM_download(url, title + ext);
     }
 }
