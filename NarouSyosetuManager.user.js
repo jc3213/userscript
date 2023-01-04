@@ -1,13 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.4
+// @version      1.6.5
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
-// @require      https://raw.githubusercontent.com/jc3213/jslib/39c093071d6c63d23b190801289cc663b2030e62/ui/table.js#sha256-dBp2g4nHZuDF0G+q6H8L7AEuSuM89+WDdMOeR7mXAg4=
+// @require      https://raw.githubusercontent.com/jc3213/jslib/bbc7806672da9af7e023ebc3a25194e95c23bd5c/js/jsui.js#sha256-DXIy14gcMq8OGDH4F858fuvoSqNJCFozz1mqVW4j30I=
 // @require      https://raw.githubusercontent.com/jc3213/jslib/main/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -42,7 +41,6 @@ var aria2c;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
 var jsUI = new JSUI();
-var jsTable = new FlexTable();
 
 addEventListener('message', event => {
     var {extension_name} = event.data;
@@ -56,8 +54,8 @@ var css = document.createElement('style');
 css.innerHTML = `.jsui-menu-item {border-width: 0px;}
 .jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
-.jsui-table > :nth-child(n+2) > :nth-child(1) {line-height: 44px;}
-.jsui-table > * > :not(:nth-child(2)) {flex: none; width: 120px;}
+.jsui-table-button:nth-child(1) {line-height: 200%;}
+.jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
 .jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
@@ -123,8 +121,8 @@ var submenu = jsUI.menulist([
     {text: 'NCODE登録', onclick: subscribeCurrentNovel},
     {text: 'NCODE保存', onclick: exportAllNovels},
     {text: 'PDFダウンロード', onclick: downloadAllPDfs},
-    {text: '書庫更新', onclick: saveAllChanges, attributes: [{name: 'id', value: 'jsui-save-btn'}]},
-    {text: 'ログ表示', onclick: toggleLogging, attributes: [{name: 'id', value: 'jsui-log-btn'}]}
+    {text: '書庫更新', onclick: saveAllChanges, id: 'jsui-save-btn'},
+    {text: 'ログ表示', onclick: toggleLogging, id: 'jsui-log-btn'}
 ]);
 function subscribeNcode(ncode, title) {
     var book = {ncode, title, last: 0, next: 0};
@@ -199,11 +197,11 @@ function saveAllChanges() {
         GM_setValue('bookmark', bookmark);
         saveBtn.classList.add('jsui-menu-disabled');
         changed = false;
-        jsTable.table.style.display = 'block';
+        jsTable.style.display = 'block';
     }
 }
 function toggleLogging(event) {
-    jsTable.table.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
+    jsTable.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
     logBtn.classList.toggle('jsui-menu-checked');
 }
 
@@ -220,17 +218,18 @@ var logWindow = document.createElement('div');
 logWindow.className = 'jsui-logging';
 
 submenu.prepend(input);
-jsTable.head = ['NCODE', '小説タイトル', '更新間隔', 'ダウンロード'];
-container.prepend(submenu, jsTable.table, logWindow);
+var jsTable = jsUI.table(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
+container.prepend(submenu, jsTable, logWindow);
 document.body.appendChild(container);
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
-    var mybook = jsTable.add([ncode, title, generateTimeFormat(book.last)], [
-        event => removeNcodeFromShelf(mybook, index, ncode, title), event => openNcodeInNewPage(ncode, title), event => downloadCurrentNcode(book, title)
+    var mybook = jsTable.add([
+        {text: ncode, onclick: event => removeNcodeFromShelf(mybook, index, ncode, title)},
+        {text: title, onclick: event => openNcodeInNewPage(ncode, title)},
+        {text: generateTimeFormat(book.last), onclick: event => downloadCurrentNcode(book, title)}
     ]);
-
     var input = document.createElement('input');
     input.type = 'number';
     input.style.width = '126px';
