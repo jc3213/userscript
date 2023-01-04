@@ -175,15 +175,15 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    jsTable.add([
-        {text: id, onclick: event => removeBanList(event.target.parentNode, id, liver)},
+    var rule = jsTable.add([
+        {text: id, onclick: event => removeBanList(rule, id, liver)},
         liver
     ]);
 }
 
-function removeBanList(cell, id, liver) {
+function removeBanList(column, id, liver) {
     if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
-        cell.remove();
+        column.remove();
         var index = banned.findIndex(rule => rule.id === id);
         if (index !== -1) {
             banned.splice(index, 1);
