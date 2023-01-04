@@ -331,8 +331,7 @@ async function downloadPDFHelper(book) {
     }
     else {
         download[ncode] = 'リトライ';
-        waitForRetryDownload(book);
-        return 'retry';
+        return waitForRetryDownload(book);
     }
 }
 function promisedXMLRequest(url) {
