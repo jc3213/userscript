@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.14
+// @version         1.5.15
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -95,7 +95,7 @@ function exportList(event) {
     }
 }
 function importList(event) {
-    upload.querySelector('input').click();
+    upload.click();
 }
 function batchUnblock(event) {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
