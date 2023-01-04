@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.5
+// @version      1.6.6
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -56,6 +56,7 @@ css.innerHTML = `.jsui-menu-item {border-width: 0px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
 .jsui-table-button:nth-child(1) {line-height: 200%;}
 .jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
+.jsui-table-body > :nth-child(2n) {background-color: #efefef;}
 .jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
@@ -255,13 +256,12 @@ function openNcodeInNewPage(ncode, title) {
         open('https://ncode.syosetu.com/' + ncode + '/', '_blank');
     }
 }
-function downloadCurrentNcode(book, title) {
+async function downloadCurrentNcode(book, title) {
     if (confirm(title + ' をダウンロードしますか？')) {
-        downloadPDFHelper(book).then(result => {
-            if (result === 'ok') {
-                saveBookmarkButton();
-            }
-        });
+        var result = await downloadPDFHelper(book);
+        if (result === 'ok') {
+            saveBookmarkButton();
+        }
     }
 }
 function changeNcodeUpdatePeriod(book, ncode, title, value) {
@@ -308,10 +308,12 @@ async function downloadPDFHelper(book) {
     var name = title + '.pdf';
     if (aria2c) {
         postMessage({aria2c: 'Download With Aria2', type: 'download', message: { url, options: {out: name} } });
-        return;
+        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+        return 'ok';
     }
     if (download[ncode] === 'ダウンロード') {
-        return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
+        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
+        return 'waiting';
     }
     download[ncode] = 'ダウンロード';
     myFancyPopup('Nコード【' + ncode + '】、「' + title + '」のダウンロードを開始しました！');
@@ -329,7 +331,8 @@ async function downloadPDFHelper(book) {
     }
     else {
         download[ncode] = 'リトライ';
-        return waitForRetryDownload(book);
+        waitForRetryDownload(book);
+        return 'retry';
     }
 }
 function promisedXMLRequest(url) {
