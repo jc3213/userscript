@@ -2,13 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.13
+// @version         1.5.14
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/ebfc3f125cbafd83bcac7b3a9d30685eee5c9d80/js/jsui.js#sha256-SgDLUxPMqW77vtocg/3u7i7CuF/5Sm49gEV1Cat+Wak=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/ui/table.js#sha256-NEbVclWSJYQHpTp+wA8ANAq3YfaWrKyMXeySqFctiTU=
+// @require         https://raw.githubusercontent.com/jc3213/jslib/bbc7806672da9af7e023ebc3a25194e95c23bd5c/js/jsui.js#sha256-DXIy14gcMq8OGDH4F858fuvoSqNJCFozz1mqVW4j30I=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -20,33 +19,31 @@ var show = false;
 
 var css = document.createElement('style');
 css.type = 'text/css';
-css.innerText = '.jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}\
-.jsui-manager > * {width: 100%; resize: none;}\
-.jsui-table {height: 400px; border: none;}\
-.jsui-menu-item, .jsui-click-cell {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}\
-.Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}';
+css.innerText = `.jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}
+.jsui-manager > * {width: 100%; resize: none;}
+.jsui-table {height: 400px; border: none;}
+.jsui-table-cell {border-width: 0px;}
+.jsui-menu-item, .jsui-table-button {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}
+.Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}`;
 document.body.appendChild(css);
 
 var jsUI = new JSUI();
-var menu = jsUI.menulist({
-    items: [
-        {text: '批量屏蔽', onclick: batchBlock},
-        {text: '导入列表', onclick: importList},
-        {text: '导出列表', onclick: exportList},
-        {text: '清空列表', onclick: batchUnblock}
-    ]
-});
+var menu = jsUI.menulist([
+    {text: '批量屏蔽', onclick: batchBlock},
+    {text: '导入列表', onclick: importList},
+    {text: '导出列表', onclick: exportList},
+    {text: '清空列表', onclick: batchUnblock}
+]);
 
 var entry = document.createElement('textarea');
 entry.rows = '6';
 
-var jsTable = new FlexTable();
-jsTable.head = ['直播间ID', '主播昵称'];
+var jsTable = jsUI.table(['直播间ID', '主播昵称']);
 
 var manager = document.createElement('div');
 manager.className = 'jsui-manager';
 manager.style.display = 'none';
-manager.append(menu, entry, jsTable.table);
+manager.append(menu, entry, jsTable);
 document.body.appendChild(manager);
 
 var opener = jsUI.menuitem({
@@ -178,7 +175,10 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    jsTable.add([id, liver], [event => removeBanList(event.target.parentNode, id, liver)]);
+    jsTable.add([
+        {text: id, onclick: event => removeBanList(event.target.parentNode, id, liver)},
+        liver
+    ]);
 }
 
 function removeBanList(cell, id, liver) {
@@ -230,12 +230,10 @@ function addMenuToLiveRoom(element) {
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
-    var menu = jsUI.menulist({
-        items: [
-            {text: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
-            {text: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
-        ]
-    });
+    var menu = jsUI.menulist([
+        {text: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
+        {text: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
+    ]);
     menu.style.display = 'none';
 
     element.querySelector('div.Item_2A9JA1Uf').appendChild(menu);
