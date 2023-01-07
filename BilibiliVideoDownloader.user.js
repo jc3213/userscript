@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.11
+// @version         1.4.12
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -40,18 +40,18 @@ var format = {
 };
 var jsUI = new JSUI();
 
-addEventListener('message', event => {
+addEventListener('message', function (event) {
     var {extension_name} = event.data;
     if (extension_name === 'Download With Aria2') {
-        aria2c = true;
+        aria2c = extension_name;
     }
 });
 
 if (watch.startsWith('/video/')) {
-    var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
+    var [player, toolbar, widescreen, widestate, next, prev, offset] = ['bwp-video', '#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
 }
 else {
-    [toolbar, widescreen, widestate, next, prev, offset] = ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
+    [player, toolbar, widescreen, widestate, next, prev, offset] = ['video', '#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
 }
 
 var css = document.createElement('style');
@@ -115,20 +115,23 @@ options.addEventListener('change', event => {
     localStorage[id] = value;
 });
 
-var analyse = document.createElement('div');
-analyse.className = 'jsui-analyse';
+var analyse = jsUI.add({style: 'jsui-analyse'});
 menu.append(options, analyse, css);
 
 options.style.display = analyse.style.display = 'none';
 
 var observer = setInterval(() => {
-    var widebtn = document.querySelector(widescreen);
-    if (widebtn) {
+    var video = document.querySelector(player);
+    if (video) {
         clearInterval(observer);
-        document.querySelector(toolbar).append(menu);
-        if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
-            widebtn.click();
-        }
+        video.addEventListener('play', function biliVideoToolbar() {
+            document.querySelector(toolbar).append(menu);
+            var widebtn = document.querySelector(widescreen);
+            if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
+                widebtn.click();
+            }
+            video.removeEventListener('play', biliVideoToolbar);
+        });
     }
 }, 200);
 new MutationObserver(mutations => {
@@ -165,7 +168,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
 
 function downloadBiliVideo(url, ext) {
     if (aria2c) {
-        postMessage({ aria2c: 'Download With Aria2', type: 'download', message: {url, options: {out: title + ext, referer: location.href }} });
+        postMessage({ aria2c, type: 'download', message: {url, options: {out: title + ext, referer: location.href }} });
     }
     else {
         GM_download(url, title + ext);
