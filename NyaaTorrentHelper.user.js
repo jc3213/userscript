@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.5
+// @version      0.8.6
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        https://*.nyaa.si/*
@@ -16,6 +16,7 @@ if (location.pathname.startsWith('/view/')) {
 
 var torrents = {};
 var working = {};
+var aria2c;
 
 // UI
 var keyword;
@@ -38,6 +39,13 @@ var messages = {
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
 
+addEventListener('message', event => {
+    var {extension_name} = event.data;
+    if (extension_name === 'Download With Aria2') {
+        aria2c = extension_name;
+    }
+});
+
 var input = document.createElement('input');
 input.className = 'form-control search-bar';
 input.style.cssText = 'display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;';
@@ -53,7 +61,12 @@ button.className = 'btn btn-primary';
 button.style.cssText = 'margin-top: -3px;';
 button.innerText = '🕸️';
 button.addEventListener('click', event => {
-    if (event.ctrlKey) {
+    var {ctrlKey, altKey} = event;
+    if (altKey && aria2c) {
+        var magnet = [...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet);
+        aria2Download(magnet);
+    }
+    if (ctrlKey) {
         batchCopy();
     }
     else {
@@ -144,11 +157,14 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
     tr.appendChild(td);
     //
     title.addEventListener('contextmenu', async event => {
-        var {layerY, layerX, ctrlKey} = event;
+        var {layerY, layerX, ctrlKey, altKey} = event;
         event.preventDefault();
         torrents[id].top = layerY;
         torrents[id].left = layerX;
-        if (ctrlKey) {
+        if (altKey && aria2c) {
+            aria2Download(magnet);
+        }
+        else if (ctrlKey) {
             var text = await getInformation(id);
             navigator.clipboard.writeText(text);
         }
@@ -226,4 +242,8 @@ function popupPreview(id, image) {
     img.style.cssText = 'position: absolute; z-index: 3213; max-height: 800px; width: auto; top: ' + top + 'px; left: ' + left + 'px';
     img.addEventListener('click', event => img.remove());
     document.body.append(img);
+}
+
+function aria2Download(url) {
+    postMessage({ aria2c, type: 'download', message: { url, options: {} } });
 }
