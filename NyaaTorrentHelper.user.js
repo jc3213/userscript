@@ -66,7 +66,7 @@ button.addEventListener('click', event => {
         var magnet = [...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet);
         aria2Download(magnet);
     }
-    if (ctrlKey) {
+    else if (ctrlKey) {
         batchCopy();
     }
     else {
