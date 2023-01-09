@@ -4,7 +4,7 @@
 // @version      0.8.6
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
-// @match        https://*.nyaa.si/*
+// @match        *://*.nyaa.si/*
 // @grant        GM_openInTab
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*://*.realsrv.com/*", "action": "cancel"}
