@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.12
+// @version         1.4.13
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -48,10 +48,10 @@ addEventListener('message', function (event) {
 });
 
 if (watch.startsWith('/video/')) {
-    var [player, toolbar, widescreen, widestate, next, prev, offset] = ['bwp-video', '#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
+    var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
 }
 else {
-    [player, toolbar, widescreen, widestate, next, prev, offset] = ['video', '#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
+    [toolbar, widescreen, widestate, next, prev, offset] = ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
 }
 
 var css = document.createElement('style');
@@ -121,15 +121,17 @@ menu.append(options, analyse, css);
 options.style.display = analyse.style.display = 'none';
 
 var observer = setInterval(() => {
-    var video = document.querySelector(player);
+    var video = document.querySelector('div.bpx-player-video-wrap > :first-child');
     if (video) {
         clearInterval(observer);
         video.addEventListener('play', function biliVideoToolbar() {
-            document.querySelector(toolbar).append(menu);
-            var widebtn = document.querySelector(widescreen);
-            if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
-                widebtn.click();
-            }
+            setTimeout(() => {
+                document.querySelector(toolbar).append(menu);
+                var widebtn = document.querySelector(widescreen);
+                if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
+                    widebtn.click();
+                }
+            }, 1000);
             video.removeEventListener('play', biliVideoToolbar);
         });
     }
