@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.6
+// @version      1.6.7
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -45,7 +45,7 @@ var jsUI = new JSUI();
 addEventListener('message', event => {
     var {extension_name} = event.data;
     if (extension_name === 'Download With Aria2') {
-        aria2c = true;
+        aria2c = extension_name;
     }
 });
 
@@ -161,15 +161,17 @@ async function subscribeCurrentNovel() {
         }
     }
 }
-function downloadAllPDfs() {
+async function downloadAllPDfs() {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         if (download.all) {
             return;
         }
+        download.all = true;
         var session = bookmark.map(downloadPDFHelper);
-        Promise.all(session).then(array => {
-            myFancyPopup('全ての小説の縦書きPDFのダウンロードがかんりょうしました！');
-        });
+        var result = await Promise.all(session);
+        myFancyPopup('全ての小説の縦書きPDFのダウンロードがかんりょうしました！');
+        GM_setValue('bookmark', result);
+        download.all = false;
     }
 }
 function exportAllNovels() {
@@ -178,8 +180,7 @@ function exportAllNovels() {
             var {ncode, title} = book;
             var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
             var name = book.title + '.pdf';
-            book.last = timeline;
-            container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+            book.last = updateBookInfo(ncode);
             return {url: [{url}], name, language: 'ja'};
         });
         var text = metalink4(meta4);
@@ -304,35 +305,37 @@ if (today !== scheduler) {
 // ダウンロード関連
 async function downloadPDFHelper(book) {
     var {ncode, title} = book;
-    var url = 'https://pdfnovels.net/' + book.ncode + '/main.pdf';
+    var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
     var name = title + '.pdf';
     if (aria2c) {
-        postMessage({aria2c: 'Download With Aria2', type: 'download', message: { url, options: {out: name} } });
-        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
-        return 'ok';
+        postMessage({aria2c, type: 'download', message: { url, options: {out: name} } });
+        book.last = updateBookInfo(ncode);
+        return book;
     }
-    if (download[ncode] === 'ダウンロード') {
+    if (download[ncode]) {
         myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
-        return 'waiting';
+        return book;
     }
-    download[ncode] = 'ダウンロード';
+    download[ncode] = true;
     myFancyPopup('Nコード【' + ncode + '】、「' + title + '」のダウンロードを開始しました！');
     var details = await promisedXMLRequest(url);
     if (details.response.type === 'application/pdf') {
         var href = URL.createObjectURL(details.response);
-        container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
-        book.last = timeline;
-        delete download[ncode];
+        book.last = updateBookInfo(ncode);
+        download[ncode] = false;
         var a = document.createElement('a');
         a.href = href;
         a.download = name;
         a.click();
-        return 'ok';
+        return book;
     }
     else {
-        download[ncode] = 'リトライ';
         return waitForRetryDownload(book);
     }
+}
+function updateBookInfo(ncode) {
+    container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+    return timeline;
 }
 function promisedXMLRequest(url) {
     return new Promise((resolve, reject) => {
