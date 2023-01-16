@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.6
+// @version      0.8.7
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -16,7 +16,7 @@ if (location.pathname.startsWith('/view/')) {
 
 var torrents = {};
 var working = {};
-var aria2c;
+var aria2c = 'Download With Aria2';
 
 // UI
 var keyword;
@@ -39,13 +39,6 @@ var messages = {
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
 
-addEventListener('message', event => {
-    var {extension_name} = event.data;
-    if (extension_name === 'Download With Aria2') {
-        aria2c = extension_name;
-    }
-});
-
 var input = document.createElement('input');
 input.className = 'form-control search-bar';
 input.style.cssText = 'display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;';
@@ -62,7 +55,7 @@ button.style.cssText = 'margin-top: -3px;';
 button.innerText = '🕸️';
 button.addEventListener('click', event => {
     var {ctrlKey, altKey} = event;
-    if (altKey && aria2c) {
+    if (altKey) {
         var magnet = [...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet);
         aria2Download(magnet);
     }
@@ -161,7 +154,7 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
         event.preventDefault();
         torrents[id].top = layerY;
         torrents[id].left = layerX;
-        if (altKey && aria2c) {
+        if (altKey) {
             aria2Download(magnet);
         }
         else if (ctrlKey) {
