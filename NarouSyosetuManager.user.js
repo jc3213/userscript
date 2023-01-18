@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.7
+// @version      1.6.8
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -379,5 +379,5 @@ function myFancyLog(ncode, title, result) {
     myFancyPopup(message);
 }
 function myFancyPopup(message) {
-    jsUI.notification({message, timeout: 3000});
+    jsUI.notification({text: message, timeout: 3000});
 }
