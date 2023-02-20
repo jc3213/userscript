@@ -52,6 +52,7 @@ function createEmojiUI({name, author, emoji}, index) {
     if (panel) {
         panel.innerHTML = '';
         panel.style.display = 'none';
+        emojiRunOnce[name] = true;
         addEmoji(emoji, panel);
     }
     else {
