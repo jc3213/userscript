@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.8
+// @version         1.9.0
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -28,21 +28,18 @@ var emojiOrigin;
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
 subscribe.accept = 'application/json';
-subscribe.addEventListener('change', event => {
-    [...subscribe.files].forEach((file, index, files) => {
-        var reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-            var json = JSON.parse(reader.result);
-            var find = emojiPackage.findIndex(package => package.name === json.name);
-            find = find === -1 ? emojiPackage.length : find;
-            emojiPackage[find] = json;
-            createEmojiUI(json, find);
-            if (index === files.length - 1) {
-                GM_setValue('emoji', emojiPackage);
-            }
-        };
+subscribe.multiple = 'true';
+subscribe.addEventListener('change', async event => {
+    var files = [...subscribe.files];
+    var result = files.map(async file => {
+        var json = await fileReader(file);
+        var find = emojiPackage.findIndex(package => package.name === json.name);
+        find = find === -1 ? emojiPackage.length : find;
+        emojiPackage[find] = json;
+        createEmojiUI(json, find);
     });
+    await Promise.all(result);
+    GM_setValue('emoji', emojiPackage);
 });
 
 var manager = document.createElement('button');
@@ -54,6 +51,7 @@ function createEmojiUI({name, author, emoji}, index) {
     var panel = emojiPanel.childNodes[index + emojiOrigin];
     if (panel) {
         panel.innerHTML = '';
+        panel.style.display = 'none';
         addEmoji(emoji, panel);
     }
     else {
@@ -95,6 +93,17 @@ function addEmoji(package, panel) {
             postfunc.selectSmilesw._.hide();
         });
         panel.appendChild(img);
+    });
+}
+
+function fileReader(file) {
+    return new Promise(resolve => {
+        var reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            var json = JSON.parse(reader.result);
+            resolve(json);
+        };
     });
 }
 
