@@ -2,7 +2,7 @@
 // @name            NGA Emoji Manager
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213
-// @version         1.9.0
+// @version         1.9.1
 // @description     Add/Remove New Emoji to NGA Forum
 // @description:zh  为NGA论坛添加/删除新表情
 // @author          jc3213
@@ -25,6 +25,15 @@ var emojiTab;
 var emojiPanel;
 var emojiOrigin;
 
+var css = document.createElement('style');
+css.innerText = `.single_ttip2 img {max-height: 64px;}`
+document.head.append(css);
+
+var manager = document.createElement('button');
+manager.innerText = '添加新表情';
+manager.className = 'block_txt_big';
+manager.addEventListener('click', event => subscribe.click());
+
 var subscribe = document.createElement('input');
 subscribe.type = 'file';
 subscribe.accept = 'application/json';
@@ -40,20 +49,15 @@ subscribe.addEventListener('change', async event => {
     });
     await Promise.all(result);
     GM_setValue('emoji', emojiPackage);
+    subscribe.value = '';
 });
-
-var manager = document.createElement('button');
-manager.innerText = '添加新表情';
-manager.className = 'block_txt_big';
-manager.addEventListener('click', event => subscribe.click());
 
 function createEmojiUI({name, author, emoji}, index) {
     var panel = emojiPanel.childNodes[index + emojiOrigin];
     if (panel) {
         panel.innerHTML = '';
         panel.style.display = 'none';
-        emojiRunOnce[name] = true;
-        addEmoji(emoji, panel);
+        delete emojiRunOnce[name];
     }
     else {
         var tab = document.createElement('button');
@@ -75,26 +79,27 @@ function createEmojiUI({name, author, emoji}, index) {
                 emojiPanel.childNodes.forEach(ePanel => {
                     ePanel.style.display = ePanel === panel ? 'block' : 'none';
                 });
-                if (!emojiRunOnce[name]) {
-                    addEmoji(emoji, panel);
-                    emojiRunOnce[name] = true;
-                }
+                appendEmojiToUI(name, panel);
             }
         });
     }
 }
 
-function addEmoji(package, panel) {
-    package.forEach(emoji => {
+function appendEmojiToUI(name, panel) {
+    if (emojiRunOnce[name]) {
+        return;
+    }
+    var {emoji} = emojiPackage.find(package => package.name === name);
+    emoji.forEach(em => {
         var img = document.createElement('img');
-        img.src = 'https://img.nga.178.com/attachments/' + emoji;
-        img.style.cssText = 'max-height: 100px; margin: 0px 5px 5px 0px;';
+        img.src = 'https://img.nga.178.com/attachments/' + em;
         img.addEventListener('click', event => {
-            postfunc.addText('[img]' + emoji + '[/img]');
+            postfunc.addText('[img]' + em + '[/img]');
             postfunc.selectSmilesw._.hide();
         });
         panel.appendChild(img);
     });
+    emojiRunOnce[name] = true;
 }
 
 function fileReader(file) {
