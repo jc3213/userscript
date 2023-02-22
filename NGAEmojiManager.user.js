@@ -117,8 +117,8 @@ new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {
         var newNode = mutation.addedNodes[0];
         if (newNode && newNode.id.startsWith('commonwindow')) {
-            emojiTab = newNode.querySelector('div > div.div2 > div > div');
-            emojiPanel = newNode.querySelector('div > div.div2 > div > span');
+            emojiTab = newNode.querySelector('.div1 > .div2 > .div3 > div');
+            emojiPanel = newNode.querySelector('.div1 > .div2 > .div3 > span');
             emojiOrigin = emojiPanel.childNodes.length;
             emojiTab.appendChild(manager);
             emojiPackage.forEach(createEmojiUI);
