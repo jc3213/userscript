@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.8
+// @version      0.8.9
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -238,5 +238,6 @@ function popupPreview(id, image) {
 }
 
 function aria2Download(url) {
-    postMessage({ aria2c, download: { url, options: {} } });
+    var json = Array.isArray(url) ? url.map(url=> json = {url}) : [{url}];
+    postMessage({ aria2c, download: { json } });
 }
