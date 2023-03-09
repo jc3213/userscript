@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.15
+// @version         1.5.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -19,6 +19,7 @@ var watch = location.pathname;
 var worker = true;
 var title;
 var aria2c = 'Download With Aria2';
+var bvplayer = watch.startsWith('/video/');
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
     '30232': {text: '音频 中码率', ext: '.128k.m4a'},
@@ -38,29 +39,42 @@ var format = {
     'av01': {title: '视频编码：AV1', alt: '.av1'},
     'mp4a': {title: '音频编码: AAC', alt: '.aac'}
 };
-var jsUI = new JSUI();
 
-if (watch.startsWith('/video/')) {
-    var [toolbar, widescreen, widestate, next, prev, offset] = ['#arc_toolbar_report', 'div.bpx-player-ctrl-wide', 'bpx-state-entered', 'div.bpx-player-ctrl-next', 'div.bpx-player-ctrl-prev', 'top: -6px;'];
+if (bvplayer) {
+    var menuBox = '#arc_toolbar_report';
+    var wideBtn = 'div.bpx-player-ctrl-wide';
+    var wideStat = 'bpx-state-entered';
+    var nextBtn = 'div.bpx-player-ctrl-next';
+    var prevBtn = 'div.bpx-player-ctrl-prev';
+    var cssOffset = '.jsui-main-menu {top: -6px;}';
 }
 else {
-    [toolbar, widescreen, widestate, next, prev, offset] = ['#toolbar_module', 'div.squirtle-video-widescreen', 'active', 'div.squirtle-video-next', 'div.squirtle-video-prev', 'left: 20px;'];
+    menuBox = 'div.toolbar_toolbar__NJCNy';
+    wideBtn = 'div.squirtle-video-widescreen'
+    wideStat = 'active';
+    nextBtn = 'div.squirtle-video-next';
+    prevBtn = 'div.squirtle-video-prev';
+    cssOffset = `.jsui-main-menu {left: 20px;}
+    .jsui-menu-item {padding: 10px}`;
 }
 
-var css = document.createElement('style');
-css.innerHTML = '.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}\
-.jsui-drop-menu {width: 150px;}\
-.jsui-analyse {display: flex;}\
-.jsui-options {width: 150px;}\
-.jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}\
-.jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}\
-.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}';
+var jsUI = new JSUI();
+jsUI.css.innerText += `.jsui-main-menu {position: relative; width: 160px; display: inline-block; width: 220px;}
+.jsui-main-menu > .jsui-menu-item {display: inline-block; width: 100px;}
+.jsui-drop-menu {width: 150px;}
+.jsui-analyse {display: flex;}
+.jsui-options {width: 150px;}
+.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}
+.jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}
+.jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}
+.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}
+${cssOffset}`;
 
 var menu = jsUI.menulist([
     {text: '设置', onclick: openOptions},
     {text: '解析', onclick: analyseVideo}
 ]);
-menu.style.cssText = 'position: relative; width: 160px; ' + offset;
+menu.className = 'jsui-main-menu';
 function openOptions() {
     analyse.style.display = 'none';
     options.style.display = options.style.display === 'none' ? 'block' : 'none';
@@ -70,14 +84,15 @@ async function analyseVideo() {
         worker = false;
         videocodec = localStorage.videocodec;
         analyse.innerHTML = '';
-        var {videoData, epInfo} = document.defaultView.__INITIAL_STATE__;
-        if (videoData !== undefined) {
-            var {title, pic, aid, cid} = videoData;
+        if (bvplayer) {
+            var {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
             await biliVideoExtractor(title, pic, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
         }
-        else if (epInfo !== undefined) {
-            var {share_copy, cover, id} = epInfo
-            await biliVideoExtractor(share_copy, cover, 'pgc/player/web/playurl?ep_id=' + id, 'result');
+        else {
+            var {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').innerText).itemListElement[0];
+            var id = document.body.querySelector('li.squirtle-pagelist-select-item.active').getAttribute('data-value');
+            console.log(id);
+            await biliVideoExtractor(name, thumbnailUrl[0], 'pgc/player/web/playurl?ep_id=' + id, 'result');
         }
     }
     options.style.display = 'none';
@@ -88,11 +103,11 @@ document.addEventListener('keydown', event => {
     if (event.ctrlKey) {
         if (event.key === 'ArrowRight') {
             event.preventDefault();
-            document.querySelector(next).click();
+            document.querySelector(nextBtn).click();
         }
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
-            document.querySelector(prev).click();
+            document.querySelector(prevBtn).click();
         }
     }
 });
@@ -109,7 +124,7 @@ options.addEventListener('change', event => {
 });
 
 var analyse = jsUI.add({style: 'jsui-analyse'});
-menu.append(options, analyse, css);
+menu.append(options, analyse);
 
 options.style.display = analyse.style.display = 'none';
 
@@ -119,10 +134,10 @@ var observer = setInterval(() => {
         clearInterval(observer);
         video.addEventListener('play', function biliVideoToolbar() {
             setTimeout(() => {
-                document.querySelector(toolbar).append(menu);
-                var widebtn = document.querySelector(widescreen);
-                if (!widebtn.classList.contains(widestate) && autowide === '1' ) {
-                    widebtn.click();
+                document.querySelector(menuBox).append(menu);
+                var wide = document.querySelector(wideBtn);
+                if (!wide.classList.contains(wideStat) && autowide === '1' ) {
+                    wide.click();
                 }
             }, 500);
             video.removeEventListener('play', biliVideoToolbar);
