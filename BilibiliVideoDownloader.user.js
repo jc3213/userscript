@@ -2,15 +2,13 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.0
+// @version         1.5.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/bbc7806672da9af7e023ebc3a25194e95c23bd5c/js/jsui.js#sha256-DXIy14gcMq8OGDH4F858fuvoSqNJCFozz1mqVW4j30I=
-// @grant           GM_webRequest
+// @require         https://raw.githubusercontent.com/jc3213/jslib/16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
 // @grant           GM_download
-// @webRequest      {"selector": "*://s1.hdslb.com/bfs/static/jinkela/long/js/sentry/*", "action": "cancel"}
 // @run-at          document-idle
 // ==/UserScript==
 
@@ -59,7 +57,7 @@ else {
 }
 
 var jsUI = new JSUI();
-jsUI.css.innerText += `.jsui-main-menu {position: relative; width: 160px; display: inline-block; width: 220px;}
+jsUI.css.add(`.jsui-main-menu {position: relative; width: 160px; display: inline-block; width: 220px;}
 .jsui-main-menu > .jsui-menu-item {display: inline-block; width: 100px;}
 .jsui-drop-menu {width: 150px;}
 .jsui-analyse {display: flex;}
@@ -68,7 +66,7 @@ jsUI.css.innerText += `.jsui-main-menu {position: relative; width: 160px; displa
 .jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}
-${cssOffset}`;
+${cssOffset}`);
 
 var menu = jsUI.menulist([
     {text: '设置', onclick: openOptions},
