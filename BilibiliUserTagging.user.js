@@ -75,15 +75,14 @@ function submitFunction() {
 
 function addManageTag(id, store) {
     var {tag, keyword, color} = store;
-    var rule = body.add([{text: tag, id, onclick: event => removeManageTag(rule, tag)}, keyword]);
+    var rule = body.add([{text: tag, id, onclick: event => removeManageTag(rule, id, tag)}, keyword]);
     rule.firstChild.style.backgroundColor = color;
 }
 
-function removeManageTag(rule, tag) {
+function removeManageTag(rule, id, tag) {
     if (confirm(`确定要删除标签《${tag}》吗？`)) {
-        var {id, parentNode} = event.target;
-        parentNode.remove();
         tagging.splice(id, 1);
+        rule.remove();
         GM_setValue('tagging', tagging);
     }
 }
