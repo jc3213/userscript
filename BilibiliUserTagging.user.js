@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.3.0
+// @version         0.4.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -25,12 +25,12 @@ var tagging = GM_getValue('tagging', [
 var logging = {};
 var shown = true;
 var {hostname, pathname} = location;
-var commlist;
-var mid;
+var comment_list;
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-comment-menu {margin-left: 25px; padding: 5px 10px; position: relative;}
-.jsui-tag-window {display: none; position: absolute; top: 0px; left: 330px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px; font-size: 16px;}
+jsUI.css.add(`.jsui-tag-manager {margin-left: 25px; display: relative;}
+.jsui-comment-menu {padding: 5px 10px;}
+.jsui-tag-window {display: none; position: absolute; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px; font-size: 16px;}
 .jsui-tag-head {display: flex; padding: 5px;}
 .jsui-tag-head input {width: 80px; height: 34px; margin: 0px auto;}
 .jsui-tag-head span {padding: 5px 0px; text-align: center;}
@@ -88,28 +88,13 @@ function removeManageTag(rule, id, tag) {
 }
 
 if (pathname.startsWith('/video/')) {
-    commlist = document.querySelector('#comment');
-    mid = 'data-user-id';
-    newNodeObserver(commlist, 'reply-item', comment => {
-        comment.querySelectorAll('div.user-name, div.sub-user-name').forEach(appendTagToUser);
-        newNodeObserver(comment.querySelector('div.sub-reply-container'), 'sub-reply-item', reply => {
-            var user = reply.querySelector('div.user-name') ?? reply.querySelector('div.sub-user-name');
-            appendTagToUser(user);
-        });
-    });
+    appendNewTagToUser('#comment', 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name')
     appendMenuToWindow('div.sub-user-name', 'ul.nav-bar');
+
 }
 else if (pathname.startsWith('/bangumi/')) {
-    commlist = document.querySelector('#comment_module');
-    mid = 'data-usercard-mid';
-    newNodeObserver(document.querySelector('#comment'), 'list-item reply-wrap ', comment => {
-        comment.querySelectorAll('a.name').forEach(appendTagToUser);
-        newNodeObserver(comment.querySelector('div.sub-reply-container'), 'reply-item reply-wrap', reply => {
-            var user = reply.querySelector('a.name');
-            appendTagToUser(user);
-        });
-    });
-    appendMenuToWindow('a.name');
+    appendNewTagToUser('#comment-module', 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name')
+    appendMenuToWindow('div.sub-user-name', 'ul.nav-bar');
 }
 else if (hostname === 'space.bilibili.com') {
 
@@ -118,17 +103,17 @@ else if (hostname === 't.bilibili.com') {
 
 }
 
-function appendMenuToWindow(sel, tar) {
+function appendMenuToWindow(sel, tar, offset) {
     var observer = setInterval(() => {
-        var check = commlist.querySelector(sel);
+        var check = comment_list.querySelector(sel);
         if (check) {
-            commlist.querySelector(tar).appendChild(manager);
+            comment_list.querySelector(tar).appendChild(manager);
             clearInterval(observer);
         }
     }, 500);
 }
 
-async function appendTagToUser(user) {
+async function createUserTag(user, mid) {
     var uid = user.getAttribute(mid);
     var name = user.innerText;
     var debug = '昵称： ' + name + '\nUID： ' + uid + '\n标记：';
@@ -137,7 +122,6 @@ async function appendTagToUser(user) {
         log = [];
         var response = await fetch('https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?&host_mid=' + uid, {credentials: 'include'});
         var {data} = await response.json();
-        console.log(data);
         data.items.forEach(({modules: {module_dynamic: {desc}}}) => {
             if (desc === null) {
                 return;
@@ -169,6 +153,17 @@ function createNewTag(user, tag, color) {
     badge.style.cssText = 'background-color: ' + color + '; color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;';
     badge.innerText = tag;
     user.appendChild(badge);
+}
+
+function appendNewTagToUser(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
+    comment_list = document.querySelector(comment);
+    newNodeObserver(comment_list, root_box, comment => {
+        comment.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
+        newNodeObserver(comment.querySelector(sub_box), sub_item, reply => {
+            var user = reply.querySelector(root_user) ?? reply.querySelector(sub_user);
+            createUserTag(user, mid);
+        });
+    });
 }
 
 function newNodeObserver(dom, style, callback) {
