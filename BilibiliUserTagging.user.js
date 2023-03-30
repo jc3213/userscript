@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.4.0
+// @version         0.4.1
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -28,9 +28,9 @@ var {hostname, pathname} = location;
 var comment_list;
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-tag-manager {margin-left: 25px; display: relative;}
+jsUI.css.add(`.jsui-tag-manager {position: relative; left: 25px;}
 .jsui-comment-menu {padding: 5px 10px;}
-.jsui-tag-window {display: none; position: absolute; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px; font-size: 16px;}
+.jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px; font-size: 16px;}
 .jsui-tag-head {display: flex; padding: 5px;}
 .jsui-tag-head input {width: 80px; height: 34px; margin: 0px auto;}
 .jsui-tag-head span {padding: 5px 0px; text-align: center;}
@@ -63,7 +63,10 @@ function submitFunction() {
         result[name] = value;
         i.value = '';
     });
-    var {keyword} = result;
+    var {tag, keyword} = result;
+    if (keyword === '' || tag === '') {
+        return;
+    }
     var find = tagging.findIndex(tag => tag.keyword === keyword);
     if (find === -1) {
         var id = tagging.length;
