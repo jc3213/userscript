@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.5.0
+// @version         1.0.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -99,18 +99,18 @@ else if (pathname.startsWith('/bangumi/')) {
     addTagToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
     addMenuToWindow('div.sub-user-name', 'ul.nav-bar');
 }
-else if (hostname === 'space.bilibili.com') {
+else if (hostname === 't.bilibili.com' && pathname !== '/') {
+    newNodeTimeoutObserver('div.bb-comment').then(list => {
+        addTagToComment(list, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+    });
+}
+else {
     newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
         newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
             newNodeMutationObserver(item, 'bb-comment ', replys => {
                 addTagToComment(replys, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
             });
         });
-    });
-}
-else if (hostname === 't.bilibili.com') {
-    newNodeTimeoutObserver('div.bb-comment').then(list => {
-        addTagToComment(list, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
     });
 }
 
