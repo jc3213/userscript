@@ -2,12 +2,14 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.4.1
+// @version         0.5.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
 // @match           https://www.bilibili.com/video/*
 // @match           https://www.bilibili.com/bangumi/*
+// @match           https://space.bilibili.com/*/dynamic*
+// @match           https://t.bilibili.com/*
 // @require         https://raw.githubusercontent.com/jc3213/jslib/16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -25,7 +27,6 @@ var tagging = GM_getValue('tagging', [
 var logging = {};
 var shown = true;
 var {hostname, pathname} = location;
-var comment_list;
 
 var jsUI = new JSUI();
 jsUI.css.add(`.jsui-tag-manager {position: relative; left: 25px;}
@@ -91,29 +92,31 @@ function removeManageTag(rule, id, tag) {
 }
 
 if (pathname.startsWith('/video/')) {
-    appendNewTagToUser('#comment', 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name')
-    appendMenuToWindow('div.sub-user-name', 'ul.nav-bar');
-
+    addTagToComment(document.querySelector('#comment'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
+    addMenuToWindow('div.sub-user-name', 'ul.nav-bar');
 }
 else if (pathname.startsWith('/bangumi/')) {
-    appendNewTagToUser('#comment-module', 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name')
-    appendMenuToWindow('div.sub-user-name', 'ul.nav-bar');
+    addTagToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
+    addMenuToWindow('div.sub-user-name', 'ul.nav-bar');
 }
 else if (hostname === 'space.bilibili.com') {
-
+    newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
+        newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
+            newNodeMutationObserver(item, 'bb-comment ', replys => {
+                addTagToComment(replys, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+            });
+        });
+    });
 }
 else if (hostname === 't.bilibili.com') {
-
+    newNodeTimeoutObserver('div.bb-comment').then(list => {
+        addTagToComment(list, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+    });
 }
 
-function appendMenuToWindow(sel, tar, offset) {
-    var observer = setInterval(() => {
-        var check = comment_list.querySelector(sel);
-        if (check) {
-            comment_list.querySelector(tar).appendChild(manager);
-            clearInterval(observer);
-        }
-    }, 500);
+async function addMenuToWindow(sel, tar, offset) {
+    await newNodeTimeoutObserver(sel);
+    document.querySelector(tar).appendChild(manager);
 }
 
 async function createUserTag(user, mid) {
@@ -158,18 +161,17 @@ function createNewTag(user, tag, color) {
     user.appendChild(badge);
 }
 
-function appendNewTagToUser(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
-    comment_list = document.querySelector(comment);
-    newNodeObserver(comment_list, root_box, comment => {
-        comment.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
-        newNodeObserver(comment.querySelector(sub_box), sub_item, reply => {
+function addTagToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
+    newNodeMutationObserver(comment, root_box, area => {
+        area.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
+        newNodeMutationObserver(area.querySelector(sub_box), sub_item, reply => {
             var user = reply.querySelector(root_user) ?? reply.querySelector(sub_user);
             createUserTag(user, mid);
         });
     });
 }
 
-function newNodeObserver(dom, style, callback) {
+function newNodeMutationObserver(dom, style, callback) {
     new MutationObserver(mutations => {
         mutations.forEach(async mutation => {
             mutation.addedNodes.forEach(node => {
@@ -179,4 +181,22 @@ function newNodeObserver(dom, style, callback) {
             });
         });
     }).observe(dom, {childList: true, subtree: true});
+}
+
+function newNodeTimeoutObserver(sel) {
+    return new Promise((resolve, reject) => {
+        var time = 0;
+        var observer = setInterval(() => {
+            var dom = document.querySelector(sel);
+            if (dom) {
+                clearInterval(observer);
+                resolve(dom);
+            }
+            time ++;
+            if (time === 50) {
+                clearInterval(observer);
+                reject(new Error('Can\'t find element with DOM Selector "' + sel + '"'));
+            }
+        }, 200);
+    });
 }
