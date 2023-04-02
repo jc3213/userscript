@@ -94,11 +94,11 @@ function removeManageTag(rule, id, tag) {
 
 if (pathname.startsWith('/video/')) {
     addBadgeToComment(document.querySelector('#comment'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToComment('div.sub-user-name', 'ul.nav-bar');
+    addMenuToComment('div.user-name', 'ul.nav-bar');
 }
 else if (pathname.startsWith('/bangumi/')) {
     addBadgeToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToComment('div.sub-user-name', 'ul.nav-bar');
+    addMenuToComment('div.user-name', 'ul.nav-bar');
 }
 else if (hostname === 'space.bilibili.com') {
     addBadgeToDynamic();
@@ -167,7 +167,7 @@ function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user,
 async function addMenuToComment(anchor, target) {
     await newNodeTimeoutObserver(anchor);
     var menu = document.querySelector(target);
-    manager.style.cssText = 'left: 25px;';
+    jsUI.css.add(`.jsui-tag-manager {left: 25px;}`);
     menu.appendChild(manager);
 }
 
@@ -184,7 +184,9 @@ function addBadgeToDynamic() {
 
 async function addMenuToDynamic(comment, target) {
     var menu = comment.querySelector(target);
-    manager.style.left = main.style.left = '130px';
+    jsUI.css.add(`.jsui-tag-manager {float: left;}
+.jsui-tag-window {left: 88px;}
+.jsui-tag-window input {height: 24px;}`);
     menu.appendChild(manager);
 }
 
