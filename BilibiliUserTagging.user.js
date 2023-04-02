@@ -202,20 +202,21 @@ function newNodeMutationObserver(dom, style, callback) {
     }).observe(dom, {childList: true, subtree: true});
 }
 
-function newNodeTimeoutObserver(sel) {
+function newNodeTimeoutObserver(selector, timeout = 10) {
     return new Promise((resolve, reject) => {
+        timeout = timeout * 10;
         var time = 0;
         var observer = setInterval(() => {
-            var dom = document.querySelector(sel);
-            if (dom) {
+            var element = document.querySelector(selector);
+            if (element) {
                 clearInterval(observer);
-                resolve(dom);
+                resolve(element);
             }
             time ++;
-            if (time === 50) {
+            if (time === timeout) {
                 clearInterval(observer);
-                reject(new Error('Can\'t find element with DOM Selector "' + sel + '"'));
+                reject(new Error('Can\'t find element with DOM Selector "' + selector + '"'));
             }
-        }, 200);
+        }, 100);
     });
 }
