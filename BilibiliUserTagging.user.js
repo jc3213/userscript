@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.1.0
+// @version         1.2.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -29,7 +29,7 @@ var shown = true;
 var {hostname, pathname} = location;
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-tag-manager {position: relative; font-size: 16px;}
+var stylesheet = `.jsui-tag-manager {position: relative; font-size: 16px;}
 .jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px; margin: 0px auto;}
 .jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
 .jsui-tag-head {display: flex; padding: 5px;}
@@ -37,30 +37,36 @@ jsUI.css.add(`.jsui-tag-manager {position: relative; font-size: 16px;}
 .jsui-tag-head span {padding: 5px 0px; text-align: center;}
 .jsui-tag-item {color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;}
 .jsui-tag-submit {margin-left: auto; height: 32px; padding: 3px 10px !important;}
-.jsui-tag-window .jsui-table-button {color: #fff;}`);
+.jsui-tag-window .jsui-table-button {color: #fff;}`;
+var videocss = ` .jsui-tag-manager {left: 25px;}`;
+var dynamiccss = ` .jsui-tag-manager {float: left;}
+.jsui-tag-window {left: 88px;}
+.jsui-tag-window input {height: 24px;}`;
 
-var manager = jsUI.add('div', {style: 'jsui-tag-manager'});
-var button = jsUI.menuitem({text: '管理标签', style: 'jsui-tag-menu', onclick: toggleManager});
-var main = jsUI.add('div', {style: 'jsui-tag-window'});
-var head = jsUI.add('div', {style: 'jsui-tag-head', html: '<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">'});
-var body = jsUI.table(['标签', '关键词']);
-var submit = jsUI.menuitem({text: '添加', style: 'jsui-tag-submit', onclick: submitFunction});
+function createManagerMenu() {
+    var manager = jsUI.add('div', {style: 'jsui-tag-manager'});
+    var button = jsUI.menuitem({text: '管理标签', style: 'jsui-tag-menu', onclick: event => toggleManagerWindow(window, list)});
+    var window = jsUI.add('div', {style: 'jsui-tag-window'});
+    var menu = jsUI.add('div', {style: 'jsui-tag-head', html: '<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">'});
+    var list = jsUI.table(['标签', '关键词']);
+    var submit = jsUI.menuitem({text: '添加', style: 'jsui-tag-submit', onclick: event => submitNewBadge(menu, list)});
+    manager.append(button, window);
+    window.append(menu, jsUI.add('hr'), list);
+    menu.append(submit);
+    return manager;
+}
 
-manager.append(button, main);
-main.append(head, jsUI.add('hr'), body);
-head.append(submit);
-
-function toggleManager() {
-    main.style.display = main.style.display === 'block' ? 'none' : 'block';
+function toggleManagerWindow(window, list) {
+    window.style.display = window.style.display === 'block' ? 'none' : 'block';
     if (shown) {
-        tagging.forEach((tag, id) => addManageTag(id, tag));
+        tagging.forEach((tag, id) => addManageTag(list, id, tag));
         shown = false;
     }
 }
 
-function submitFunction() {
+function submitNewBadge(menu, list) {
     var result = {};
-    head.querySelectorAll('input').forEach(i => {
+    menu.querySelectorAll('input').forEach(i => {
         var {name, value} = i;
         result[name] = value;
         i.value = '';
@@ -73,14 +79,14 @@ function submitFunction() {
     if (find === -1) {
         var id = tagging.length;
         tagging.push(result);
-        addManageTag(id, result);
+        addManageTag(list, id, result);
         GM_setValue('tagging', tagging);
     }
 }
 
-function addManageTag(id, store) {
+function addManageTag(list, id, store) {
     var {tag, keyword, color} = store;
-    var rule = body.add([{text: tag, id, onclick: event => removeManageTag(rule, id, tag)}, keyword]);
+    var rule = list.add([{text: tag, id, onclick: event => removeManageTag(rule, id, tag)}, keyword]);
     rule.firstChild.style.backgroundColor = color;
 }
 
@@ -107,10 +113,8 @@ else if (pathname === '/') {
     addBadgeToDynamic();
 }
 else {
-    newNodeTimeoutObserver('div.bb-comment').then(comment => {
-        addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
-        addMenuToDynamic(comment, 'ul.clearfix');
-    });
+    newNodeTimeoutObserver('div.bb-comment').then(addBadgeMenuToTopic);
+    jsUI.css.add(stylesheet + dynamiccss);
 }
 
 async function createUserTag(user, mid) {
@@ -166,35 +170,33 @@ function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user,
 
 async function addMenuToComment(anchor, target) {
     await newNodeTimeoutObserver(anchor);
-    var menu = document.querySelector(target);
-    jsUI.css.add(`.jsui-tag-manager {left: 25px;}`);
-    menu.appendChild(manager);
+    var container = document.querySelector(target);
+    var manager = createManagerMenu();
+    jsUI.css.add(stylesheet + videocss);
+    container.appendChild(manager);
 }
 
 function addBadgeToDynamic() {
     newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
         newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
-            newNodeMutationObserver(item, 'bb-comment ', comment => {
-                addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
-                addMenuToDynamic(comment, 'ul.clearfix');
-            });
+            newNodeMutationObserver(item, 'bb-comment ', addBadgeMenuToTopic);
         });
     });
+    jsUI.css.add(stylesheet + dynamiccss);
 }
 
-async function addMenuToDynamic(comment, target) {
-    var menu = comment.querySelector(target);
-    jsUI.css.add(`.jsui-tag-manager {float: left;}
-.jsui-tag-window {left: 88px;}
-.jsui-tag-window input {height: 24px;}`);
-    menu.appendChild(manager);
+function addBadgeMenuToTopic(comment) {
+    addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+    var container = comment.querySelector('ul.clearfix');
+    var manager = createManagerMenu();
+    container.appendChild(manager);
 }
 
 function newNodeMutationObserver(dom, style, callback) {
     new MutationObserver(mutations => {
         mutations.forEach(async mutation => {
             mutation.addedNodes.forEach(node => {
-                if (node.tagName === 'DIV' && node.className === style) {
+                if (node.tagName === 'DIV' && node.className.includes(style)) {
                     callback(node);
                 }
             });
