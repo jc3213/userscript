@@ -33,7 +33,7 @@ jsUI.css.add(`.jsui-tag-manager {position: relative; font-size: 16px;}
 .jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px; margin: 0px auto;}
 .jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
 .jsui-tag-head {display: flex; padding: 5px;}
-.jsui-tag-head input {width: 80px; height: 32px; padding: 3px; margin: 0px auto;}
+.jsui-tag-head input {width: 80px; height: 32px; padding: 3px; margin: 0px auto; border-width: 1px;}
 .jsui-tag-head span {padding: 5px 0px; text-align: center;}
 .jsui-tag-item {color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;}
 .jsui-tag-submit {margin-left: auto; height: 32px; padding: 3px 10px !important;}
