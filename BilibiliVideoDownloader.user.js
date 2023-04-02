@@ -7,7 +7,7 @@
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
 // @grant           GM_download
 // @run-at          document-idle
 // ==/UserScript==
@@ -125,22 +125,38 @@ menu.append(options, analyse);
 
 options.style.display = analyse.style.display = 'none';
 
-var observer = setInterval(() => {
-    var video = document.querySelector('div.bpx-player-video-wrap > :first-child');
-    if (video) {
-        clearInterval(observer);
-        video.addEventListener('play', function biliVideoToolbar() {
-            setTimeout(() => {
-                document.querySelector(menuBox).append(menu);
-                var wide = document.querySelector(wideBtn);
-                if (!wide.classList.contains(wideStat) && autowide === '1' ) {
-                    wide.click();
-                }
-            }, 500);
-            video.removeEventListener('play', biliVideoToolbar);
-        });
-    }
-}, 200);
+newNodeTimeoutObserver('div.bpx-player-video-wrap > :first-child').then(video => {
+    video.addEventListener('play', function biliVideoToolbar() {
+        setTimeout(() => {
+            document.querySelector(menuBox).append(menu);
+            var wide = document.querySelector(wideBtn);
+            if (!wide.classList.contains(wideStat) && autowide === '1' ) {
+                wide.click();
+            }
+        }, 500);
+        video.removeEventListener('play', biliVideoToolbar);
+    });
+});
+
+function newNodeTimeoutObserver(selector, timeout = 10) {
+    return new Promise((resolve, reject) => {
+        timeout = timeout * 10;
+        var time = 0;
+        var observer = setInterval(() => {
+            var element = document.querySelector(selector);
+            if (element) {
+                clearInterval(observer);
+                resolve(element);
+            }
+            time ++;
+            if (time === timeout) {
+                clearInterval(observer);
+                reject(new Error('Can\'t find element with DOM Selector "' + selector + '"'));
+            }
+        }, 100);
+    });
+}
+
 new MutationObserver(mutations => {
     if (watch !== location.pathname) {
         watch = location.pathname;
