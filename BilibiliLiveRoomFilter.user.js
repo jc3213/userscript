@@ -7,7 +7,7 @@
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-DXIy14gcMq8OGDH4F858fuvoSqNJCFozz1mqVW4j30I=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
