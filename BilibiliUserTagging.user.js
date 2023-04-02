@@ -10,7 +10,7 @@
 // @match           https://www.bilibili.com/bangumi/*
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
-// @require         https://raw.githubusercontent.com/jc3213/jslib/16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @run-at          document-idle
