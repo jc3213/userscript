@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.6
+// @version         1.8.7
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -12,8 +12,8 @@
 // @match           https://weloma.art/*
 // @match           https://mangahatachi.com/*
 // @connect         *
-// @require         https://raw.githubusercontent.com/jc3213/jslib/3aa59ec35171169068f63703a76799524e32ec48/js/jsui.js#sha256-XhP7/w7IFRLG3eoySzn5pxbd1Is6hClCyuAEwFDwSn8=
-// @require         https://raw.githubusercontent.com/jc3213/jslib/4221499b1b97992c9bce74122a4fe54435dbab59/js/aria2.js#sha256-ec7cbh5Q0xlLUETJEtPJCV2PvqFATCREK5/mtPFOA4Q=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d4499e210912cbb87ecdf64b9bcf21bcf1bf4fa5/js/aria2.js#sha256-jRzx7Ea8B4IefORLuAlIrX3AWexkk260gPhPzkCedKE=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -29,15 +29,15 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 // @                klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*palakahone.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*hangdogferfel.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.diclotrans.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*galanasorra.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*pavymoieter.com/*", "action": "cancel"}
 // @                rawdevart.com
 // @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
 // @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
 // @                weloma.art
-// @webRequest      {"selector": "*.com/*52076", "action": "cancel"}
+// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // @                mangaraw.ru
 // @webRequest      {"selector": "*saimifoa.net/*", "action": "cancel"}
 // @                mangahatachi.com
@@ -53,10 +53,11 @@ var images;
 var watching;
 var options = GM_getValue('options', {});
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
-var aria2 = new Aria2(jsonrpc, secret);
+var allmanga;
 var folder;
 var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
+var aria2 = new Aria2(jsonrpc, secret);
 var jsUI = new JSUI();
 
 // i18n strings and labels
@@ -85,7 +86,7 @@ var message = {
         },
         extract: {
             start: 'Extracting manga source',
-            done: 'A total of %n% image urls have been extracted',
+            done: 'All urls of %n% images have been extracted',
             fail: 'Download function not available due to extraction failure',
             error: 'Can\'t be extracted image extension'
         }
@@ -131,7 +132,7 @@ var manga = {
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['center > a > img'],
+        ads: ['#adLink1'],
         logo: [-1]
     },
     'rawdevart.com': {
@@ -231,7 +232,7 @@ function downloadAllUrls() {
                 a.href = URL.createObjectURL(blob);
                 a.download = longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1);
                 a.click();
-                if (index === images.length - 1) {
+                if (index === allmanga - 1) {
                     notification('save', 'done');
                 }
             }
@@ -244,7 +245,7 @@ function copyAllUrls() {
 }
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
-    folder = folder ?? await aria2.message('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
+    folder = folder ?? await aria2.call('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
         alert(i18n.aria2.error);
         jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
         secret = prompt('Aria2 Secret Token', secret ) ?? secret;
@@ -253,7 +254,8 @@ async function sendUrlsToAria2() {
         GM_setValue('options', options);
     });
     if (folder) {
-        urls.forEach(async(url, index) => aria2.message('aria2.addUri', [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]));
+        var json = urls.map((url, index) => url = {method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]});
+        await aria2.batch(json);
         notification('aria2', 'done');
     }
 }
@@ -304,7 +306,8 @@ if (watching) {
         removeAdsElement();
     }
     images = [...document.querySelectorAll(watching.image)];
-    if (images.length > 0) {
+    allmanga = images.length;
+    if (allmanga > 0) {
         extractImage();
     }
     if (watching.shortcut) {
@@ -324,7 +327,7 @@ function extractImage() {
     warning = notification('extract', 'start');
     downMenu.style.display = 'block';
     observer = setInterval(() => {
-        if (images.length === urls.length + fail.length) {
+        if (allmanga === urls.length + fail.length) {
             warning.remove();
             clearInterval(observer);
             if (fail.length === 0) {
@@ -337,7 +340,7 @@ function extractImage() {
     }, 250);
     if (watching.logo) {
         watching.logo.forEach(el => {
-            var pos = el >= 0 ? el: images.length + el;
+            var pos = el >= 0 ? el: allmanga + el;
             images[pos].remove();
             images.splice(pos, 1);
         });
@@ -381,7 +384,6 @@ function appendShortcuts() {
 // Notifications
 function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
-    var message = '⚠️ ' + warn.replace('%n%', images.length);
-    var caution = document.createElement('div');
-    return jsUI.notification({message, timeout: 5000});
+    var message = '⚠️ ' + warn.replace('%n%', allmanga);
+    return jsUI.notification({html: message, timeout: 5000});
 }
