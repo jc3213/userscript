@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.0.0
+// @version         1.1.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -29,17 +29,18 @@ var shown = true;
 var {hostname, pathname} = location;
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-tag-manager {position: relative; left: 25px;}
-.jsui-comment-menu {padding: 5px 10px;}
-.jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px; font-size: 16px;}
+jsUI.css.add(`.jsui-tag-manager {position: relative; font-size: 16px;}
+.jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px; margin: 0px auto;}
+.jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
 .jsui-tag-head {display: flex; padding: 5px;}
-.jsui-tag-head input {width: 80px; height: 34px; margin: 0px auto;}
+.jsui-tag-head input {width: 80px; height: 32px; padding: 3px; margin: 0px auto;}
 .jsui-tag-head span {padding: 5px 0px; text-align: center;}
-.jsui-tag-submit {margin-left: auto; padding: 3px 10px;}
+.jsui-tag-item {color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;}
+.jsui-tag-submit {margin-left: auto; height: 32px; padding: 3px 10px !important;}
 .jsui-tag-window .jsui-table-button {color: #fff;}`);
 
 var manager = jsUI.add('div', {style: 'jsui-tag-manager'});
-var button = jsUI.menuitem({text: '管理标签', style: 'jsui-comment-menu', onclick: toggleManager});
+var button = jsUI.menuitem({text: '管理标签', style: 'jsui-tag-menu', onclick: toggleManager});
 var main = jsUI.add('div', {style: 'jsui-tag-window'});
 var head = jsUI.add('div', {style: 'jsui-tag-head', html: '<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">'});
 var body = jsUI.table(['标签', '关键词']);
@@ -92,31 +93,24 @@ function removeManageTag(rule, id, tag) {
 }
 
 if (pathname.startsWith('/video/')) {
-    addTagToComment(document.querySelector('#comment'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToWindow('div.sub-user-name', 'ul.nav-bar');
+    addBadgeToComment(document.querySelector('#comment'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
+    addMenuToComment('div.sub-user-name', 'ul.nav-bar');
 }
 else if (pathname.startsWith('/bangumi/')) {
-    addTagToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToWindow('div.sub-user-name', 'ul.nav-bar');
+    addBadgeToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
+    addMenuToComment('div.sub-user-name', 'ul.nav-bar');
 }
-else if (hostname === 't.bilibili.com' && pathname !== '/') {
-    newNodeTimeoutObserver('div.bb-comment').then(list => {
-        addTagToComment(list, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
-    });
+else if (hostname === 'space.bilibili.com') {
+    addBadgeToDynamic();
+}
+else if (pathname === '/') {
+    addBadgeToDynamic();
 }
 else {
-    newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
-        newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
-            newNodeMutationObserver(item, 'bb-comment ', replys => {
-                addTagToComment(replys, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
-            });
-        });
+    newNodeTimeoutObserver('div.bb-comment').then(comment => {
+        addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+        addMenuToDynamic(comment, 'ul.clearfix');
     });
-}
-
-async function addMenuToWindow(sel, tar, offset) {
-    await newNodeTimeoutObserver(sel);
-    document.querySelector(tar).appendChild(manager);
 }
 
 async function createUserTag(user, mid) {
@@ -155,13 +149,12 @@ async function createUserTag(user, mid) {
 }
 
 function createNewTag(user, tag, color) {
-    var badge = document.createElement('span');
-    badge.style.cssText = 'background-color: ' + color + '; color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;';
-    badge.innerText = tag;
+    var badge = jsUI.add('span', {style: 'jsui-tag-item', text: tag});
+    badge.style.backgroundColor = color;
     user.appendChild(badge);
 }
 
-function addTagToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
+function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
     newNodeMutationObserver(comment, root_box, area => {
         area.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
         newNodeMutationObserver(area.querySelector(sub_box), sub_item, reply => {
@@ -169,6 +162,30 @@ function addTagToComment(comment, mid, root_box, sub_box, sub_item, root_user, s
             createUserTag(user, mid);
         });
     });
+}
+
+async function addMenuToComment(anchor, target) {
+    await newNodeTimeoutObserver(anchor);
+    var menu = document.querySelector(target);
+    manager.style.cssText = 'left: 25px;';
+    menu.appendChild(manager);
+}
+
+function addBadgeToDynamic() {
+    newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
+        newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
+            newNodeMutationObserver(item, 'bb-comment ', comment => {
+                addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+                addMenuToDynamic(comment, 'ul.clearfix');
+            });
+        });
+    });
+}
+
+async function addMenuToDynamic(comment, target) {
+    var menu = comment.querySelector(target);
+    manager.style.left = main.style.left = '130px';
+    menu.appendChild(manager);
 }
 
 function newNodeMutationObserver(dom, style, callback) {
