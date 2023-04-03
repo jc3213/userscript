@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.2.0
+// @version         1.2.1
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -26,7 +26,6 @@ var tagging = GM_getValue('tagging', [
     {keyword: '虚拟主播', tag: '舔狗', color: '#4cc'}
 ]);
 var logging = {};
-var shown = true;
 var {hostname, pathname} = location;
 
 var jsUI = new JSUI();
@@ -58,10 +57,11 @@ function createManagerMenu() {
 }
 
 function toggleManagerWindow(window, list) {
-    window.style.display = window.style.display === 'block' ? 'none' : 'block';
-    if (shown) {
+    var {style, shown} = window;
+    style.display = style.display === 'block' ? 'none' : 'block';
+    if (!shown) {
         tagging.forEach((tag, id) => addManageTag(list, id, tag));
-        shown = false;
+        window.shown = true;
     }
 }
 
