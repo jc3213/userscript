@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.2.1
+// @version      1.2.2
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
-// @match        *://www.speedrun.com/*
-// @require      https://raw.githubusercontent.com/jc3213/jslib/main/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
+// @match        https://www.speedrun.com/*
+// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@6a62f0fd4a32b30ad4e0dcd34a5856048401e638/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.hotjar.com/*", "action": "cancel"}
 // @webRequest   {"selector": "*.stripe.com/*", "action": "cancel"}
@@ -38,6 +38,7 @@ css.innerHTML = '#widget {display: none !important;}\
 document.body.append(css);
 
 document.querySelector('.widget-column').remove();
+document.querySelector('.malediction.desktop_hero').remove();
 
 if (document.title.includes('series') || document.title.startsWith('Runs')) {
     appendEvent('div.maincontent', 'a.rounded-sm', record => {
