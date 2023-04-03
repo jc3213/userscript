@@ -8,6 +8,7 @@
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_download
 // @run-at          document-idle
 // ==/UserScript==
@@ -137,25 +138,6 @@ newNodeTimeoutObserver('div.bpx-player-video-wrap > :first-child').then(video =>
         video.removeEventListener('play', biliVideoToolbar);
     });
 });
-
-function newNodeTimeoutObserver(selector, timeout = 10) {
-    return new Promise((resolve, reject) => {
-        timeout = timeout * 10;
-        var time = 0;
-        var observer = setInterval(() => {
-            var element = document.querySelector(selector);
-            if (element) {
-                clearInterval(observer);
-                resolve(element);
-            }
-            time ++;
-            if (time === timeout) {
-                clearInterval(observer);
-                reject(new Error('Can\'t find element with DOM Selector "' + selector + '"'));
-            }
-        }, 100);
-    });
-}
 
 new MutationObserver(mutations => {
     if (watch !== location.pathname) {
