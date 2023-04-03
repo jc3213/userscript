@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.2.1
+// @version         1.3.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -18,7 +18,7 @@
 // @noframes
 // ==/UserScript==
 
-var tagging = GM_getValue('tagging', [
+var badges = GM_getValue('badges', [
     {keyword: '原神', tag: '原批', color: '#4c4'},
     {keyword: '明日方舟', tag: '粥批', color: '#44c'},
     {keyword: '王者荣耀', tag: '农批', color: '#cc4'},
@@ -60,7 +60,7 @@ function toggleManagerWindow(window, list) {
     var {style, shown} = window;
     style.display = style.display === 'block' ? 'none' : 'block';
     if (!shown) {
-        tagging.forEach((tag, id) => addManageTag(list, id, tag));
+        badges.forEach((tag, id) => addManageTag(list, id, tag));
         window.shown = true;
     }
 }
@@ -76,12 +76,12 @@ function submitNewBadge(menu, list) {
     if (keyword === '' || tag === '') {
         return;
     }
-    var find = tagging.findIndex(tag => tag.keyword === keyword);
+    var find = badges.findIndex(tag => tag.keyword === keyword);
     if (find === -1) {
-        var id = tagging.length;
-        tagging.push(result);
+        var id = badges.length;
+        badges.push(result);
         addManageTag(list, id, result);
-        GM_setValue('tagging', tagging);
+        GM_setValue('badges', badges);
     }
 }
 
@@ -93,9 +93,9 @@ function addManageTag(list, id, store) {
 
 function removeManageTag(rule, id, tag) {
     if (confirm(`确定要删除标签《${tag}》吗？`)) {
-        tagging.splice(id, 1);
+        badges.splice(id, 1);
         rule.remove();
-        GM_setValue('tagging', tagging);
+        GM_setValue('badges', badges);
     }
 }
 
@@ -121,35 +121,34 @@ else {
 async function createUserTag(user, mid) {
     var uid = user.getAttribute(mid);
     var name = user.innerText;
-    var debug = '昵称： ' + name + '\nUID： ' + uid + '\n标记：';
-    var log = logging[uid];
-    if (log === undefined) {
-        log = [];
+    var {badge, debug, logs} = logging[uid] ?? {badge: {}, debug: false, logs: ''};
+    if (logs === '') {
+        logs = '昵称： ' + name + '\nUID： ' + uid + '\n标记：';
         var response = await fetch('https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?&host_mid=' + uid, {credentials: 'include'});
-        var {data} = await response.json();
-        data.items.forEach(({modules: {module_dynamic: {desc}}}) => {
+        var {data: {items}} = await response.json();
+        items.forEach(({modules: {module_dynamic: {desc}}}) => {
             if (desc === null) {
                 return;
             }
             var text = desc.text.toLowerCase();
-            tagging.forEach(({keyword, tag, color}) => {
-                if (!debug.includes(tag) && text.includes(keyword)) {
-                    log.push({tag, color});
-                    debug += ' ' + tag;
+            badges.forEach(({keyword, tag, color}) => {
+                if (!badge[tag] && text.includes(keyword)) {
+                    badge[tag] = color;
+                    debug = true;
+                    logs += ' ' + tag;
                     createNewTag(user, tag, color);
                 }
             });
         });
-        logging[uid] = log;
+        logging[uid] = {badge, debug, logs};
     }
     else {
-        log.forEach(({tag, color}) => {
-            debug += ' ' + tag;
+        Object.entries(badge).forEach(([tag, color]) => {
             createNewTag(user, tag, color);
         });
     }
-    if (log.length > 0) {
-        console.log(debug);
+    if (debug) {
+        console.log(logs);
     }
 }
 
@@ -177,11 +176,10 @@ async function addMenuToComment(anchor, target) {
     container.appendChild(manager);
 }
 
-function addBadgeToDynamic() {
-    newNodeTimeoutObserver('div.bili-dyn-list__items').then(list => {
-        newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
-            newNodeMutationObserver(item, 'bb-comment ', addBadgeMenuToTopic);
-        });
+async function addBadgeToDynamic() {
+    var list = await newNodeTimeoutObserver('div.bili-dyn-list__items');
+    newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
+        newNodeMutationObserver(item, 'bb-comment ', addBadgeMenuToTopic);
     });
     jsUI.css.add(stylesheet + dynamiccss);
 }
@@ -195,9 +193,9 @@ function addBadgeMenuToTopic(comment) {
 
 function newNodeMutationObserver(node, style, callback) {
     new MutationObserver(mutations => {
-        mutations.forEach(async mutation => {
+        mutations.forEach(mutation => {
             mutation.addedNodes.forEach(node => {
-                if (node.tagName === 'DIV' && node.className.includes(style)) {
+                if (node.tagName === 'DIV' && node.className.startsWith(style)) {
                     callback(node);
                 }
             });
