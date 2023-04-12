@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.7
+// @version         1.8.8
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -55,7 +55,6 @@ var options = GM_getValue('options', {});
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
 var allmanga;
 var folder;
-var warning;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var aria2 = new Aria2(jsonrpc, secret);
 var jsUI = new JSUI();
@@ -132,8 +131,7 @@ var manga = {
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['#adLink1'],
-        logo: [-1]
+        ads: ['#adLink1']
     },
     'rawdevart.com': {
         image: '#img-container > div > img',
@@ -324,12 +322,12 @@ function removeAdsElement() {
 }
 
 function extractImage() {
-    warning = notification('extract', 'start');
+    var warning = notification('extract', 'start');
     downMenu.style.display = 'block';
     observer = setInterval(() => {
         if (allmanga === urls.length + fail.length) {
-            warning.remove();
             clearInterval(observer);
+            warning.remove();
             if (fail.length === 0) {
                 notification('extract', 'done');
             }
@@ -339,10 +337,12 @@ function extractImage() {
         }
     }, 250);
     if (watching.logo) {
-        watching.logo.forEach(el => {
-            var pos = el >= 0 ? el: allmanga + el;
-            images[pos].remove();
-            images.splice(pos, 1);
+        watching.logo.forEach(logo => {
+            var pos = images.findIndex(url => url === logo);
+            if (pos !== -1) {
+                images.splice(pos, 1)[0].remove();
+                allmanga --;
+            }
         });
     }
     images.forEach((element, index) => {
