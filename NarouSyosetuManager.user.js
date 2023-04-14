@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.9
+// @version      1.6.10
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@0e1bf22da3991b2cf321ff65edd07dbabb77a9fd/js/jsui.js#sha256-C0fa3PYnDs0YoG+8CMWG0XfzkyOBmTqgvFlh04b2cyo=
 // @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -25,7 +25,6 @@ if (navi === undefined) {
 }
 
 var {pathname} = location;
-var {clearfix} = localStorage;
 var title = document.querySelector('p.novel_title') ?? document.querySelector('a.margin_r20');
 var novelcode = /n\d+\w+/g.exec(pathname)[0];
 var novelname = title.innerText;
@@ -54,6 +53,7 @@ var css = document.createElement('style');
 css.innerHTML = `.jsui-menu-item {border-width: 0px;}
 .jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
+.jsui-basic-menu > * {flex: auto;}
 .jsui-table-button:nth-child(1) {line-height: 200%;}
 .jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
@@ -74,31 +74,8 @@ document.addEventListener('keydown', event => {
     }
 });
 
-var noveltitle = document.querySelector('div.novel_bn');
-if (noveltitle) {
-    var content = jsUI.menuitem({text: '本文のみを見る', onclick: toggleRemoveHeader});
-    content.style.cssText = 'display: inline-block !important; margin-left: 5px;';
-    noveltitle.appendChild(content);
-    function toggleRemoveHeader() {
-        localStorage.clearfix = clearfix = clearfix === '0' ? '1' : '0';
-        removeHeaderFooter();
-    }
-    function removeHeaderFooter() {
-        if (clearfix === '1') {
-            content.classList.add('jsui-menu-checked');
-            document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
-        }
-        else {
-            content.classList.remove('jsui-menu-checked');
-            document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
-        }
-    };
-    removeHeaderFooter();
-}
-
 var manager = jsUI.menulist([
     {text: '書庫管理', onclick: openBookShelf},
-    {text: 'PDF小説', onclick: openPDFNovel}
 ]);
 manager.style.cssText = 'line-height: 40px; font-weight: bold;';
 navi.appendChild(manager);
@@ -114,6 +91,27 @@ function openPDFNovel() {
     open('https://pdfnovels.net/' + novelcode + '/main.pdf', '_blank');
 }
 
+var noveltitle = document.querySelector('div.novel_bn');
+if (noveltitle) {
+    var reader = jsUI.menuitem({text: '本文のみ', onclick: readNovelOnly});
+    manager.appendChild(reader);
+    removeHeaderFooter();
+}
+function readNovelOnly() {
+    localStorage.clearfix = localStorage.clearfix === '0' ? '1' : '0';
+    removeHeaderFooter();
+}
+function removeHeaderFooter() {
+    if (localStorage.clearfix === '1') {
+        reader.classList.add('jsui-menu-checked');
+        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
+    }
+    else {
+        reader.classList.remove('jsui-menu-checked');
+        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
+    }
+};
+
 var container = document.createElement('div');
 container.className = 'jsui-manager';
 container.style.cssText = 'display: none;';
@@ -121,6 +119,7 @@ container.style.cssText = 'display: none;';
 var submenu = jsUI.menulist([
     {text: 'NCODE登録', onclick: subscribeCurrentNovel},
     {text: 'NCODE保存', onclick: exportAllNovels},
+    {text: 'PDF閲覧', onclick: openPDFNovel},
     {text: 'PDFダウンロード', onclick: downloadAllPDfs},
     {text: '書庫更新', onclick: saveAllChanges, id: 'jsui-save-btn'},
     {text: 'ログ表示', onclick: toggleLogging, id: 'jsui-log-btn'}
