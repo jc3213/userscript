@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.2
+// @version         1.5.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -57,8 +57,8 @@ else {
 }
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-main-menu {position: relative; width: 160px; display: inline-block; width: 220px;}
-.jsui-main-menu > .jsui-menu-item {display: inline-block; width: 100px;}
+jsUI.css.add(`.jsui-video-menu {position: relative; width: 160px; width: 220px;}
+.jsui-video-menu > .jsui-menu-item {width: 100px;}
 .jsui-drop-menu {width: 150px;}
 .jsui-analyse {display: flex;}
 .jsui-options {width: 150px;}
@@ -72,7 +72,7 @@ var menu = jsUI.menulist([
     {text: '设置', onclick: openOptions},
     {text: '解析', onclick: analyseVideo}
 ]);
-menu.className = 'jsui-main-menu';
+menu.classList.add('jsui-video-menu');
 function openOptions() {
     analyse.style.display = 'none';
     options.style.display = options.style.display === 'none' ? 'block' : 'none';
@@ -89,7 +89,6 @@ async function analyseVideo() {
         else {
             var {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').innerText).itemListElement[0];
             var id = document.body.querySelector('li.squirtle-pagelist-select-item.active').getAttribute('data-value');
-            console.log(id);
             await biliVideoExtractor(name, thumbnailUrl[0], 'pgc/player/web/playurl?ep_id=' + id, 'result');
         }
     }
@@ -145,7 +144,7 @@ new MutationObserver(mutations => {
         worker = true;
         options.style.display = analyse.style.display = 'none';
     }
-}).observe(document.head, {childList: true, subtree: true});
+}).observe(document.head, {childList: true});
 
 async function biliVideoExtractor(name, image, playurl, key) {
     var multi = document.querySelector('#multi_page li.on > a');
