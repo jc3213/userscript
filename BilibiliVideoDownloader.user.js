@@ -45,7 +45,7 @@ if (bvplayer) {
     var wideStat = 'bpx-state-entered';
     var nextBtn = 'div.bpx-player-ctrl-next';
     var prevBtn = 'div.bpx-player-ctrl-prev';
-    var cssOffset = '.jsui-main-menu {top: -6px;}';
+    var cssOffset = '.jsui-video-menu {top: -6px;}';
 }
 else {
     menuBox = 'div.toolbar';
@@ -53,7 +53,7 @@ else {
     wideStat = 'active';
     nextBtn = 'div.squirtle-video-next';
     prevBtn = 'div.squirtle-video-prev';
-    cssOffset = `.jsui-main-menu {left: 20px; top: -6px;}`;
+    cssOffset = `.jsui-video-menu {left: 20px; top: -6px;}`;
 }
 
 var jsUI = new JSUI();
