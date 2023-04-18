@@ -28,7 +28,6 @@ new MutationObserver(mutations => {
         else if (whatis === 'commit') {
             commitView();
         }
-        console.log(jsdelivr);
     }
 }).observe(document.head, {childList: true});
 
