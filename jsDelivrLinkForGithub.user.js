@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.4.0
+// @version      0.5.0
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -13,7 +13,7 @@ var where;
 var whatis;
 var components;
 var stylecss;
-var jsdelivr = 'https://cdn.jsdelivr.net/gh/';
+var jsdelivr;
 
 new MutationObserver(mutations => {
     if (where !== location.pathname) {
@@ -21,12 +21,12 @@ new MutationObserver(mutations => {
         components = where.split('/');
         whatis = components[3];
         if (whatis === 'blob') {
-            jsdelivr += components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
+            jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
             stylecss = 'scale: 1.5;';
             newNodeTimeoutObserver('#spoof-warning + div + div > div > :nth-child(2) > :nth-child(2) > :nth-child(2)').then(createJSDelivrButton);
         }
         else if (whatis === 'commit') {
-            jsdelivr += components[1] + '/' + components[2] + '@' + components[4] + '/';
+            jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components[4] + '/';
             stylecss = 'scale: 2; top: 10px;';
             newNodeTimeoutObserver('div.js-diff-progressive-container').then(async files => {
                 files.querySelectorAll('span.Truncate').forEach(createJSDelivrButton);
@@ -39,7 +39,7 @@ new MutationObserver(mutations => {
 function createJSDelivrButton(menu) {
     var copy = document.createElement('div');
     if (whatis === 'blob') {
-        copy.url = jsdelivr ;
+        copy.url = jsdelivr;
     }
     else if (whatis === 'commit') {
         copy.url = jsdelivr + menu.querySelector('a').title;
