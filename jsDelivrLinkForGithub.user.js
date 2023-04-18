@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.6.0
+// @version      0.7.0
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -23,7 +23,7 @@ new MutationObserver(mutations => {
         whatis = components[3];
         if (whatis === 'blob') {
             jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
-            document.querySelector('react-app') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
+            document.querySelector('#symbols-pane') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
         }
         else if (whatis === 'commit') {
             commitView();
@@ -34,7 +34,7 @@ new MutationObserver(mutations => {
 function newCodeSearchAndCodeView() {
     cssText = 'font-size: 20px; height: 28px; width: 28px;';
     className = 'types__StyledButton-sc-ws60qy-0 dCpkrR';
-    newNodeTimeoutObserver('div.Box-sc-g0xbh4-0.kSGBPx').then(createJSDelivrButton);
+    newNodeTimeoutObserver('div.Box-sc-g0xbh4-0.kSGBPx').then(findJSDelivrButton);
 }
 
 function oldCodeSearchAndCodeView() {
@@ -48,20 +48,29 @@ function commitView() {
     cssText = 'scale: 1.92; top: 9px; left: -8px;';
     className = 'd-inline-block btn-octicon';
     newNodeTimeoutObserver('div.js-diff-progressive-container').then(async files => {
-        files.querySelectorAll('span.Truncate').forEach(createJSDelivrButton);
+        files.querySelectorAll('span.Truncate').forEach(menu => {
+            var button = createJSDelivrButton(menu);
+            button.url += button.previousElementSibling.value;
+        });
     });
+}
+
+function findJSDelivrButton(menu) {
+    var copy = menu.querySelector('#copy_jsdelivr');
+    if (copy) {
+        copy.url = jsdelivr;
+    }
+    else {
+        createJSDelivrButton(menu);
+    }
 }
 
 function createJSDelivrButton(menu) {
     var copy = document.createElement('div');
-    if (whatis === 'blob') {
-        copy.url = jsdelivr;
-    }
-    else if (whatis === 'commit') {
-        copy.url = jsdelivr + menu.querySelector('a').title;
-    }
+    copy.url = jsdelivr;
     copy.className = className;
     copy.innerText = '🖹';
+    copy.id = 'copy_jsdelivr';
     copy.title = 'Copy jsdelivr link'
     copy.style.cssText = 'position: relative; user-select: none; cursor: pointer; ' + cssText;
     copy.addEventListener('mousedown', ({button}) => {
@@ -72,5 +81,6 @@ function createJSDelivrButton(menu) {
             open(copy.url);
         }
     });
-    menu.appendChild(copy)
+    menu.appendChild(copy);
+    return copy;
 }
