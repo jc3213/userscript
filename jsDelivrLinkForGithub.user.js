@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.5.0
+// @version      0.6.0
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -12,7 +12,8 @@
 var where;
 var whatis;
 var components;
-var stylecss;
+var className;
+var cssText;
 var jsdelivr;
 
 new MutationObserver(mutations => {
@@ -22,19 +23,35 @@ new MutationObserver(mutations => {
         whatis = components[3];
         if (whatis === 'blob') {
             jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
-            stylecss = 'scale: 1.5;';
-            newNodeTimeoutObserver('#spoof-warning + div + div > div > :nth-child(2) > :nth-child(2) > :nth-child(2)').then(createJSDelivrButton);
+            document.querySelector('react-app') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
         }
         else if (whatis === 'commit') {
-            jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components[4] + '/';
-            stylecss = 'scale: 2; top: 10px;';
-            newNodeTimeoutObserver('div.js-diff-progressive-container').then(async files => {
-                files.querySelectorAll('span.Truncate').forEach(createJSDelivrButton);
-            });
+            commitView();
         }
         console.log(jsdelivr);
     }
 }).observe(document.head, {childList: true});
+
+function newCodeSearchAndCodeView() {
+    cssText = 'font-size: 20px; height: 28px; width: 28px;';
+    className = 'types__StyledButton-sc-ws60qy-0 dCpkrR';
+    newNodeTimeoutObserver('#repos-sticky-header > div > :nth-child(1) > :nth-child(2) > :nth-child(3) > div').then(createJSDelivrButton);
+}
+
+function oldCodeSearchAndCodeView() {
+    cssText = 'scale: 1.66;';
+    className = 'd-inline-block btn-octicon';
+    newNodeTimeoutObserver('[data-target="readme-toc.content"] .BtnGroup + .d-flex > :nth-child(2)').then(createJSDelivrButton);
+}
+
+function commitView() {
+    jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components[4] + '/';
+    cssText = 'scale: 1.92; top: 9px; left: -8px;';
+    className = 'd-inline-block btn-octicon';
+    newNodeTimeoutObserver('div.js-diff-progressive-container').then(async files => {
+        files.querySelectorAll('span.Truncate').forEach(createJSDelivrButton);
+    });
+}
 
 function createJSDelivrButton(menu) {
     var copy = document.createElement('div');
@@ -44,10 +61,10 @@ function createJSDelivrButton(menu) {
     else if (whatis === 'commit') {
         copy.url = jsdelivr + menu.querySelector('a').title;
     }
-    copy.className = 'd-inline-block btn-octicon';
+    copy.className = className;
     copy.innerText = '🖹';
     copy.title = 'Copy jsdelivr link'
-    copy.style.cssText = 'position: relative; user-select: none; cursor: pointer; ' + stylecss;
+    copy.style.cssText = 'position: relative; user-select: none; cursor: pointer; ' + cssText;
     copy.addEventListener('mousedown', ({button}) => {
         if (button === 0) {
             navigator.clipboard.writeText(copy.url);
