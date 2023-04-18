@@ -35,7 +35,7 @@ new MutationObserver(mutations => {
 function newCodeSearchAndCodeView() {
     cssText = 'font-size: 20px; height: 28px; width: 28px;';
     className = 'types__StyledButton-sc-ws60qy-0 dCpkrR';
-    newNodeTimeoutObserver('#repos-sticky-header > div > :nth-child(1) > :nth-child(2) > :nth-child(3) > div').then(createJSDelivrButton);
+    newNodeTimeoutObserver('div.Box-sc-g0xbh4-0.kSGBPx').then(createJSDelivrButton);
 }
 
 function oldCodeSearchAndCodeView() {
