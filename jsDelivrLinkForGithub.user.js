@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.7.0
+// @version      0.7.1
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -23,7 +23,7 @@ new MutationObserver(mutations => {
         whatis = components[3];
         if (whatis === 'blob') {
             jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
-            document.querySelector('#symbols-pane') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
+            document.querySelector('react-app') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
         }
         else if (whatis === 'commit') {
             commitView();
@@ -40,7 +40,7 @@ function newCodeSearchAndCodeView() {
 function oldCodeSearchAndCodeView() {
     cssText = 'scale: 1.66;';
     className = 'd-inline-block btn-octicon';
-    newNodeTimeoutObserver('[data-target="readme-toc.content"] .BtnGroup + .d-flex > :nth-child(2)').then(createJSDelivrButton);
+    newNodeTimeoutObserver('.BtnGroup + .d-flex > .ml-1 + div').then(createJSDelivrButton);
 }
 
 function commitView() {
