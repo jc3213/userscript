@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.7.1
+// @version      0.7.2
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -23,7 +23,7 @@ new MutationObserver(mutations => {
         whatis = components[3];
         if (whatis === 'blob') {
             jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
-            document.querySelector('react-app') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
+            document.querySelector('.Box-sc-g0xbh4-0') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
         }
         else if (whatis === 'commit') {
             commitView();
