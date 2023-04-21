@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.7.2
+// @version      0.8.0
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -12,9 +12,10 @@
 var where;
 var whatis;
 var components;
-var className;
-var cssText;
 var jsdelivr;
+var tagName;
+var cssText;
+var className;
 
 new MutationObserver(mutations => {
     if (where !== location.pathname) {
@@ -32,12 +33,14 @@ new MutationObserver(mutations => {
 }).observe(document.head, {childList: true});
 
 function newCodeSearchAndCodeView() {
+    tagName = 'button';
     cssText = 'font-size: 20px; height: 28px; width: 28px;';
-    className = 'types__StyledButton-sc-ws60qy-0 dCpkrR';
-    newNodeTimeoutObserver('div.Box-sc-g0xbh4-0.kSGBPx').then(findJSDelivrButton);
+    className = 'types__StyledButton-sc-ws60qy-0 kbjJSF';
+    newNodeTimeoutObserver('.react-blob-header-edit-and-raw-actions').then(findJSDelivrButton);
 }
 
 function oldCodeSearchAndCodeView() {
+    tagName = 'remote-clipboard-copy';
     cssText = 'scale: 1.66;';
     className = 'd-inline-block btn-octicon';
     newNodeTimeoutObserver('.BtnGroup + .d-flex > .ml-1 + div').then(createJSDelivrButton);
@@ -45,6 +48,7 @@ function oldCodeSearchAndCodeView() {
 
 function commitView() {
     jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components[4] + '/';
+    tagName = 'clipboard-copy';
     cssText = 'scale: 1.92; top: 9px; left: -8px;';
     className = 'd-inline-block btn-octicon';
     newNodeTimeoutObserver('div.js-diff-progressive-container').then(async files => {
@@ -66,12 +70,12 @@ function findJSDelivrButton(menu) {
 }
 
 function createJSDelivrButton(menu) {
-    var copy = document.createElement('div');
+    var copy = document.createElement(tagName);
     copy.url = jsdelivr;
     copy.className = className;
     copy.innerText = '🖹';
     copy.id = 'copy_jsdelivr';
-    copy.title = 'Copy jsdelivr link'
+    copy.title = 'Copy jsdelivr link';
     copy.style.cssText = 'position: relative; user-select: none; cursor: pointer; ' + cssText;
     copy.addEventListener('mousedown', ({button}) => {
         if (button === 0) {
