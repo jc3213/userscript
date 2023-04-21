@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         jsDelivr link for Github
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.0
+// @version      0.8.1
 // @description  Add a button to copy jsdelivr link for github files
 // @author       jc3213
 // @match        https://github.com/*
@@ -22,11 +22,13 @@ new MutationObserver(mutations => {
         where = location.pathname;
         components = where.split('/');
         whatis = components[3];
+        jsdelivr ='https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@';
         if (whatis === 'blob') {
-            jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components.slice(4).join('/');
-            document.querySelector('.Box-sc-g0xbh4-0') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
+            jsdelivr += components.slice(4).join('/');
+            document.querySelector('script[src*="react-lib"]') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
         }
         else if (whatis === 'commit') {
+            jsdelivr += components[4] + '/';
             commitView();
         }
     }
@@ -34,7 +36,7 @@ new MutationObserver(mutations => {
 
 function newCodeSearchAndCodeView() {
     tagName = 'button';
-    cssText = 'font-size: 20px; height: 28px; width: 28px;';
+    cssText = 'font-size: 20px; height: 28px;';
     className = 'types__StyledButton-sc-ws60qy-0 kbjJSF';
     newNodeTimeoutObserver('.react-blob-header-edit-and-raw-actions').then(findJSDelivrButton);
 }
@@ -47,7 +49,6 @@ function oldCodeSearchAndCodeView() {
 }
 
 function commitView() {
-    jsdelivr = 'https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@' + components[4] + '/';
     tagName = 'clipboard-copy';
     cssText = 'scale: 1.92; top: 9px; left: -8px;';
     className = 'd-inline-block btn-octicon';
