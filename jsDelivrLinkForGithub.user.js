@@ -25,7 +25,7 @@ new MutationObserver(mutations => {
         jsdelivr ='https://cdn.jsdelivr.net/gh/' + components[1] + '/' + components[2] + '@';
         if (whatis === 'blob') {
             jsdelivr += components.slice(4).join('/');
-            document.querySelector('script[src*="react-lib"]') ? newCodeSearchAndCodeView() : oldCodeSearchAndCodeView();
+            document.querySelector('script[src*="react-lib"]') ? newCodeView() : oldCodeView();
         }
         else if (whatis === 'commit') {
             jsdelivr += components[4] + '/';
@@ -34,14 +34,14 @@ new MutationObserver(mutations => {
     }
 }).observe(document.head, {childList: true});
 
-function newCodeSearchAndCodeView() {
+function newCodeView() {
     tagName = 'button';
     cssText = 'font-size: 20px; height: 28px;';
     className = 'types__StyledButton-sc-ws60qy-0 kbjJSF';
     newNodeTimeoutObserver('.react-blob-header-edit-and-raw-actions').then(findJSDelivrButton);
 }
 
-function oldCodeSearchAndCodeView() {
+function oldCodeView() {
     tagName = 'remote-clipboard-copy';
     cssText = 'scale: 1.66;';
     className = 'd-inline-block btn-octicon';
