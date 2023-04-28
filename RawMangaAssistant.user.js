@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.8
+// @version         1.8.9
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -29,6 +29,7 @@
 // @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
 // @                klmanga.net
 // @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*oralistnations.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.diclotrans.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*galanasorra.com/*", "action": "cancel"}
@@ -131,7 +132,7 @@ var manga = {
         lazyload: 'data-aload',
         title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
         shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
-        ads: ['#adLink1']
+        ads: ['#adLink1', '.chapter-content > center']
     },
     'rawdevart.com': {
         image: '#img-container > div > img',
@@ -286,7 +287,7 @@ function switchMenuMode() {
     }
 }
 function contextMenuHandler(event) {
-    if (event.shiftKey) {
+    if (event.shiftKey || event.target.tagName === 'IMG') {
         return;
     }
     event.preventDefault();
