@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.6.10
+// @version      1.7.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -24,10 +24,8 @@ if (navi === undefined) {
     return;
 }
 
-var {pathname} = location;
-var title = document.querySelector('p.novel_title') ?? document.querySelector('a.margin_r20');
-var novelcode = /n\d+\w+/g.exec(pathname)[0];
-var novelname = title.innerText;
+var [, novelcode, novelread] = location.pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
+var novelname = document.querySelector('[property="og:title"]').getAttribute('content');
 var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
@@ -50,10 +48,12 @@ addEventListener('message', event => {
 
 // UI作成関連
 var css = document.createElement('style');
-css.innerHTML = `.jsui-menu-item {border-width: 0px;}
+css.innerText = `.jsui-menu-item {border-width: 0px;}
 .jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
-.jsui-basic-menu > * {flex: auto;}
+.jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
+.jsui-menu-item {flex: auto; padding: 5px 10px;}
+.jsui-menu-checked, .jsui-menu-item:not(.jsui-menu-disabled):active {padding: 4px 9px}
 .jsui-table-button:nth-child(1) {line-height: 200%;}
 .jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
@@ -77,7 +77,7 @@ document.addEventListener('keydown', event => {
 var manager = jsUI.menulist([
     {text: '書庫管理', onclick: openBookShelf},
 ]);
-manager.style.cssText = 'line-height: 40px; font-weight: bold;';
+manager.className += ' jsui-book-manager';
 navi.appendChild(manager);
 function openBookShelf() {
     if (shelf === false) {
@@ -91,8 +91,8 @@ function openPDFNovel() {
     open('https://pdfnovels.net/' + novelcode + '/main.pdf', '_blank');
 }
 
-var noveltitle = document.querySelector('div.novel_bn');
-if (noveltitle) {
+if (novelread) {
+    css.innerText += '#novel_color {width: 60%}';
     var reader = jsUI.menuitem({text: '本文のみ', onclick: readNovelOnly});
     manager.appendChild(reader);
     removeHeaderFooter();
