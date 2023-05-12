@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.3
+// @version         1.5.4
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -40,12 +40,12 @@ var format = {
 };
 
 if (bvplayer) {
-    var menuBox = '#arc_toolbar_report';
+    var menuBox = 'div.video-toolbar-left';
     var wideBtn = 'div.bpx-player-ctrl-wide';
     var wideStat = 'bpx-state-entered';
     var nextBtn = 'div.bpx-player-ctrl-next';
     var prevBtn = 'div.bpx-player-ctrl-prev';
-    var cssOffset = '.jsui-video-menu {top: -6px;}';
+    var cssOffset = '';
 }
 else {
     menuBox = 'div.toolbar';
@@ -57,14 +57,12 @@ else {
 }
 
 var jsUI = new JSUI();
-jsUI.css.add(`.jsui-video-menu {position: relative; width: 160px; width: 220px;}
-.jsui-video-menu > .jsui-menu-item {width: 100px;}
-.jsui-drop-menu {width: 150px;}
+jsUI.css.add(`.jsui-video-menu {position: relative; width: 240px;}
+.jsui-drop-menu, .jsui-options {width: 120px;}
 .jsui-analyse {display: flex;}
-.jsui-options {width: 150px;}
 .jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}
 .jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}
-.jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%;}
+.jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%; margin: 0px;}
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}
 ${cssOffset}`);
 
