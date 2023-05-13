@@ -4,8 +4,8 @@
 - Click `Raw` then `Tampermonkey` will install the script automatically
 
 ## JS Delivr CDN
-- [BilibiliLiveRoomFilter.user.js](BilibiliLiveRoomFilter.user.js)
-- [BilibiliUserTagging.user.js](BilibiliUserTagging.user.js)
-- [BilibiliVideoDownloader.user.js](BilibiliVideoDownloader.user.js)
-- [NGAEmojiManager.user.js](NGAEmojiManager.user.js)
-- [tsdmAutoSignAndWork.user.js](tsdmAutoSignAndWork.user.js)
+- [BilibiliLiveRoomFilter.user.js](https://jc3213.github.io/userscript/BilibiliLiveRoomFilter.user.js)
+- [BilibiliUserTagging.user.js](https://jc3213.github.io/userscript/BilibiliUserTagging.user.js)
+- [BilibiliVideoDownloader.user.js](https://jc3213.github.io/userscript/BilibiliVideoDownloader.user.js)
+- [NGAEmojiManager.user.js](https://jc3213.github.io/userscript/NGAEmojiManager.user.js)
+- [tsdmAutoSignAndWork.user.js](https://jc3213.github.io/userscript/tsdmAutoSignAndWork.user.js)
