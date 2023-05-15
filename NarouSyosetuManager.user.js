@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.7.0
+// @version      1.7.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -19,14 +19,14 @@
 // ==/UserScript==
 
 'use strict';
-var navi = document.querySelector('#head_nav');
-if (navi === undefined) {
+var {pathname} = location;
+var [, novelcode, novelread] = pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
+if (!novelcode) {
     return;
 }
-
-var [, novelcode, novelread] = location.pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
-var novelname = document.querySelector('[property="og:title"]').getAttribute('content');
+var novelname = pathname === '/' + novelcode + '/' ? document.title : document.querySelector('#container a[href$="/' + novelcode + '/"]').innerText;
 var myncode = novelcode;
+var navi = document.querySelector('#head_nav');
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
@@ -43,6 +43,15 @@ addEventListener('message', event => {
     var {extension_name} = event.data;
     if (extension_name === 'Download With Aria2') {
         aria2c = extension_name;
+    }
+});
+
+var tategaki = navi.querySelector('li:nth-child(5) > a');
+tategaki.href += 'main.pdf';
+tategaki.addEventListener('click', event => {
+    if (aria2c) {
+        event.preventDefault();
+        postMessage({aria2c, download: { url: tategaki.href, options: {out: novelname + '.pdf'} } });
     }
 });
 
@@ -79,6 +88,7 @@ var manager = jsUI.menulist([
 ]);
 manager.className += ' jsui-book-manager';
 navi.appendChild(manager);
+
 function openBookShelf() {
     if (shelf === false) {
         bookmark.forEach(fancyTableItem);
@@ -86,9 +96,6 @@ function openBookShelf() {
     }
     container.style.display = event.target.classList.contains('jsui-menu-checked') ? 'none' : 'block';
     event.target.classList.toggle('jsui-menu-checked');
-}
-function openPDFNovel() {
-    open('https://pdfnovels.net/' + novelcode + '/main.pdf', '_blank');
 }
 
 if (novelread) {
@@ -119,7 +126,6 @@ container.style.cssText = 'display: none;';
 var submenu = jsUI.menulist([
     {text: 'NCODE登録', onclick: subscribeCurrentNovel},
     {text: 'NCODE保存', onclick: exportAllNovels},
-    {text: 'PDF閲覧', onclick: openPDFNovel},
     {text: 'PDFダウンロード', onclick: downloadAllPDfs},
     {text: '書庫更新', onclick: saveAllChanges, id: 'jsui-save-btn'},
     {text: 'ログ表示', onclick: toggleLogging, id: 'jsui-log-btn'}
