@@ -1,13 +1,11 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.7.1
+// @version      1.8.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
-// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@0e1bf22da3991b2cf321ff65edd07dbabb77a9fd/js/jsui.js#sha256-C0fa3PYnDs0YoG+8CMWG0XfzkyOBmTqgvFlh04b2cyo=
-// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/metalink4.js#sha256-KrcYnyS4fuAruLmyc1zQab2cd+YRfF98S4BupoTVz+A=
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -24,9 +22,8 @@ var [, novelcode, novelread] = pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
 if (!novelcode) {
     return;
 }
-var novelname = pathname === '/' + novelcode + '/' ? document.title : document.querySelector('#container a[href$="/' + novelcode + '/"]').innerText;
+var novelname = pathname === '/' + novelcode + '/' ? document.title : $('#container a[href$="/' + novelcode + '/"]')[0].innerText;
 var myncode = novelcode;
-var navi = document.querySelector('#head_nav');
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
@@ -37,7 +34,7 @@ var shelf = false;
 var aria2c;
 var bookmark = GM_getValue('bookmark', []);
 var scheduler = GM_getValue('scheduler', today);
-var jsUI = new JSUI();
+var overlay = $('<div class="jsui-notify-overlay"></div>');
 
 addEventListener('message', event => {
     var {extension_name} = event.data;
@@ -46,9 +43,8 @@ addEventListener('message', event => {
     }
 });
 
-var tategaki = navi.querySelector('li:nth-child(5) > a');
-tategaki.href += 'main.pdf';
-tategaki.addEventListener('click', event => {
+var tategaki = $('#head_nav > :nth-child(5) > a');
+tategaki.attr('href', 'https://pdfnovels.net/' + novelcode + '/main.pdf').click(event => {
     if (aria2c) {
         event.preventDefault();
         postMessage({aria2c, download: { url: tategaki.href, options: {out: novelname + '.pdf'} } });
@@ -56,88 +52,76 @@ tategaki.addEventListener('click', event => {
 });
 
 // UI作成関連
-var css = document.createElement('style');
-css.innerText = `.jsui-menu-item {border-width: 0px;}
-.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-menu-checked {padding: 2px; border-width: 1px;}
-.jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px;}
+var manager = $('<div class="jsui-basic-menu jsui-book-manager"></div>');
+
+var css = $(`<style>
+.jsui-menu-item {text-align: center; margin: 1px; flex: auto; padding: 5px 10px; border-width: 0px;}
+.jsui-menu-item:not(.jsui-menu-disabled):hover, .jsui-table-button:hover {cursor: pointer; filter: contrast(75%);}
+.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-table-button:active {filter: contrast(45%);}
+.jsui-menu-checked {padding: 4px 9px; border-style: inset; border-width: 1px;}
+.jsui-menu-disabled {filter: contrast(25%);}
+.jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
-.jsui-menu-item {flex: auto; padding: 5px 10px;}
-.jsui-menu-checked, .jsui-menu-item:not(.jsui-menu-disabled):active {padding: 4px 9px}
+.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
+.jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
 .jsui-table-button:nth-child(1) {line-height: 200%;}
+.jsui-table-column {display: flex; gap: 1px; margin: 1px;}
 .jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
+.jsui-table-cell, .jsui-table-button {flex: auto; padding: 5px; text-align: center; line-height: 100%; border-width: 1px; border-style: solid;}
+.jsui-table-head > * {background-color: #000000; color: #ffffff; padding: 10px 5px;}
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
-.jsui-manager {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
+.jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
+.jsui-notify-popup {position: relative; background-color: #fff; cursor: pointer; padding: 5px 10px; margin: 5px; width: fit-content; border-radius: 3px; border: 1px outset #cccccc;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
 .novel_view > p {margin: 30px 0px;}
 .novel_view > p > br {display: none;}
-.novel_bn:last-child {margin-top: 100px !important;}`;
-document.body.appendChild(css);
+.novel_bn:last-child {margin-top: 100px !important;}
+</style>`);
+manager.append(css);
 
-document.addEventListener('keydown', event => {
-    if (event.keyCode === 37) {
-        document.querySelector('div.novel_bn > a:nth-child(1)').click();
-    }
-    else if (event.keyCode === 39) {
-        document.querySelector('div.novel_bn > a:nth-child(2)').click();
-    }
-});
-
-var manager = jsUI.menulist([
-    {text: '書庫管理', onclick: openBookShelf},
-]);
-manager.className += ' jsui-book-manager';
-navi.appendChild(manager);
-
-function openBookShelf() {
+var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => {
     if (shelf === false) {
         bookmark.forEach(fancyTableItem);
         shelf = true;
     }
-    container.style.display = event.target.classList.contains('jsui-menu-checked') ? 'none' : 'block';
-    event.target.classList.toggle('jsui-menu-checked');
-}
+    bookshelf.toggle();
+    button.toggleClass('jsui-menu-checked');
+});
+
+manager.append(button);
+$('#head_nav').append(manager);
 
 if (novelread) {
-    css.innerText += '#novel_color {width: 60%}';
-    var reader = jsUI.menuitem({text: '本文のみ', onclick: readNovelOnly});
-    manager.appendChild(reader);
-    removeHeaderFooter();
-}
-function readNovelOnly() {
-    localStorage.clearfix = localStorage.clearfix === '0' ? '1' : '0';
+    $('#novel_color').css({width: '60%'});
+    var clearfix = $('<div class="jsui-menu-item">本文のみ</div>').click(event => {
+        localStorage.clearfix = localStorage.clearfix === '0' ? '1' : '0';
+        removeHeaderFooter();
+    });;
+    manager.append(clearfix);
     removeHeaderFooter();
 }
 function removeHeaderFooter() {
     if (localStorage.clearfix === '1') {
-        reader.classList.add('jsui-menu-checked');
-        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'none'} );
+        clearfix.addClass('jsui-menu-checked');
+        $('#novel_p, #novel_a').hide();
     }
     else {
-        reader.classList.remove('jsui-menu-checked');
-        document.querySelectorAll('#novel_p, #novel_a').forEach(element => { element.style.display = 'block'} );
+        clearfix.removeClass('jsui-menu-checked');
+        $('#novel_p, #novel_a').show();
     }
 };
 
-var container = document.createElement('div');
-container.className = 'jsui-manager';
-container.style.cssText = 'display: none;';
+var bookshelf = $('<div class="jsui-book-shelf"></div>').hide();;
+var shelf_menu = $('<div class="jsui-basic-menu"></div>');
+var shelf_table = $('<div class="jsui-table"></div>');
+var shelf_debug = $('<div class="jsui-logging"></div>');
+bookshelf.append(shelf_menu, shelf_table, shelf_debug);
 
-var submenu = jsUI.menulist([
-    {text: 'NCODE登録', onclick: subscribeCurrentNovel},
-    {text: 'NCODE保存', onclick: exportAllNovels},
-    {text: 'PDFダウンロード', onclick: downloadAllPDfs},
-    {text: '書庫更新', onclick: saveAllChanges, id: 'jsui-save-btn'},
-    {text: 'ログ表示', onclick: toggleLogging, id: 'jsui-log-btn'}
-]);
-function subscribeNcode(ncode, title) {
-    var book = {ncode, title, last: 0, next: 0};
-    fancyTableItem(book, bookmark.length);
-    bookmark.push(book);
-    saveBookmarkButton();
-    myFancyLog(ncode, title, 'は書庫に登録しました！');
-}
-async function subscribeCurrentNovel() {
+var input_field = $('<input>').change(event => {
+    myncode = event.target.value ?? novelcode;
+});
+var submit_btn = $('<div class="jsui-menu-item">NCODE登録</div>').click(async event => {
     var book = bookmark.find(({ncode}) => ncode === myncode);
     if (book) {
         var {ncode, title} = book;
@@ -165,8 +149,21 @@ async function subscribeCurrentNovel() {
             subscribeNcode(myncode, title)
         }
     }
-}
-async function downloadAllPDfs() {
+});
+var export_btn = $('<div class="jsui-menu-item">NCODE保存</div>').click(event => {
+    if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
+        var text = JSON.stringify(bookmark);
+        var blob = new Blob([text], {type: 'application/metalink+xml; charset=utf-8'})
+        var href = URL.createObjectURL(blob);
+        var download = '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.json';
+        var a = $('<a></a>').attr({href, download});
+        a[0].click();
+        a.remove();
+        saveBookmarkButton();
+        alert('情報のエックスポートは無事に成功しました！');
+    }
+});
+var download_btn = $('<div class="jsui-menu-item">PDFダウンロード</div>').click(async event => {
     if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
         if (download.all) {
             return;
@@ -178,76 +175,44 @@ async function downloadAllPDfs() {
         GM_setValue('bookmark', result);
         download.all = false;
     }
-}
-function exportAllNovels() {
-    if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        var meta4 = bookmark.map(book => {
-            var {ncode, title} = book;
-            var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
-            var name = book.title + '.pdf';
-            book.last = updateBookInfo(ncode);
-            return {url: [{url}], name, language: 'ja'};
-        });
-        var text = metalink4(meta4);
-        var blob = new Blob([text], {type: 'application/metalink+xml; charset=utf-8'})
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.meta4';
-        a.click();
-        a.remove();
-        saveBookmarkButton();
-        alert('情報のエックスポートは無事に成功しました！');
-    }
-}
-function saveAllChanges() {
+});
+var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save-btn">書庫更新</div>').click(event => {
     if (changed) {
         GM_setValue('bookmark', bookmark);
-        saveBtn.classList.add('jsui-menu-disabled');
+        update_btn.addClass('jsui-menu-disabled');
         changed = false;
-        jsTable.style.display = 'block';
+        shelf_table.show();
     }
-}
-function toggleLogging(event) {
-    jsTable.style.display = event.target.classList.contains('jsui-menu-checked') ? 'block' : 'none';
-    logBtn.classList.toggle('jsui-menu-checked');
-}
+});
+var debug_btn = $('<div class="jsui-menu-item" id="jsui-log-btn">ログ表示</div>').click(event => {
+    shelf_table.toggle();
+    debug_btn.toggleClass('jsui-menu-checked');
+});
+shelf_menu.append(input_field, submit_btn, export_btn, download_btn, update_btn, debug_btn);
 
-var saveBtn = submenu.querySelector('#jsui-save-btn');
-var logBtn = submenu.querySelector('#jsui-log-btn')
-saveBtn.classList.add('jsui-menu-disabled');
-
-var input = document.createElement('input');
-input.addEventListener('change', event => {
-    myncode = event.target.value ?? novelcode;
+$(document.body).append(bookshelf, overlay).keydown(event => {
+    if (event.keyCode === 37) {
+        $('#novel_color > .novel_bn > a')[0].click();
+    }
+    else if (event.keyCode === 39) {
+        $('#novel_color > .novel_bn > a')[1].click();
+    }
 });
 
-var logWindow = document.createElement('div');
-logWindow.className = 'jsui-logging';
-
-submenu.prepend(input);
-var jsTable = jsUI.table(['NCODE', '小説タイトル', '更新間隔', 'ダウンロード']);
-container.prepend(submenu, jsTable, logWindow);
-document.body.appendChild(container);
+var shelf_thead = $('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div><div class="jsui-table-cell">更新間隔</div><div class="jsui-table-cell">ダウンロード</div></div>');
+shelf_table.append(shelf_thead);
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
-    var mybook = jsTable.add([
-        {text: ncode, onclick: event => removeNcodeFromShelf(mybook, index, ncode, title)},
-        {text: title, onclick: event => openNcodeInNewPage(ncode, title)},
-        {text: generateTimeFormat(book.last), onclick: event => downloadCurrentNcode(book, title)}
-    ]);
-    var input = document.createElement('input');
-    input.type = 'number';
-    input.style.width = '126px';
-    input.min = '0';
-    input.max = '30';
-    input.value = next;
-    input.title = next === 0 ? 'は更新しないように設定しました！' : 'は ' + next + ' 日間隔で更新するように設定しました！'
-    input.addEventListener('change', event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
-
-    mybook.lastChild.before(input);
-    mybook.id = ncode;
+`<div class="jsui-table-column" id="n1976ey">
+<div class="jsui-table-button">2023/5/168:6:28</div></div>`
+    var mybook = $('<div class="jsui-table-column"></div>').attr('id', ncode);
+    var cell_ncode = $('<div class="jsui-table-button"></div>').text(ncode).click(event => removeNcodeFromShelf(mybook, index, ncode, title));
+    var cell_title = $('<div class="jsui-table-button"></div>').text(title).click(event => openNcodeInNewPage(ncode, title));
+    var cell_input = $('<input type="number" min="0" max="30" style="width: 126px;">').attr('title', next === 0 ? '自動更新をしません' : next + '日間隔で更新します').val(next).change(event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
+    var cell_update = $('<div class="jsui-table-button"></div>').text(generateTimeFormat(book.last)).click(event => downloadCurrentNcode(book, title));
+    mybook.append(cell_ncode, cell_title, cell_input, cell_update).appendTo(shelf_table);
 }
 function removeNcodeFromShelf(mybook, index, ncode, title) {
     if (confirm('【 ' + title + ' 】を書庫から削除しますか？')) {
@@ -282,7 +247,7 @@ function generateTimeFormat(ms) {
     return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
 }
 function saveBookmarkButton() {
-    saveBtn.classList.remove('jsui-menu-disabled');
+    update_btn.removeClass('jsui-menu-disabled');
     changed = true;
 }
 
@@ -315,7 +280,7 @@ async function downloadPDFHelper(book) {
     if (aria2c) {
         postMessage({aria2c, download: { url, options: {out: name} } });
         book.last = updateBookInfo(ncode);
-        return book;
+        //return book;
     }
     if (download[ncode]) {
         myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
@@ -326,12 +291,11 @@ async function downloadPDFHelper(book) {
     var details = await promisedXMLRequest(url);
     if (details.response.type === 'application/pdf') {
         var href = URL.createObjectURL(details.response);
+        var down = $('<a></a>').attr({href, download: name});
+        down[0].click();
+        down.remove();
         book.last = updateBookInfo(ncode);
         download[ncode] = false;
-        var a = document.createElement('a');
-        a.href = href;
-        a.download = name;
-        a.click();
         return book;
     }
     else {
@@ -339,7 +303,7 @@ async function downloadPDFHelper(book) {
     }
 }
 function updateBookInfo(ncode) {
-    container.querySelector('#' + ncode).lastChild.innerHTML = generateTimeFormat(timeline);
+    var date = shelf_table.find('#' + ncode + '> :last-child').text(generateTimeFormat(timeline));
     return timeline;
 }
 function promisedXMLRequest(url) {
@@ -367,22 +331,21 @@ function waitForRetryDownload(book) {
 // ログ関連
 function myFancyLog(ncode, title, result) {
     if (ncode && title) {
-        var html = '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」 <span style="color: violet">' + result + '</span>';
-        var message = 'Nコード【' + ncode + '】、「' + title + '」' + result;
+        var message = '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」 <span style="color: violet">' + result + '</span>';
     }
     else if (ncode === undefined && title) {
-        html = '<span style="color: darkgreen">' + title + '</span> <span style="color: violet">' + result + '</span>';
-        message = '「' + title + '」' + result;
+        message = '<span style="color: darkgreen">' + title + '</span> <span style="color: violet">' + result + '</span>';
     }
     else if (ncode && title === undefined) {
-        html = '<span style="color: darkgreen">' + ncode + '</span> <span style="color: violet">' + result + '</span>';
-        message = 'Nコード【' + ncode + '】' + result;
+        message = '<span style="color: darkgreen">' + ncode + '</span> <span style="color: violet">' + result + '</span>';
     }
-    var log = document.createElement('p');
-    log.innerHTML = html;
-    logWindow.prepend(log);
+    var log = $('<p></p>').html(message);
+    shelf_debug.prepend(log);
     myFancyPopup(message);
 }
 function myFancyPopup(message) {
-    jsUI.notification({text: message, timeout: 3000});
+    var popup = $('<div class="jsui-notify-popup"></div>').html(message).click(event => popup.remove());
+    overlay.append(popup);
+    popup.css('left', ($(document).width() - popup.width()) / 2 + 'px');
+    setTimeout(() => popup.remove(), 3000);
 }
