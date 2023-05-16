@@ -7,7 +7,7 @@
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@4ca2ca9bf09b3d8738b4bed912665cea43984567/ui/jsui.js#sha256-MSgAq8bexB2X5u1HbKCKk7TW0g5TFu0d3mQNiFrLNn0=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@aa501e0a7942209aa96866c78683e886f126505e/ui/jsui.js#sha256-DZvmxgSalDn3+Q25oNGYfKsuqMXHQCRBGxciFNxmqQE=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_addStyle
 // @grant           GM_getResourceURL
