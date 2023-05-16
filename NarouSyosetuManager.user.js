@@ -32,7 +32,7 @@ var changed = false;
 var shelf = false;
 var aria2c;
 var bookmark = GM_getValue('bookmark', []);
-var scheduler = GM_getValue('scheduler', today);
+var scheduler = localStorage.scheduler ?? today;
 var overlay = $('<div class="jsui-notify-overlay"></div>');
 
 addEventListener('message', event => {
@@ -55,10 +55,10 @@ var manager = $('<div class="jsui-basic-menu jsui-book-manager"></div>');
 
 var css = $(`<style>
 .jsui-menu-item {text-align: center; margin: 1px; flex: auto; padding: 5px 10px; border-width: 0px;}
-.jsui-menu-item:not(.jsui-menu-disabled):hover, .jsui-table-button:hover {cursor: pointer; filter: contrast(75%);}
-.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-table-button:active {filter: contrast(45%);}
+.jsui-menu-item:not(.jsui-menu-disabled):hover, .jsui-table-button:hover {cursor: pointer; filter: contrast(65%);}
+.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-table-button:active {filter: contrast(35%);}
 .jsui-menu-checked {padding: 4px 9px; border-style: inset; border-width: 1px;}
-.jsui-menu-disabled {filter: contrast(25%);}
+.jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
 .jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
@@ -263,7 +263,7 @@ if (today !== scheduler) {
         }
     });
     Promise.all(update).then(result => {
-        GM_setValue('scheduler', today);
+        localStorage.scheduler = today;
     });
 }
 
