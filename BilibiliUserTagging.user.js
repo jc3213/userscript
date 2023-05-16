@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.3.0
+// @version         1.4.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -10,7 +10,7 @@
 // @match           https://www.bilibili.com/bangumi/*
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@aa501e0a7942209aa96866c78683e886f126505e/ui/jsui.js#sha256-DZvmxgSalDn3+Q25oNGYfKsuqMXHQCRBGxciFNxmqQE=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -22,46 +22,48 @@ var badges = GM_getValue('badges', [
     {keyword: '原神', tag: '原批', color: '#4c4'},
     {keyword: '明日方舟', tag: '粥批', color: '#44c'},
     {keyword: '王者荣耀', tag: '农批', color: '#cc4'},
-    {keyword: '抽奖', tag: '奖批', color: '#c4c'},
-    {keyword: '虚拟主播', tag: '舔狗', color: '#4cc'}
+    {keyword: '虚拟主播', tag: '管人痴', color: '#4cc'},
+    {keyword: '抽奖', tag: '乞丐', color: '#c4c'}
 ]);
 var logging = {};
+var shown = false;
 var {hostname, pathname} = location;
 
 var jsUI = new JSUI();
-var stylesheet = `.jsui-tag-manager {position: relative; font-size: 16px;}
+
+var stylesheet = ` .jsui-tag-manager {position: relative; font-size: 16px;}
 .jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px; margin: 0px auto;}
-.jsui-tag-window {display: none; position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
-.jsui-tag-head {display: flex; padding: 5px;}
-.jsui-tag-head input {width: 80px; height: 32px; padding: 3px; margin: 0px auto; border-width: 1px;}
-.jsui-tag-head span {padding: 5px 0px; text-align: center;}
-.jsui-tag-item {color: #fff; font-weight: bold; padding: 5px; margin-left: 5px;}
-.jsui-tag-submit {margin-left: auto; height: 32px; padding: 3px 10px !important;}
-.jsui-tag-window .jsui-table-button {color: #fff;}`;
+.jsui-tag-window {position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
+.jsui-tag-head {display: flex; padding: 3px;}
+.jsui-tag-head input {width: 80px; height: 29px; padding: 3px; margin: 0px auto; border-width: 1px;}
+.jsui-tag-head span {padding: 3px 5px; text-align: center;}
+.jsui-tag-head .jsui-menu-item {padding: 3px 10px;}
+.jsui-badge {color: #fff; font-weight: bold; padding: 3px; margin-left: 3px;}
+.jsui-menu-cell {color: #fff;}
+.jsui-table > :nth-child(n+2) > :nth-child(2) {background-color: #eee}`;
 var videocss = ` .jsui-tag-manager {left: 25px;}`;
 var dynamiccss = ` .jsui-tag-manager {float: left;}
 .jsui-tag-window {left: 88px;}
 .jsui-tag-window input {height: 24px;}`;
 
 function createManagerMenu() {
-    var manager = jsUI.add('div', {style: 'jsui-tag-manager'});
-    var button = jsUI.menuitem({text: '管理标签', style: 'jsui-tag-menu', onclick: event => toggleManagerWindow(window, list)});
-    var window = jsUI.add('div', {style: 'jsui-tag-window'});
-    var menu = jsUI.add('div', {style: 'jsui-tag-head', html: '<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">'});
-    var list = jsUI.table(['标签', '关键词']);
-    var submit = jsUI.menuitem({text: '添加', style: 'jsui-tag-submit', onclick: event => submitNewBadge(menu, list)});
+    var manager = jsUI.new().class('jsui-tag-manager');
+    var button = jsUI.new().text('管理标签').class('jsui-menu-item').class('jsui-tag-menu').onclick(event => toggleManagerWindow(window, list));
+    var window = jsUI.new().class('jsui-tag-window').hide();
+    var menu = jsUI.new().class('jsui-tag-head').html('<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">');
+    var list = jsUI.new().class('jsui-table').html('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
+    var submit = jsUI.new().text('添加').class('jsui-menu-item').onclick(event => submitNewBadge(menu, list));
     manager.append(button, window);
-    window.append(menu, jsUI.add('hr'), list);
+    window.append(menu, jsUI.new('hr'), list);
     menu.append(submit);
     return manager;
 }
 
 function toggleManagerWindow(window, list) {
-    var {style, shown} = window;
-    style.display = style.display === 'block' ? 'none' : 'block';
+    window.switch();
     if (!shown) {
         badges.forEach((tag, id) => addManageTag(list, id, tag));
-        window.shown = true;
+        shown = true;
     }
 }
 
@@ -87,8 +89,12 @@ function submitNewBadge(menu, list) {
 
 function addManageTag(list, id, store) {
     var {tag, keyword, color} = store;
-    var rule = list.add([{text: tag, id, onclick: event => removeManageTag(rule, id, tag)}, keyword]);
-    rule.firstChild.style.backgroundColor = color;
+    var rule = jsUI.new();
+    var menu = jsUI.new().text(tag).class('jsui-menu-cell').onclick(event => removeManageTag(rule, id, tag));
+    menu.style.backgroundColor = color;
+    var name = jsUI.new().text(keyword);
+    rule.append(menu, name);
+    list.append(rule);
 }
 
 function removeManageTag(rule, id, tag) {
@@ -153,7 +159,7 @@ async function createUserTag(user, mid) {
 }
 
 function createNewTag(user, tag, color) {
-    var badge = jsUI.add('span', {style: 'jsui-tag-item', text: tag});
+    var badge = jsUI.new('span').text(tag).class('jsui-badge');
     badge.style.backgroundColor = color;
     user.appendChild(badge);
 }
