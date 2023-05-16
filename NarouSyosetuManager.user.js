@@ -55,18 +55,18 @@ var manager = $('<div class="jsui-basic-menu jsui-book-manager"></div>');
 
 var css = $(`<style>
 .jsui-menu-item {text-align: center; margin: 1px; flex: auto; padding: 5px 10px; border-width: 0px;}
-.jsui-menu-item:not(.jsui-menu-disabled):hover, .jsui-table-button:hover {cursor: pointer; filter: contrast(65%);}
-.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-table-button:active {filter: contrast(35%);}
+.jsui-menu-item:not(.jsui-menu-disabled):hover, .jsui-button-cell:hover {cursor: pointer; filter: contrast(65%);}
+.jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-button-cell:active {filter: contrast(35%);}
 .jsui-menu-checked {padding: 4px 9px; border-style: inset; border-width: 1px;}
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
 .jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
-.jsui-table-button:nth-child(1) {line-height: 200%;}
+.jsui-button-cell:nth-child(1) {line-height: 200%;}
 .jsui-table-column {display: flex; gap: 1px; margin: 1px;}
 .jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
-.jsui-table-cell, .jsui-table-button {flex: auto; padding: 5px; text-align: center; line-height: 100%; border-width: 1px; border-style: solid;}
+.jsui-table-cell, .jsui-button-cell {flex: auto; padding: 5px; text-align: center; line-height: 100%; border-width: 1px; border-style: solid;}
 .jsui-table-head > * {background-color: #000000; color: #ffffff; padding: 10px 5px;}
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
 .jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
@@ -200,13 +200,11 @@ $(document.body).append(bookshelf, overlay).keydown(event => {
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
-`<div class="jsui-table-column" id="n1976ey">
-<div class="jsui-table-button">2023/5/168:6:28</div></div>`
     var mybook = $('<div class="jsui-table-column"></div>').attr('id', ncode);
-    var cell_ncode = $('<div class="jsui-table-button"></div>').text(ncode).click(event => removeNcodeFromShelf(mybook, index, ncode, title));
-    var cell_title = $('<div class="jsui-table-button"></div>').text(title).click(event => openNcodeInNewPage(ncode, title));
+    var cell_ncode = $('<div class="jsui-button-cell"></div>').text(ncode).click(event => removeNcodeFromShelf(mybook, index, ncode, title));
+    var cell_title = $('<div class="jsui-button-cell"></div>').text(title).click(event => openNcodeInNewPage(ncode, title));
     var cell_input = $('<input type="number" min="0" max="30" style="width: 126px;">').attr('title', next === 0 ? '自動更新をしません' : next + '日間隔で更新します').val(next).change(event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
-    var cell_update = $('<div class="jsui-table-button"></div>').text(generateTimeFormat(book.last)).click(event => downloadCurrentNcode(book, title));
+    var cell_update = $('<div class="jsui-button-cell"></div>').text(generateTimeFormat(book.last)).click(event => downloadCurrentNcode(book, title));
     mybook.append(cell_ncode, cell_title, cell_input, cell_update).appendTo(shelf_table);
 }
 function removeNcodeFromShelf(mybook, index, ncode, title) {
@@ -275,7 +273,7 @@ async function downloadPDFHelper(book) {
     if (aria2c) {
         postMessage({aria2c, download: { url, options: {out: name} } });
         book.last = updateBookInfo(ncode);
-        //return book;
+        return book;
     }
     if (download[ncode]) {
         myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
