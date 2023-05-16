@@ -78,7 +78,6 @@ var css = $(`<style>
 .novel_view > p > br {display: none;}
 .novel_bn:last-child {margin-top: 100px !important;}
 </style>`);
-manager.append(css);
 
 var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => {
     if (shelf === false) {
@@ -89,7 +88,7 @@ var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => 
     button.toggleClass('jsui-menu-checked');
 });
 
-manager.append(button);
+manager.append(css, button);
 $('#head_nav').append(manager);
 
 if (novelread) {
@@ -114,7 +113,7 @@ function removeHeaderFooter() {
 
 var bookshelf = $('<div class="jsui-book-shelf"></div>').hide();;
 var shelf_menu = $('<div class="jsui-basic-menu"></div>');
-var shelf_table = $('<div class="jsui-table"></div>');
+var shelf_table = $('<div class="jsui-table"></div>').html('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div><div class="jsui-table-cell">更新間隔</div><div class="jsui-table-cell">ダウンロード</div></div>');
 var shelf_debug = $('<div class="jsui-logging"></div>');
 bookshelf.append(shelf_menu, shelf_table, shelf_debug);
 
@@ -198,9 +197,6 @@ $(document.body).append(bookshelf, overlay).keydown(event => {
         $('#novel_color > .novel_bn > a')[1].click();
     }
 });
-
-var shelf_thead = $('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div><div class="jsui-table-cell">更新間隔</div><div class="jsui-table-cell">ダウンロード</div></div>');
-shelf_table.append(shelf_thead);
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
