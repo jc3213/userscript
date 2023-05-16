@@ -91,7 +91,7 @@ manager.append(css, button);
 $('#head_nav').append(manager);
 
 if (novelread) {
-    $('#novel_color').css({width: '60%'});
+    $('#novel_color').css('width', '60%');
     var clearfix = $('<div class="jsui-menu-item">本文のみ</div>').click(event => {
         localStorage.clearfix = localStorage.clearfix === '0' ? '1' : '0';
         removeHeaderFooter();
