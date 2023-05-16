@@ -10,7 +10,6 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @grant        GM_download
 // @grant        GM_webRequest
 // @webRequest   {"selector": "*.microad.net/*", "action": "cancel"}
 // @webRequest   {"selector": "*.microad.jp/*", "action": "cancel"}
