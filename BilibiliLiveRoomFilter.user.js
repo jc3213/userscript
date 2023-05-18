@@ -2,12 +2,12 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.5.15
+// @version         1.6.0
 // @description     Filtering Bilibili liveroom, batch management, export, import rulelist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5a35a3fe2dd19f4330d5c1843f9a896b440c080f/ui/jsui.pro.js#sha256-GCjjYs98uwYSZhCwg+eAM3hPQx0lI1uQhHCvEqrwqjM=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -16,52 +16,35 @@
 'use strict';
 var banned = GM_getValue('banned', []);
 var show = false;
+var jsUI = new JSUI();
 
-var css = document.createElement('style');
-css.type = 'text/css';
-css.innerText = `.jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}
+jsUI.css.add(` .jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}
 .jsui-manager > * {width: 100%; resize: none;}
 .jsui-table {height: 400px; border: none;}
-.jsui-table-cell {border-width: 0px;}
-.jsui-menu-item, .jsui-table-button {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}
-.Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}`;
-document.body.appendChild(css);
+.jsui-menu-item, .jsui-menu-cell {font-size: 14px; border-width: 0px !important; border-radius: 3px; background-color: #23ade5; color: #fff;}
+.Item_2A9JA1Uf > .jsui-basic-menu {margin: 10px 10px 0px 10px;}`);
 
-var jsUI = new JSUI();
-var menu = jsUI.menulist([
-    {text: '批量屏蔽', onclick: batchBlock},
-    {text: '导入列表', onclick: importList},
-    {text: '导出列表', onclick: exportList},
-    {text: '清空列表', onclick: batchUnblock}
-]);
+var manager = jsUI.new().class('jsui-manager').parent(document.body).hide();
 
-var entry = document.createElement('textarea');
-entry.rows = '6';
+var menu = jsUI.menu().parent(manager);
+menu.add('批量屏蔽').onclick(batchBlock);
+menu.add('导入列表').onclick(importList);
+menu.add('导出列表').onclick(exportList);
+menu.add('清空列表').onclick(batchUnblock);
 
-var jsTable = jsUI.table(['直播间ID', '主播昵称']);
+var entry = jsUI.new('textarea').attr('rows', 6).parent(manager);
 
-var manager = document.createElement('div');
-manager.className = 'jsui-manager';
-manager.style.display = 'none';
-manager.append(menu, entry, jsTable);
-document.body.appendChild(manager);
+var jsTable = jsUI.table(['直播间ID', '主播昵称']).parent(manager);
 
-var opener = jsUI.menuitem({
-    text: '管理列表',
-    onclick: event => {
-        if (!show) {
-            banned.forEach(({id, liver}) => makeBanlist(id, liver));
-            show = true;
-        }
-        manager.style.display = manager.style.display === 'none' ? 'block' : 'none';
+var opener = jsUI.new().text('管理列表').class('jsui-menu-item').css('width', '120px').onclick(event => {
+    if (!show) {
+        banned.forEach(({id, liver}) => makeBanlist(id, liver));
+        show = true;
     }
+    manager.switch();
 });
-opener.style.width = '120px';
 
-var upload = document.createElement('input');
-upload.type = 'file';
-upload.accept = '.json';
-upload.addEventListener('change', event => {
+var upload = jsUI.new('input').attr({type: 'file', accept: '.json'}).onchange(event => {
     if (confirm('确定要导入屏蔽列表【' + event.target.files[0].name.slice(0, -5) + '】吗？')) {
         var reader = new FileReader();
         reader.readAsText(event.target.files[0]);
@@ -127,7 +110,7 @@ function livePlayerInFrame(id) {
     var observer = setInterval(() => {
         try {
             var player = document.querySelector('#player-ctnr iframe').contentDocument.querySelector('#head-info-vm > div > div.rows-ctnr');
-            player.append(jsUI.css, css);
+            player.append(jsUI.css);
             banInsideLiveRoom(player, id);
             clearInterval(observer);
         }
@@ -138,9 +121,9 @@ function livePlayerInFrame(id) {
 function applyFilterToArea({menu, room, list}) {
     setTimeout(() => {
         var where = document.querySelector(menu);
-        where.appendChild(opener);
+        opener.parent(where);
         where.after(manager);
-        manager.style.top = where.offsetTop + 30 + 'px';
+        manager.css('top', where.offsetTop + 30 + 'px');
         document.querySelectorAll(room).forEach(addMenuToLiveRoom);
         list.forEach(item => {
             new MutationObserver(mutationList => {
@@ -158,18 +141,15 @@ function applyFilterToArea({menu, room, list}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = jsUI.menuitem({
-        text: '屏蔽直播间',
-        onclick: event => {
-            if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-                addBanlist(id, liver);
-                saveBanlist();
-                open(area, '_self');
-            }
+    var block = jsUI.new().text('屏蔽直播间').class('jsui-menu-item').onclick(event => {
+        if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
+            addBanlist(id, liver);
+            saveBanlist();
+            open(area, '_self');
         }
     });
     domPlayer.querySelector('div.upper-row > div.right-ctnr').prepend(block);
-    if (banned.find(rule => rule.id === id) && !confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
+    if (banned.some(rule => rule.id === id) && !confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
         open(area, '_self');
     }
 }
@@ -193,7 +173,7 @@ function removeBanList(column, id, liver) {
 }
 
 function addBanlist(id, liver) {
-    if (!banned.find(rule => rule.id === id)) {
+    if (!banned.some(rule => rule.id === id)) {
         banned.push({id, liver});
         if (show) {
             makeBanlist(id, liver);
@@ -207,16 +187,15 @@ function saveBanlist() {
 }
 
 function blobToFile(blob, name) {
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
+    var a = jsUI.new('a').attr({href: URL.createObjectURL(blob), download: name});
     a.click();
+    a.remove();
 }
 
 function banLiveRoom(element) {
     var url = element.querySelector('a').href;
     var id = url.slice(url.lastIndexOf('/') + 1, url.indexOf('?'));
-    element.style.display = banned.find(rule => rule.id === id) ? 'none' : 'inline-block';
+    element.style.display = banned.some(rule => rule.id === id) ? 'none' : 'inline-block';
     return id;
 }
 
@@ -230,15 +209,13 @@ function addMenuToLiveRoom(element) {
     var preview = element.querySelector('div.Item_2n7ef9LN').style['background-image'];
     var url = 'https' + preview.slice(preview.indexOf(':'), preview.lastIndexOf('"'));
 
-    var menu = jsUI.menulist([
-        {text: '屏蔽直播间', onclick: event => floatBlockLiveRoom(event, id, liver)},
-        {text: '打开封面', onclick: event => floatOpenThumbnail(event, url)}
-    ]);
-    menu.style.display = 'none';
+    var menu = jsUI.menu().hide();
+    menu.add('屏蔽直播间').onclick(event => floatBlockLiveRoom(event, id, liver));
+    menu.add('打开封面').onclick(event => floatOpenThumbnail(event, url, name));
 
     element.querySelector('div.Item_2A9JA1Uf').appendChild(menu);
-    element.addEventListener('mouseover', event => {menu.style.display = 'flex';});
-    element.addEventListener('mouseout', event => {menu.style.display = 'none';})
+    element.addEventListener('mouseover', event => menu.show());
+    element.addEventListener('mouseout', event => menu.hide())
 }
 
 function floatBlockLiveRoom(event, id, liver) {
@@ -249,9 +226,9 @@ function floatBlockLiveRoom(event, id, liver) {
     }
 }
 
-function floatOpenThumbnail(event, url) {
+function floatOpenThumbnail(event, url, name) {
     event.preventDefault();
-    if (confirm('确定要打开直播《' + name + '》的封面吗？')) {
+    if (confirm('确定要打开直播《 ' + name + ' 》的封面吗？')) {
         open(url, '_blank');
     }
 }
