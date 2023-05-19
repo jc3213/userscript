@@ -7,7 +7,7 @@
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5a35a3fe2dd19f4330d5c1843f9a896b440c080f/ui/jsui.css.js#sha256-IsiQ8d4ACrnz4XwKqW6Rdz/0xRGiYFYlRvm/xiOJD94=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@79d0357d9324e69e068abc1bb4a59efec6bc0539/ui/jsui.min.js#sha256-MIUOY/umNvxdEW+4JoqM0ko3x52PIHihYkUsaDuiudU=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_addStyle
 // @grant           GM_getResourceURL
@@ -60,9 +60,7 @@ else {
 
 var jsUI = new JSUI();
 
-var mainmenu = jsUI.new().class('jsui-video-menu').class('jsui-basic-menu');
-
-var css = jsUI.new('style').text(`.jsui-video-menu {position: relative; width: 240px;}
+jsUI.css.add(`.jsui-video-menu {position: relative; width: 240px;}
 .jsui-drop-menu, .jsui-options {width: 120px;}
 .jsui-analyse {display: flex;}
 .jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}
@@ -71,8 +69,9 @@ var css = jsUI.new('style').text(`.jsui-video-menu {position: relative; width: 2
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}
 ${cssOffset}`);
 
-var options_btn = jsUI.new().text('设置').class('jsui-menu-item').onclick(openOptions);
-var analyse_btn = jsUI.new().text('解析').class('jsui-menu-item').onclick(analyseVideo);
+var menu = jsUI.menu().class('jsui-video-menu');
+menu.add('设置').onclick(openOptions);
+menu.add('解析').onclick(analyseVideo);
 
 function openOptions() {
     analyse_win.hide();
@@ -113,7 +112,7 @@ document.addEventListener('keydown', event => {
 newNodeTimeoutObserver('div.bpx-player-video-wrap > :first-child').then(video => {
     video.addEventListener('play', function biliVideoToolbar() {
         setTimeout(() => {
-            document.querySelector(menuBox).append(mainmenu);
+            document.querySelector(menuBox).append(menu);
             var wide = document.querySelector(wideBtn);
             if (!wide.classList.contains(wideStat) && autowide === '1' ) {
                 wide.click();
@@ -132,16 +131,14 @@ new MutationObserver(mutations => {
     }
 }).observe(document.head, {childList: true});
 
-var options_win = jsUI.new().class('jsui-options').onchange(optionChange).hide();
+var options_win = jsUI.new().class('jsui-options').onchange(optionChange).hide().parent(menu);
 var wide_opt = jsUI.new('select').html('<option value="0">关闭</option><option value="1">启用</option>');
 var code_opt = jsUI.new('select').html('<option value="0">H.264</option><option value="1">HEVC</option><option value="2">AV-1</option>');
 wide_opt.value = autowide;
 code_opt.value = videocodec;
 options_win.append(jsUI.new('p').text('自动宽屏'), wide_opt, jsUI.new('p').text('编码格式'), code_opt);
 
-var analyse_win = jsUI.new().class('jsui-analyse').hide();
-
-mainmenu.append(options_btn, analyse_btn, options_win, analyse_win, css);
+var analyse_win = jsUI.new().class('jsui-analyse').hide().parent(menu);
 
 function optionChange(event) {
     var {id, value} = event.target;
@@ -152,28 +149,25 @@ async function biliVideoExtractor(name, image, playurl, key) {
     var multi = document.querySelector('#multi_page li.on > a');
     name = multi ? name + '-' + multi.innerText : name;
     title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
-    var fixed = image.replace(/^(https?:)?\/\//, 'https://');
-    var thumb = getThumbnail(image);
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
-    var menu = {avc1: jsUI.new().class('jsui-drop-menu'), hev1: jsUI.new().class('jsui-drop-menu'), av01: jsUI.new().class('jsui-drop-menu'), mp4a: jsUI.new().class('jsui-drop-menu')};
+    var menu = {avc1: jsUI.menu(true), hev1: jsUI.menu(true), av01: jsUI.menu(true), mp4a: jsUI.menu(true)};
     var {video, audio} = json[key].dash;
     [...video, ...audio].forEach(({id, codecs, baseUrl}) => {
         var codec = codecs.slice(0, codecs.indexOf('.'));
         var {text, ext} = format[id];
         var {title, alt} = format[codec];
-        var item = jsUI.new().class('jsui-menu-item').text(text).attr('title', title).onclick(event => downloadBiliVideo(event, baseUrl, alt + ext));
-        menu[codec].append(item);
+        menu[codec].add(text).attr('title', title).onclick(event => downloadBiliVideo(event, baseUrl, alt + ext));
     });
-    var output = videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1;
-    analyse_win.append(thumb, output, menu.mp4a);
+    var thumb = getThumbnail(image);
+    analyse_win.append(thumb, videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1, menu.mp4a);
 }
 
 function getThumbnail(url) {
-    var thumb = jsUI.new().class('jsui-drop-menu');
+    var thumb = jsUI.menu(true);
     var fixed = url.replace(/^(https?:)?\/\//, 'https://');
-    var image = jsUI.new().class('jsui-menu-item').text('视频封面').onclick(event => downloadBiliVideo(event, fixed, url.slice(url.lastIndexOf('.'))));
-    thumb.append(image);
+    var ext = url.slice(url.lastIndexOf('.'));
+    thumb.add('视频封面').onclick(event => downloadBiliVideo(event, fixed, ext));
     return thumb;
 }
 
