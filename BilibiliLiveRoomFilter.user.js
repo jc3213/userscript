@@ -7,7 +7,7 @@
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5a35a3fe2dd19f4330d5c1843f9a896b440c080f/ui/jsui.pro.js#sha256-GCjjYs98uwYSZhCwg+eAM3hPQx0lI1uQhHCvEqrwqjM=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@221922c171b866f614b81618f279b66793493dc8/ui/jsui.pro.js#sha256-0JHLyFH5c5ibugyb53huIhKGqE1c8kOTElNhCA/2hSQ=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -82,7 +82,7 @@ function importList(event) {
 }
 function batchUnblock(event) {
     if (confirm('确定要清空当前屏蔽列表吗？')) {
-        jsTable.clear();
+        jsTable.empty();
         banned = [];
         saveBanlist();
     }
