@@ -10,7 +10,7 @@
 // @match           https://www.bilibili.com/bangumi/*
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5a35a3fe2dd19f4330d5c1843f9a896b440c080f/ui/jsui.css.js#sha256-IsiQ8d4ACrnz4XwKqW6Rdz/0xRGiYFYlRvm/xiOJD94=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.css.js#sha256-5+Wmo2jiMGUSS0X/4QY799VJ/x12SsfVE2udGGb+pcU=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -32,15 +32,14 @@ var {hostname, pathname} = location;
 var jsUI = new JSUI();
 
 var stylesheet = ` .jsui-tag-manager {position: relative; font-size: 16px;}
-.jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px; margin: 0px auto;}
+.jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px;}
 .jsui-tag-window {position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
-.jsui-tag-head {display: flex; padding: 3px;}
-.jsui-tag-head input {width: 80px; height: 29px; padding: 3px; margin: 0px auto; border-width: 1px;}
-.jsui-tag-head span {padding: 3px 5px; text-align: center;}
-.jsui-tag-head .jsui-menu-item {padding: 3px 10px;}
+.jsui-tag-head {display: flex; height: 36px;}
+.jsui-tag-head > * {margin: auto;}
+.jsui-tag-head > .jsui-menu-item {padding: 1px 5px;}
+.jsui-tag-head input {width: 80px; height: 23px; padding: 3px; border-width: 1px;}
 .jsui-badge {color: #fff; font-weight: bold; padding: 3px; margin-left: 3px;}
-.jsui-menu-cell {color: #fff;}
-.jsui-table > :nth-child(n+2) > :nth-child(2) {background-color: #eee}`;
+.jsui-menu-cell {color: #fff;}`
 var videocss = ` .jsui-tag-manager {left: 25px;}`;
 var dynamiccss = ` .jsui-tag-manager {float: left;}
 .jsui-tag-window {left: 88px;}
@@ -50,7 +49,7 @@ function createManagerMenu() {
     var manager = jsUI.new().class('jsui-tag-manager');
     var button = jsUI.new().text('管理标签').class('jsui-menu-item').class('jsui-tag-menu').onclick(event => toggleManagerWindow(window, list));
     var window = jsUI.new().class('jsui-tag-window').hide();
-    var menu = jsUI.new().class('jsui-tag-head').html('<span>颜色</span><input type="color" name="color"><span>标签</span><input name="tag"><span>关键词</span><input name="keyword">');
+    var menu = jsUI.new().class('jsui-tag-head').html('<div>颜色</div><input type="color" name="color"><div>标签</div><input name="tag"><div>关键词</div><input name="keyword">');
     var list = jsUI.new().class('jsui-table').html('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
     var submit = jsUI.new().text('添加').class('jsui-menu-item').onclick(event => submitNewBadge(menu, list));
     manager.append(button, window);
