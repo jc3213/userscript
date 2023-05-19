@@ -2,7 +2,7 @@
 // @name            Bilibili Users Tagging
 // @name:zh         哔哩哔哩查户口
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.4.0
+// @version         1.5.0
 // @description     Search users' profile, then tagging them for Bilibili
 // @description:zh  查询哔哩哔哩动画用户成分并予以标记
 // @author          jc3213
@@ -11,7 +11,6 @@
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.css.js#sha256-5+Wmo2jiMGUSS0X/4QY799VJ/x12SsfVE2udGGb+pcU=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @run-at          document-idle
@@ -19,108 +18,123 @@
 // ==/UserScript==
 
 var badges = GM_getValue('badges', [
-    {keyword: '原神', tag: '原批', color: '#4c4'},
-    {keyword: '明日方舟', tag: '粥批', color: '#44c'},
-    {keyword: '王者荣耀', tag: '农批', color: '#cc4'},
-    {keyword: '虚拟主播', tag: '管人痴', color: '#4cc'},
-    {keyword: '抽奖', tag: '乞丐', color: '#c4c'}
+    {color: '#4c4', keyword: '原神', name: '原批'},
+    {color: '#44c', keyword: '明日方舟', name: '粥批'},
+    {color: '#cc4', keyword: '王者荣耀', name: '农批'},
+    {color: '#4cc', keyword: '虚拟主播', name: '管人痴'},
+    {color: '#c4c', keyword: '抽奖', name: '乞丐'}
 ]);
 var logging = {};
 var shown = false;
 var {hostname, pathname} = location;
+var position = pathname.slice(1);
 
 var jsUI = new JSUI();
 
-var stylesheet = ` .jsui-tag-manager {position: relative; font-size: 16px;}
+jsUI.css.add(` .jsui-tag-manager {position: relative; font-size: 16px; left: 25px;}
 .jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px;}
 .jsui-tag-window {position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
 .jsui-tag-head {display: flex; height: 36px;}
 .jsui-tag-head > * {margin: auto;}
-.jsui-tag-head > .jsui-menu-item {padding: 1px 5px;}
-.jsui-tag-head input {width: 80px; height: 23px; padding: 3px; border-width: 1px;}
+.jsui-tag-head input {width: 80px; height: 24px; padding: 3px; border-width: 1px;}
 .jsui-badge {color: #fff; font-weight: bold; padding: 3px; margin-left: 3px;}
-.jsui-menu-cell {color: #fff;}`
-var videocss = ` .jsui-tag-manager {left: 25px;}`;
-var dynamiccss = ` .jsui-tag-manager {float: left;}
-.jsui-tag-window {left: 88px;}
-.jsui-tag-window input {height: 24px;}`;
+.jsui-menu-cell {color: #fff;}`);
 
-function createManagerMenu() {
-    var manager = jsUI.new().class('jsui-tag-manager');
-    var button = jsUI.new().text('管理标签').class('jsui-menu-item').class('jsui-tag-menu').onclick(event => toggleManagerWindow(window, list));
-    var window = jsUI.new().class('jsui-tag-window').hide();
-    var menu = jsUI.new().class('jsui-tag-head').html('<div>颜色</div><input type="color" name="color"><div>标签</div><input name="tag"><div>关键词</div><input name="keyword">');
-    var list = jsUI.new().class('jsui-table').html('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
-    var submit = jsUI.new().text('添加').class('jsui-menu-item').onclick(event => submitNewBadge(menu, list));
-    manager.append(button, window);
-    window.append(menu, jsUI.new('hr'), list);
-    menu.append(submit);
-    return manager;
-}
+var manager = jsUI.new().class('jsui-tag-manager');
+var button = jsUI.new().text('管理标签').class('jsui-menu-item, jsui-tag-menu').parent(manager).onclick(event => toggleManagerWindow(win, list));
+var win = jsUI.new().class('jsui-tag-window').parent(manager).hide();
 
-function toggleManagerWindow(window, list) {
-    window.switch();
+var menu = jsUI.new().class('jsui-tag-head').parent(win);
+var color_set = jsUI.new('input').attr('type', 'color');
+var name_set = jsUI.new('input');
+var keyword_set = jsUI.new('input');
+var submit = jsUI.new().text('添加').class('jsui-menu-item').parent(menu).onclick(event => submitNewBadge(menu, list));
+menu.append(jsUI.new().text('颜色'), color_set, jsUI.new().text('标签'), name_set, jsUI.new().text('关键词'), keyword_set, submit);
+var list = jsUI.new().class('jsui-table').parent(win).html('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
+
+function toggleManagerWindow() {
+    win.switch();
     if (!shown) {
-        badges.forEach((tag, id) => addManageTag(list, id, tag));
+        badges.forEach(addManageTag);
         shown = true;
     }
 }
 
-function submitNewBadge(menu, list) {
-    var result = {};
-    menu.querySelectorAll('input').forEach(i => {
-        var {name, value} = i;
-        result[name] = value;
-        i.value = '';
-    });
-    var {tag, keyword} = result;
-    if (keyword === '' || tag === '') {
+function submitNewBadge() {
+    var color = color_set.value;
+    var keyword = keyword_set.value;
+    var name = name_set.value;
+    if (keyword === '' || name === '') {
         return;
     }
     var find = badges.findIndex(tag => tag.keyword === keyword);
     if (find === -1) {
-        var id = badges.length;
+        var idx = badges.length;
+        var result = {color, keyword, name};
         badges.push(result);
-        addManageTag(list, id, result);
+        addManageTag(result, idx);
         GM_setValue('badges', badges);
     }
 }
 
-function addManageTag(list, id, store) {
-    var {tag, keyword, color} = store;
-    var rule = jsUI.new();
-    var menu = jsUI.new().text(tag).class('jsui-menu-cell').onclick(event => removeManageTag(rule, id, tag));
-    menu.style.backgroundColor = color;
-    var name = jsUI.new().text(keyword);
-    rule.append(menu, name);
-    list.append(rule);
+function addManageTag({color, keyword, name}, idx) {
+    var rule = jsUI.new().parent(list);
+    jsUI.new().text(name).class('jsui-menu-cell').parent(rule).css('background-color', color).onclick(event => removeManageTag(rule, idx, name));
+    jsUI.new().text(keyword).parent(rule);
 }
 
-function removeManageTag(rule, id, tag) {
-    if (confirm(`确定要删除标签《${tag}》吗？`)) {
-        badges.splice(id, 1);
+function removeManageTag(rule, idx, name) {
+    if (confirm(`确定要删除标签《${name}》吗？`)) {
+        badges.splice(idx, 1);
         rule.remove();
         GM_setValue('badges', badges);
     }
 }
 
-if (pathname.startsWith('/video/')) {
-    addBadgeToComment(document.querySelector('#comment'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToComment('div.user-name', 'ul.nav-bar');
-}
-else if (pathname.startsWith('/bangumi/')) {
-    addBadgeToComment(document.querySelector('#comment-module'), 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
-    addMenuToComment('div.user-name', 'ul.nav-bar');
+if (hostname === 'www.bilibili.com') {
+    newNodeTimeoutObserver('div.comment-container').then(addBadgeMenuGeneral);
+    submit.css('padding', '1px 10px');
 }
 else if (hostname === 'space.bilibili.com') {
-    addBadgeToDynamic();
+    bilibiliSpaceAndDynamic('bb-comment ', addBadgeMenuToSpace);
+    manager.css('float', 'left');
 }
-else if (pathname === '/') {
-    addBadgeToDynamic();
+else if (hostname === 't.bilibili.com') {
+    if (pathname === '/') {
+        bilibiliSpaceAndDynamic('bili-dyn-item__panel', anchorNode => {
+            newNodeTimeoutObserver('div.comment-container', {anchorNode}).then(addBadgeMenuGeneral);
+        });
+    }
+    else if (!isNaN(position)) {
+        newNodeTimeoutObserver('div.comment-container').then(addBadgeMenuGeneral);
+    }
 }
-else {
-    newNodeTimeoutObserver('div.bb-comment').then(addBadgeMenuToTopic);
-    jsUI.css.add(stylesheet + dynamiccss);
+
+function addBadgeMenuGeneral(comment) {
+    addBadgeToComment(comment, 'data-user-id', 'reply-item', 'div.sub-reply-container', 'sub-reply-item', 'div.user-name', 'div.sub-user-name');
+    comment.querySelector('ul.nav-bar').append(manager);
+}
+
+function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
+    newNodeMutationObserver(comment, root_box, area => {
+        area.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
+        newNodeMutationObserver(area.querySelector(sub_box), sub_item, reply => {
+            var user = reply.querySelector(root_user) ?? reply.querySelector(sub_user);
+            createUserTag(user, mid);
+        });
+    });
+}
+
+async function bilibiliSpaceAndDynamic(anchor, callback) {
+    var list = await newNodeTimeoutObserver('div.bili-dyn-list__items');
+    newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
+        newNodeMutationObserver(item, anchor, callback);
+    });
+}
+
+function addBadgeMenuToSpace(comment) {
+    addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
+    comment.querySelector('ul.clearfix').append(manager);
 }
 
 async function createUserTag(user, mid) {
@@ -136,20 +150,20 @@ async function createUserTag(user, mid) {
                 return;
             }
             var text = desc.text.toLowerCase();
-            badges.forEach(({keyword, tag, color}) => {
-                if (!badge[tag] && text.includes(keyword)) {
-                    badge[tag] = color;
+            badges.forEach(({keyword, name, color}) => {
+                if (!badge[name] && text.includes(keyword)) {
+                    badge[name] = color;
                     debug = true;
-                    logs += ' ' + tag;
-                    createNewTag(user, tag, color);
+                    logs += ' ' + name;
+                    createNewTag(user, color, name);
                 }
             });
         });
         logging[uid] = {badge, debug, logs};
     }
     else {
-        Object.entries(badge).forEach(([tag, color]) => {
-            createNewTag(user, tag, color);
+        Object.entries(badge).forEach(([name, color]) => {
+            createNewTag(user, color, name);
         });
     }
     if (debug) {
@@ -157,43 +171,8 @@ async function createUserTag(user, mid) {
     }
 }
 
-function createNewTag(user, tag, color) {
-    var badge = jsUI.new('span').text(tag).class('jsui-badge');
-    badge.style.backgroundColor = color;
-    user.appendChild(badge);
-}
-
-function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
-    newNodeMutationObserver(comment, root_box, area => {
-        area.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
-        newNodeMutationObserver(area.querySelector(sub_box), sub_item, reply => {
-            var user = reply.querySelector(root_user) ?? reply.querySelector(sub_user);
-            createUserTag(user, mid);
-        });
-    });
-}
-
-async function addMenuToComment(anchor, target) {
-    await newNodeTimeoutObserver(anchor);
-    var container = document.querySelector(target);
-    var manager = createManagerMenu();
-    jsUI.css.add(stylesheet + videocss);
-    container.appendChild(manager);
-}
-
-async function addBadgeToDynamic() {
-    var list = await newNodeTimeoutObserver('div.bili-dyn-list__items');
-    newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
-        newNodeMutationObserver(item, 'bb-comment ', addBadgeMenuToTopic);
-    });
-    jsUI.css.add(stylesheet + dynamiccss);
-}
-
-function addBadgeMenuToTopic(comment) {
-    addBadgeToComment(comment, 'data-usercard-mid', 'list-item reply-wrap ', 'div.reply-box', 'reply-item reply-wrap', 'a.name', 'a.name');
-    var container = comment.querySelector('ul.clearfix');
-    var manager = createManagerMenu();
-    container.appendChild(manager);
+function createNewTag(user, color, name) {
+    jsUI.new('span').text(name).class('jsui-badge').css('background-color', color).parent(user);
 }
 
 function newNodeMutationObserver(node, style, callback) {
@@ -206,4 +185,22 @@ function newNodeMutationObserver(node, style, callback) {
             });
         });
     }).observe(node, {childList: true, subtree: true});
+}
+
+function newNodeTimeoutObserver(selector, options = {}) {
+    var {anchorNode = document, timeout = 5} = options;
+    return new Promise(function (resolve, reject) {
+        var observer = setInterval(() => {
+            var element = anchorNode.querySelector(selector);
+            if (element) {
+                clearInterval(observer);
+                resolve(element);
+            }
+            timeout -= 0.25;
+            if (timeout === 0) {
+                clearInterval(observer);
+                reject(new Error('Can\'t find element with DOM Selector "' + selector + '"'));
+            }
+        }, 250);
+    });
 }
