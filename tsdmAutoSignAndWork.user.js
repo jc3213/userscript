@@ -1,16 +1,16 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.2.1
+// @version      1.3.0
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
-// @match        *://www.tsdm39.com/*
+// @match        *://*.tsdm39.com/*
 // @noframes
 // ==/UserScript==
 
 'use strict';
 var {signed = '0', worked = '0'} = localStorage;
-var working = {};
+var action = {};
 var today = new Date();
 var date = today.getFullYear() + today.getMonth() + today.getDate();
 var now = today.getTime();
@@ -39,62 +39,66 @@ document.querySelector('#mn_Nfded_menu > :nth-child(2) > a').addEventListener('c
 });
 
 async function autoSign() {
-    if (working.sign) {
+    if (action.signed) {
         return;
     }
-    working.sign = now;
+    action.signed = true;
     var popup = startPopup('查询签到状态...', '80px');
     var idoc = await startWork('/plugin.php?id=dsu_paulsign:sign');
     var iwin = idoc.defaultView;
-    if (idoc.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)')) {
-        popup.innerText = idoc.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)').innerText;
-        localStorage.signed = signed = date;
-        endWork(iwin, popup, 'sign');
+    var error = idoc.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
+    if (error) {
+        var text = error.innerText;
     }
     else {
         popup.innerText = '开始签到...';
         iwin.Icon_selected('kx');
         idoc.getElementById('todaysay').value = '每日签到';
-        setTimeout(() => {
-            iwin.showWindow('qwindow', 'qiandao', 'post', '0');
-            popup.innerText = '已完成签到';
-            localStorage.signed = signed = date;
-            endWork(iwin, popup, 'sign');
-        }, 3000);
+        await waitTimeout(3000);
+        iwin.showWindow('qwindow', 'qiandao', 'post', '0');
+        text = '已完成签到';
     }
+    endWork('signed', date, text, popup, iwin);
 }
 
 async function autoWork() {
-    if (working.work) {
+    if (action.worked) {
         return;
     }
-    working.work = now;
+    action.worked = true;
     var popup = startPopup('查询打工状态...', '120px');
     var idoc = await startWork('/plugin.php?id=np_cliworkdz:work');
     var iwin = idoc.defaultView;
     if (idoc.querySelector('#messagetext')) {
         var text = idoc.querySelector('#messagetext > p:nth-child(1)').innerHTML.split(/<br>|<script/)[1];
-        var clock = text.match(/\d+/g);
-        var next = (clock[0] | 0) * 3600000 + (clock[1] | 0) * 60000 + (clock[2] | 0) * 1000;
-        popup.innerText = text;
-        localStorage.worked = worked = Date.now() + next;
-        endWork(iwin, popup, 'sign');
+        var [full, hh, mm, ss] = text.match(/(\d)小时(\d+)分钟(\d+)秒/);
+        var next = hh * 3600000 + mm * 60000 + ss * 1000;
     }
     else {
         popup.innerText = '开始打工...';
-        idoc.querySelectorAll('#advids > div > a').forEach((element, index) => {
+        idoc.querySelectorAll('#advids > div > a').forEach(async (element, index) => {
             element.removeAttribute('href');
             element.removeAttribute('target');
-            setTimeout(() => element.click(), index * 300);
+            await waitTimeout(index * 300);
+            element.click();
         });
-        setTimeout(() => {
-            idoc.querySelector('#stopad > a').click();
-            setTimeout(autoWork, 21600000);
-            popup.innerText = '已完成打工';
-            localStorage.worked = worked = Date.now() + 21600000;
-            endWork(iwin, popup, 'sign');
-        }, 3000);
+        await waitTimeout(3000);
+        idoc.querySelector('#stopad > a').click();
+        setTimeout(autoWork, 21600000);
+        text = '已完成打工';
+        next = 21600000;
+
     }
+    endWork('worked', Date.now() + next, text, popup, iwin);
+}
+
+async function endWork(work, value, text, popup, frame) {
+    action[work] = false;
+    localStorage[work] = self[work] = value;
+    popup.innerText = text;
+    await waitTimeout(5000);
+    frame.frameElement.remove();
+    popup.remove();
 }
 
 function startPopup(string, top) {
@@ -115,10 +119,8 @@ function startWork(url) {
     });
 }
 
-function endWork(iwin, popup, key) {
-    setTimeout(() => {
-        iwin.frameElement.remove();
-        delete working[key];
-        popup.remove();
-    }, 5000);
+function waitTimeout(number) {
+    return new Promise(resolve => {
+        setTimeout(resolve, number);
+    });
 }
