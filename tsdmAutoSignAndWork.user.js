@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.2.0
+// @version      1.2.1
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
-// @match        *://www.tsdm39.net/*
+// @match        *://www.tsdm39.com/*
 // @noframes
 // ==/UserScript==
 
