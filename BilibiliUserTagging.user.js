@@ -11,6 +11,7 @@
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.css.js#sha256-5+Wmo2jiMGUSS0X/4QY799VJ/x12SsfVE2udGGb+pcU=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@73a5d66c400ea0ca8ae18950bc2da36b30d1e22b/js/nodeobserver.js#sha256-8UCTt9FaaeUn/QePL4WWcB0ndsps/UYzLf8FB+CRLME=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @run-at          document-idle
@@ -30,10 +31,11 @@ var {hostname, pathname} = location;
 var position = pathname.slice(1);
 
 var jsUI = new JSUI();
+var observer = new NodeObserver();
 
 jsUI.css.add(` .jsui-tag-manager {position: relative; font-size: 16px; left: 25px;}
 .jsui-tag-manager .jsui-menu-item {background-color: #c26; color: #fff; width: fit-content; padding: 5px 10px;}
-.jsui-tag-window {position: absolute; top: 0px; left: 88px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
+.jsui-tag-window {position: absolute; top: 2px; left: 90px; background-color: #fff; z-index: 999; border-width: 1px; border-style: solid; height: 600px; width: 480px;}
 .jsui-tag-head {display: flex; height: 36px;}
 .jsui-tag-head > * {margin: auto;}
 .jsui-tag-head input {width: 80px; height: 24px; padding: 3px; border-width: 1px;}
@@ -92,7 +94,7 @@ function removeManageTag(rule, idx, name) {
 }
 
 if (hostname === 'www.bilibili.com') {
-    newNodeTimeoutObserver('div.comment-container').then(addBadgeMenuGeneral);
+    observer.timeout('div.comment-container').then(addBadgeMenuGeneral);
     submit.css('padding', '1px 10px');
 }
 else if (hostname === 'space.bilibili.com') {
@@ -102,11 +104,11 @@ else if (hostname === 'space.bilibili.com') {
 else if (hostname === 't.bilibili.com') {
     if (pathname === '/') {
         bilibiliSpaceAndDynamic('bili-dyn-item__panel', anchorNode => {
-            newNodeTimeoutObserver('div.comment-container', {anchorNode}).then(addBadgeMenuGeneral);
+            observer.timeout('div.comment-container', {anchorNode}).then(addBadgeMenuGeneral);
         });
     }
     else if (!isNaN(position)) {
-        newNodeTimeoutObserver('div.comment-container').then(addBadgeMenuGeneral);
+        observer.timeout('div.comment-container').then(addBadgeMenuGeneral);
     }
 }
 
@@ -115,20 +117,20 @@ function addBadgeMenuGeneral(comment) {
     comment.querySelector('ul.nav-bar').append(manager);
 }
 
-function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
-    newNodeMutationObserver(comment, root_box, area => {
+async function addBadgeToComment(comment, mid, root_box, sub_box, sub_item, root_user, sub_user) {
+    observer.mutation(comment, {className: root_box}, area => {
         area.querySelectorAll(root_user + ',' + sub_user).forEach(user => createUserTag(user, mid));
-        newNodeMutationObserver(area.querySelector(sub_box), sub_item, reply => {
+        observer.mutation(area.querySelector(sub_box), {className: sub_item}, reply => {
             var user = reply.querySelector(root_user) ?? reply.querySelector(sub_user);
             createUserTag(user, mid);
         });
     });
 }
 
-async function bilibiliSpaceAndDynamic(anchor, callback) {
-    var list = await newNodeTimeoutObserver('div.bili-dyn-list__items');
-    newNodeMutationObserver(list, 'bili-dyn-list__item', item => {
-        newNodeMutationObserver(item, anchor, callback);
+async function bilibiliSpaceAndDynamic(string, callback) {
+    var list = await observer.timeout('div.bili-dyn-list__items');
+    observer.mutation(list, {className: 'bili-dyn-list__item'}, item => {
+        observer.mutation(item, {className: string}, callback);
     });
 }
 
@@ -173,34 +175,4 @@ async function createUserTag(user, mid) {
 
 function createNewTag(user, color, name) {
     jsUI.new('span').text(name).class('jsui-badge').css('background-color', color).parent(user);
-}
-
-function newNodeMutationObserver(node, style, callback) {
-    new MutationObserver(mutations => {
-        mutations.forEach(mutation => {
-            mutation.addedNodes.forEach(node => {
-                if (node.tagName === 'DIV' && node.className.startsWith(style)) {
-                    callback(node);
-                }
-            });
-        });
-    }).observe(node, {childList: true, subtree: true});
-}
-
-function newNodeTimeoutObserver(selector, options = {}) {
-    var {anchorNode = document, timeout = 5} = options;
-    return new Promise(function (resolve, reject) {
-        var observer = setInterval(() => {
-            var element = anchorNode.querySelector(selector);
-            if (element) {
-                clearInterval(observer);
-                resolve(element);
-            }
-            timeout -= 0.25;
-            if (timeout === 0) {
-                clearInterval(observer);
-                reject(new Error('Can\'t find element with DOM Selector "' + selector + '"'));
-            }
-        }, 250);
-    });
 }
