@@ -8,6 +8,7 @@
 // @author          jc3213
 // @match           *://live.bilibili.com/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.pro.js#sha256-kk8KI9/mPAf5Et9+Mka6rERAgyjotWUoncGN2wqz7bs=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7609e22d5506c10182773660667136e9b96fe744/js/nodeobserver.js#sha256-xG7yfLlwtkpejTuRCKVeI7LJPUtx+SvAtnjMhsqnHbM=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @noframes
@@ -17,6 +18,7 @@
 var banned = GM_getValue('banned', []);
 var show = false;
 var jsUI = new JSUI();
+var observer = new NodeObserver();
 
 jsUI.css.add(` .jsui-manager {border: 2px outset #000; width: 500px; background-color: #fff; font-size: 14px; z-index: 999999; position: absolute;}
 .jsui-manager > * {width: 100%; resize: none;}
@@ -93,10 +95,10 @@ if (area === '') {
     return;
 }
 else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    applyFilterToArea({menu: '#area-tag-list > div:nth-child(1) > div:nth-child(1)', room: 'div.index_3Uym8ODI', list: ['#area-tag-list > div:nth-child(2)']});
+    applyFilterToArea({menu: '#area-tag-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: ['#area-tag-list > div:nth-child(2)']});
 }
 else if (area === 'all') {
-    applyFilterToArea({menu: '#all-area-card-list > div:nth-child(1) > div:nth-child(1)', room: 'div.index_3Uym8ODI', list: ['#all-area-card-list > div:nth-child(2)']});
+    applyFilterToArea({menu: '#all-area-card-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: ['#all-area-card-list > div:nth-child(2)', '#all-special-area-recommend > div:nth-child(2)']});
 }
 else if (!isNaN(area)) {
     var player = document.querySelector('section.player-and-aside-area');
@@ -106,36 +108,23 @@ else {
     console.log('尚未支持的特殊区间，请到NGA原帖或Github反馈');
 }
 
-function livePlayerInFrame(id) {
-    var observer = setInterval(() => {
-        try {
-            var player = document.querySelector('#player-ctnr iframe').contentDocument.querySelector('#head-info-vm > div > div.rows-ctnr');
-            player.append(jsUI.css);
-            banInsideLiveRoom(player, id);
-            clearInterval(observer);
-        }
-        catch(error) {}
-    }, 100);
+async function livePlayerInFrame(id) {
+    var iframe = await observer.timeout('#player-ctnr iframe');
+    iframe.addEventListener('load', async event => {
+        var anchorNode = iframe.contentDocument;
+        var player = await observer.timeout('#head-info-vm > div > div.rows-ctnr', {anchorNode});
+        player.append(jsUI.css);
+        banInsideLiveRoom(player, id);
+    });
 }
 
-function applyFilterToArea({menu, room, list}) {
-    setTimeout(() => {
-        var where = document.querySelector(menu);
-        opener.parent(where);
-        where.after(manager);
-        manager.css('top', where.offsetTop + 30 + 'px');
-        document.querySelectorAll(room).forEach(addMenuToLiveRoom);
-        list.forEach(item => {
-            new MutationObserver(mutationList => {
-                mutationList.forEach(mutation => {
-                    var newNode = mutation.addedNodes[0];
-                    if (newNode) {
-                        addMenuToLiveRoom(newNode);
-                    }
-                });
-            }).observe(document.querySelector(item), {childList: true, subtree: false});
-        });
-    }, 1000);
+async function applyFilterToArea({menu, list, tagName, className}) {
+    var where = await observer.timeout(menu);
+    opener.parent(where);
+    where.after(manager);
+    manager.css('top', where.offsetTop + 30 + 'px');
+    document.querySelectorAll(tagName + '.' + className).forEach(addMenuToLiveRoom);
+    list.forEach(item => observer.mutation(document.querySelector(item), {tagName, className}, addMenuToLiveRoom));
 }
 
 function banInsideLiveRoom(domPlayer, id) {
