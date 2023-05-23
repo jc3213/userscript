@@ -2,18 +2,16 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.9
+// @version         1.9.0
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
-// @match           https://mangaraw.ru/*
 // @match           https://klmanga.net/*
-// @match           https://rawdevart.com/*
 // @match           https://weloma.art/*
-// @match           https://mangahatachi.com/*
+// @match           https://rawdevart.art/*
 // @connect         *
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@16833307450f5226347ffe7b3ebaadacc1377393/js/jsui.js#sha256-8TN+oyjtrzcHHzHO7qYN2f+O94HEpjU4f4NvTByja0o=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d4499e210912cbb87ecdf64b9bcf21bcf1bf4fa5/js/aria2.js#sha256-jRzx7Ea8B4IefORLuAlIrX3AWexkk260gPhPzkCedKE=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/ui/jsui.max.js#sha256-474rXwhePKEEabtRcybkQptUGi43VxfwUZ6kUsj169k=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/js/aria2.js#sha256-D59PF0HBvNaTfgK+nTUY+2nTQG12hp2f81MCaM5EHI8=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -32,30 +30,22 @@
 // @webRequest      {"selector": "*oralistnations.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.diclotrans.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*galanasorra.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*pavymoieter.com/*", "action": "cancel"}
-// @                rawdevart.com
-// @webRequest      {"selector": "*.vdo.ai/*", "action": "cancel"}
-// @webRequest      {"selector": "*.exdynsrv.com/*", "action": "cancel"}
-// @                weloma.art
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-// @                mangaraw.ru
-// @webRequest      {"selector": "*saimifoa.net/*", "action": "cancel"}
-// @                mangahatachi.com
-// @webRequest      {"selector": "*sinmgaepu3or9a61w.com/*", "action": "cancel"}
+// @                weloma.art
+// @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.highcpmrevenuenetwork.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.profitabledisplaynetwork.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*welovemanga.one/app/manga/themes/dark/ads/pop.js", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
 // Initial variables
 var urls = [];
 var fail = [];
-var observer;
-var images;
-var watching;
+var dir;
 var options = GM_getValue('options', {});
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
-var allmanga;
-var folder;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var aria2 = new Aria2(jsonrpc, secret);
 var jsUI = new JSUI();
@@ -126,116 +116,85 @@ var message = {
 var i18n = message[navigator.language] ?? message['en-US'];
 
 // Supported sites
-var manga = {
+var sites = {
     'klmanga.net': {
-        image: 'img.chapter-img',
-        lazyload: 'data-aload',
-        title: {reg: /^(.+)\sChapter\s([^\s]+)/, sel: 'li.current > a', attr: 'title', tl: 1, ch: 2},
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next'],
+        manga: 'img.chapter-img',
+        attr: 'data-aload',
+        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next',
         ads: ['#adLink1', '.chapter-content > center']
     },
-    'rawdevart.com': {
-        image: '#img-container > div > img',
-        lazyload: 'data-src',
-        title: {reg: /^Chapter\s([^\s]+)\s\|\s(.+)\sPage/, sel: '#img-container > div > img', attr: 'alt', tl: 2, ch: 1}
-    },
     'weloma.art': {
-        image: 'img.chapter-img',
-        lazyload: 'data-srcset',
-        title: {reg: /^(.+)(!?\s-\sRAW)?\sChapter\s([^\s]+)/, sel: 'img.chapter-img', attr: 'alt', tl: 1, ch: 3},
-        shortcut: ['a.btn.btn-info.prev', 'a.btn.btn-info.next']
+        manga: 'img.chapter-img',
+        attr: 'data-src',
+        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next'
     },
-    'mangaraw.ru': {
-        image: 'div.card-wrap > img',
-        lazyload: 'data-src',
-        title: {reg: /^(.+)\s\u2013\s\u3010\u7b2c(.+)\u8a71\u3011/, sel: 'img[data-ll-status]', attr: 'alt', tl: 1, ch: 2},
-        shortcut: 'div.chapter-select > div > a'
+    'rawdevart.art': {
+        manga: 'div.chapter-img > canvas',
+        attr: 'data-srcset',
+        title: {selector: 'div.chapter-img > canvas', attr: 'alt', regexp: /^([\w\s\d]+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        shortcut: 'div.chapter-btn.prev > a, div.chapter-btn.next > a'
     },
-    'mangahatachi.com': {
-        image: 'div.page-break > img',
-    }
 };
-watching = manga[location.host];
+var watch = sites[location.host];
 
-function longDecimalNumber(input, length = 3) {
-    var number = isNaN(input) ? input : input.toString();
-    var float = number.indexOf('.');
-    return (10 ** length + number).slice(0 - length - (float === -1 ? 0 : number.length - float));
+function longDecimalNumber(sum, len = 3) {
+    var [, num, flt] = (sum + '').match(/(\d+)(\.\d+)?/);
+    return (10 ** len + num).slice(- len) + (flt ? flt : '');
 }
 
-function extractMangaTitle(title = '') {
-    try {
-        var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-        if (Array.isArray(watching.title)) {
-            watching.title.forEach(item => { title += symbol + watching.title[0].reg.exec(document.querySelector(watching.title[0].sel).getAttribute(watching.title[0].attr))[watching.title[0].nl]; });
-        }
-        else {
-            var text = document.querySelector(watching.title.sel).getAttribute(watching.title.attr);
-            var temp = watching.title.reg.exec(text);
-            title += symbol + temp[watching.title.tl] + symbol + temp[watching.title.ch];
-        }
-        return title.replace(/[:\?\"\']/g, '_');
-    }
-    catch (error) {
-        return;
-    }
+function extractMangaTitle() {
+    var symbol = navigator.platform === 'Win32' ? '\\' : '/';
+    var {selector, attr, regexp, name, chapter, exclude = ''} = watch.title;
+    var temp = document.querySelector(selector).getAttribute(attr).match(regexp);
+    var title = symbol + temp[name] + symbol + longDecimalNumber(temp[chapter]);
+    return title.replace(/[:\?\"\']/g, '_');
 }
 
 // Create UI
-var css = document.createElement('style');
-css.type = 'text/css';
-css.innerText = '.jsui-menu-item {height: 36px; line-height: 28px; background-color: #fff; color: #000 !important; border-width: 0px;}\
-.jsui-manager {top: ' + (iconTop) + 'px; left: ' + (iconLeft + 38) + 'px; display: none;}\
-.jsui-manager {background-color: #fff; z-index: 999999999; position: fixed;}\
-.jsui-drop-menu {border: 1px inset darkviolet; width: 120px;}\
-.jsui-notify-popup {color: #000;}';
+jsUI.css.add(` .jsui-menu-item {height: 36px; line-height: 28px; margin: 0px; width: 120px; font-size: 14px;}
+.jsui-drop-menu, .jsui-menu-float, .jsui-notify-popup {color: #000; background-color: #fff; border: 1px solid darkviolet;}
+.jsui-menu-float, .jsui-manager {position: fixed; z-index: 9999999;}
+.jsui-menu-float {top: ${iconTop}px; left: ${iconLeft}px; width: 38px; height: 38px;}
+.jsui-manager {top: ${iconTop}'px; left: ${iconLeft + 39}px;}`);
 
-var float = jsUI.menuitem({
-    text: '🖱️',
-    onclick: event => {
-        container.style.display = 'block';
+var float = jsUI.new().body('🖱️').class('jsui-menu-float, jsui-menu-item').onclick(event => container.show());
+
+var container = jsUI.new().class('jsui-manager').hide();
+document.body.append(float, container);
+
+document.addEventListener('click', event => {
+    if (!float.contains(event.target)) {
+        container.hide();
     }
 });
-float.style.cssText = 'position: fixed; top: ' + iconTop + 'px; left: ' + iconLeft + 'px; width: 38px; height: 38px; z-index: 999999999; border: 1px inset darkviolet;';
-document.addEventListener('click', event => {
-    container.style.display = float.contains(event.target) ? 'block' : 'none';
-});
-
-var container = document.createElement('div');
-container.className = 'jsui-manager';
-document.body.append(float, container, css);
 
 // Draggable button and menu
 jsUI.dragndrop(float, ({top, left}) => {
-    container.style.top = top + 1 + 'px';
-    container.style.left = left + 39 + 'px';
-    iconTop = top;
-    iconLeft = left;
-    options = {...options, iconTop, iconLeft}
+    container.css({top: `${top}px`, left: `${left + 38}px`});
+    options = {...options, iconTop: top, iconLeft: left};
     GM_setValue('options', options);
 });
 
-var downMenu = jsUI.menulist([
-    {text: i18n.save.label, onclick: downloadAllUrls},
-    {text: i18n.copy.label, onclick: copyAllUrls},
-    {text: i18n.aria2.label, onclick: sendUrlsToAria2}
-], true);
-downMenu.style.display = 'none';
-function downloadAllUrls() {
-    urls.forEach((url, index) => {
-        GM_xmlhttpRequest({
-            url, headers, method: 'GET', responseType: 'blob',
-            onload: (details) => {
-                var blob = details.response;
-                var a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1);
-                a.click();
-                if (index === allmanga - 1) {
-                    notification('save', 'done');
-                }
-            }
-        });
+var downMenu = jsUI.menu(true).parent(container).hide();
+downMenu.add(i18n.save.label).onclick(downloadAllUrls);
+downMenu.add(i18n.copy.label).onclick(copyAllUrls);
+downMenu.add(i18n.aria2.label).onclick(sendUrlsToAria2);
+
+async function downloadAllUrls() {
+    await Promise.all(urls.map(promiseDownload));
+    notification('save', 'done');
+}
+function promiseDownload(url, index) {
+    return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({url, headers, method: 'GET', responseType: 'blob', onload: (details) => {
+            var blob = details.response;
+            var a = jsUI.new('a').attr({href: URL.createObjectURL(blob), download: `${longDecimalNumber(index)}.${blob.type.slice(blob.type.indexOf('/') + 1)}`});
+            a.click();
+            a.remove();
+            resolve(true);
+        }, onerror: reject});
     });
 }
 function copyAllUrls() {
@@ -244,25 +203,31 @@ function copyAllUrls() {
 }
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
-    folder = folder ?? await aria2.call('aria2.getGlobalOption').then(({dir}) => dir + extractMangaTitle()).catch(error => {
-        alert(i18n.aria2.error);
-        jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
-        secret = prompt('Aria2 Secret Token', secret ) ?? secret;
-        aria2 = new Aria2(jsonrpc, secret);
-        options = {...options, jsonrpc, secret};
-        GM_setValue('options', options);
-    });
-    if (folder) {
-        var json = urls.map((url, index) => url = {method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp)/)[0], dir: folder, ...headers}]});
+    if (dir) {
+        var json = urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]}));
         await aria2.batch(json);
         notification('aria2', 'done');
     }
+    else {
+        aria2.call('aria2.getGlobalOption').then((result) => {
+            dir = result.dir + extractMangaTitle();
+            sendUrlsToAria2();
+        }).catch(sendAria2Error);
+    }
+}
+function sendAria2Error() {
+    alert(i18n.aria2.error);
+    jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
+    secret = prompt('Aria2 Secret Token', secret ) ?? secret;
+    aria2 = new Aria2(jsonrpc, secret);
+    options = {...options, jsonrpc, secret};
+    GM_setValue('options', options);
 }
 
-var modeMenu = jsUI.menulist([
-    {text: i18n.gotop.label, onclick: scrollToTop},
-    {text: i18n.menu.on, onclick: contextMenuMode}
-], true);
+var modeMenu = jsUI.menu(true).parent(container);
+modeMenu.add(i18n.gotop.label).onclick(scrollToTop);
+var ctxBtn = modeMenu.add(i18n.menu.on).onclick(contextMenuMode);
+
 function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
@@ -274,48 +239,43 @@ function contextMenuMode() {
 }
 function switchMenuMode() {
     if (ctxMenu === 1) {
-        float.style.display = 'none';
-        modeMenu.childNodes[1].innerText = i18n.menu.on;
+        float.hide();
+        ctxBtn.body(i18n.menu.on);
         document.addEventListener('contextmenu', contextMenuHandler);
     }
     else {
-        float.style.display = 'block';
-        modeMenu.childNodes[1].innerText = i18n.menu.off;
+        float.show();
+        ctxBtn.body(i18n.menu.off);
+        container.css({top: `${float.offsetTop}px`, left: `${float.offsetLeft + float.offsetWidth}px`});
         document.removeEventListener('contextmenu', contextMenuHandler);
-        container.style.top = float.offsetTop + 'px';
-        container.style.left = float.offsetLeft + float.offsetWidth + 'px';
     }
 }
 function contextMenuHandler(event) {
-    if (event.shiftKey || event.target.tagName === 'IMG') {
+    if (event.shiftKey || event.target.tagName === 'IMG' || event.target.tagName === 'INPUT') {
         return;
     }
     event.preventDefault();
-    container.style.top = event.clientY + 'px';
-    container.style.left = event.clientX + 'px';
-    container.style.display = 'block';
+    container.css({top: `${event.clientY}px`, left: `${event.clientX}px`}).show();
 }
 switchMenuMode();
 
-container.append(downMenu, modeMenu);
-
 // Extract images data
-if (watching) {
-    if (watching.ads) {
+if (watch) {
+    if (watch.ads) {
         removeAdsElement();
     }
-    images = [...document.querySelectorAll(watching.image)];
-    allmanga = images.length;
-    if (allmanga > 0) {
+    var images = document.querySelectorAll(watch.manga);
+    var allimages = images.length;
+    if (allimages > 0) {
         extractImage();
     }
-    if (watching.shortcut) {
+    if (watch.shortcut) {
         appendShortcuts();
     }
 }
 
 function removeAdsElement() {
-    Array.isArray(watching.ads) ? watching.ads.forEach(item => removeElement(item)) : removeElement(watching.ads);
+    Array.isArray(watch.ads) ? watch.ads.forEach(item => removeElement(item)) : removeElement(watch.ads);
 
     function removeElement(selector) {
         document.querySelectorAll(selector).forEach(item => item.remove());
@@ -324,67 +284,32 @@ function removeAdsElement() {
 
 function extractImage() {
     var warning = notification('extract', 'start');
-    downMenu.style.display = 'block';
-    observer = setInterval(() => {
-        if (allmanga === urls.length + fail.length) {
+    downMenu.show();
+    var {logo, attr} = watch;
+    var observer = setInterval(() => {
+        if (allimages === urls.length + fail.length) {
             clearInterval(observer);
             warning.remove();
-            if (fail.length === 0) {
-                notification('extract', 'done');
-            }
-            else {
-                notification('extract', 'fail', '\n' + fail.map(item => { return 'page ' + (item + 1); } ));
-            }
+            fail.length === 0 ? notification('extract', 'done') : notification('extract', 'fail', '\n' + fail.map(item => 'page ' + (item + 1)));
         }
     }, 250);
-    if (watching.logo) {
-        watching.logo.forEach(logo => {
-            var pos = images.findIndex(url => url === logo);
-            if (pos !== -1) {
-                images.splice(pos, 1)[0].remove();
-                allmanga --;
-            }
-        });
-    }
     images.forEach((element, index) => {
-        var src = element.getAttribute(watching.lazyload) ?? element.getAttribute('src');
+        var src = element.getAttribute(attr) ?? element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        if (watching.fallback && watching.fallback.includes(url)) {
-            new MutationObserver(mutation => {
-                mutation.forEach(event => {
-                    if (event.attributeName === 'src') {
-                        var url = event.target.src;
-                        if (url === watching.fallback) {
-                            fail.push(url);
-                        }
-                        else {
-                            urls.push(url);
-                        }
-                    }
-                });
-            }).observe(element, {attributes: true});
-        }
-        else {
-            urls.push(url);
-        }
+        logo?.includes(url) ? allimages -- : urls.push(url);
     });
 }
 
 // Add shortcut for chapter
 function appendShortcuts() {
-    var button = Array.isArray(watching.shortcut) ? watching.shortcut.map(item => document.querySelector(item)) : document.querySelectorAll(watching.shortcut);
-    document.addEventListener('keydown', event => {
-        var index = ['ArrowLeft', 'ArrowRight'].indexOf(event.key);
-        var shortcut = button[index];
-        if (shortcut) {
-            shortcut.click();
-        }
-    });
+    var [prev, next] = document.querySelectorAll(watch.shortcut);
+    var shortcut = {ArrowLeft: prev, ArrowRight: next};
+    document.addEventListener('keydown', event => shortcut[event.key]?.click());
 }
 
 // Notifications
 function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
-    var message = '⚠️ ' + warn.replace('%n%', allmanga);
-    return jsUI.notification({html: message, timeout: 5000});
+    var message = '⚠️ ' + warn.replace('%n%', allimages);
+    return jsUI.notification(message, 5000);
 }
