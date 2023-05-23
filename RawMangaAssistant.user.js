@@ -122,7 +122,7 @@ var sites = {
         attr: 'data-aload',
         title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next',
-        ads: ['#adLink1', '.chapter-content > center']
+        ads: '#adLink1, .chapter-content > center'
     },
     'weloma.art': {
         manga: 'img.chapter-img',
@@ -262,7 +262,7 @@ switchMenuMode();
 // Extract images data
 if (watch) {
     if (watch.ads) {
-        removeAdsElement();
+        document.querySelectorAll(watch.ads).forEach(item => item.remove());
     }
     var images = document.querySelectorAll(watch.manga);
     var allimages = images.length;
@@ -270,15 +270,9 @@ if (watch) {
         extractImage();
     }
     if (watch.shortcut) {
-        appendShortcuts();
-    }
-}
-
-function removeAdsElement() {
-    Array.isArray(watch.ads) ? watch.ads.forEach(item => removeElement(item)) : removeElement(watch.ads);
-
-    function removeElement(selector) {
-        document.querySelectorAll(selector).forEach(item => item.remove());
+        var [prev, next] = document.querySelectorAll(watch.shortcut);
+        var shortcut = {ArrowLeft: prev, ArrowRight: next};
+        document.addEventListener('keydown', event => shortcut[event.key]?.click());
     }
 }
 
@@ -298,13 +292,6 @@ function extractImage() {
         var url = src.trim().replace(/^\/\//, 'http://');
         logo?.includes(url) ? allimages -- : urls.push(url);
     });
-}
-
-// Add shortcut for chapter
-function appendShortcuts() {
-    var [prev, next] = document.querySelectorAll(watch.shortcut);
-    var shortcut = {ArrowLeft: prev, ArrowRight: next};
-    document.addEventListener('keydown', event => shortcut[event.key]?.click());
 }
 
 // Notifications
