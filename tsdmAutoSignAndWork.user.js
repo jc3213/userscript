@@ -19,14 +19,16 @@ var css = document.createElement('style');
 css.innerHTML = `iframe {position: absolute; top: 200px; left: 100px; height: 400px; width: 400px; display: none;}`;
 document.head.appendChild(css);
 
-if (date > signed) {
-    autoSign();
-}
-if (now > worked) {
-    autoWork();
-}
-else {
-    setTimeout(autoWork, worked - now);
+if (!document.querySelector('#lsform')) {
+    if (date > signed) {
+        autoSign();
+    }
+    if (now > worked) {
+        autoWork();
+    }
+    else {
+        setTimeout(autoWork, worked - now);
+    }
 }
 
 document.querySelector('#mn_Nfded_menu > :nth-child(1) > a').addEventListener('click', event => {
