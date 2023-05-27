@@ -61,16 +61,13 @@ var upload = jsUI.new('input').attr({type: 'file', accept: '.json'}).onchange(ev
 
 function batchBlock(event) {
     if (confirm('确定要屏蔽列表中的直播间吗？')) {
-        var list = entry.value.match(/[^\n]+/g);
-        if (list) {
-            list.forEach(item => {
-                var rule = item.match(/(\d+)[\\\/\|\s\n\(\)\[\]\{\},.:;'"!@#$%^&*]+(.+)/);
-                if (rule.length === 3) {
-                    addBanlist(rule[1], rule[2]);
-                }
-            });
-            saveBanlist();
-        }
+        entry.value.match(/[^\n]+/g)?.forEach(item => {
+            var rule = item.match(/(\d+)[\\\/\|\s\n\(\)\[\]\{\},.:;'"!@#$%^&*]+(.+)/);
+            if (rule.length === 3) {
+                addBanlist(rule[1], rule[2]);
+            }
+        });
+        saveBanlist();
         entry.value = '';
     }
 }
@@ -95,10 +92,10 @@ if (area === '') {
     return;
 }
 else if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    applyFilterToArea({menu: '#area-tag-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: ['#area-tag-list > div:nth-child(2)']});
+    applyFilterToArea({menu: '#area-tag-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: '#area-tag-list > div:nth-child(2)'});
 }
 else if (area === 'all') {
-    applyFilterToArea({menu: '#all-area-card-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: ['#all-area-card-list > div:nth-child(2)', '#all-special-area-recommend > div:nth-child(2)']});
+    applyFilterToArea({menu: '#all-area-card-list > div:nth-child(1) > div:nth-child(1)', tagName: 'DIV', className: 'index_3Uym8ODI', list: '#all-area-card-list > div:nth-child(2), #all-special-area-recommend > div:nth-child(2)'});
 }
 else if (!isNaN(area)) {
     var player = document.querySelector('section.player-and-aside-area');
@@ -124,7 +121,7 @@ async function applyFilterToArea({menu, list, tagName, className}) {
     where.after(manager);
     manager.css('top', where.offsetTop + 30 + 'px');
     document.querySelectorAll(tagName + '.' + className).forEach(addMenuToLiveRoom);
-    list.forEach(item => observer.mutation(document.querySelector(item), {tagName, className}, addMenuToLiveRoom));
+    document.querySelectorAll(list).forEach(node => observer.mutation(node, {tagName, className}, addMenuToLiveRoom));
 }
 
 function banInsideLiveRoom(domPlayer, id) {
@@ -144,10 +141,7 @@ function banInsideLiveRoom(domPlayer, id) {
 }
 
 function makeBanlist(id, liver) {
-    var rule = jsTable.add([
-        {text: id, onclick: event => removeBanList(rule, id, liver)},
-        liver
-    ]);
+    var rule = jsTable.add([{text: id, onclick: event => removeBanList(rule, id, liver)}, liver]);
 }
 
 function removeBanList(column, id, liver) {
