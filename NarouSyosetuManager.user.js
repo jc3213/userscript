@@ -188,14 +188,9 @@ var debug_btn = $('<div class="jsui-menu-item" id="jsui-log-btn">ログ表示</d
 });
 shelf_menu.append(input_field, submit_btn, export_btn, download_btn, update_btn, debug_btn);
 
-$(document.body).append(bookshelf, overlay).keydown(event => {
-    if (event.keyCode === 37) {
-        $('#novel_color > .novel_bn > a')[0].click();
-    }
-    else if (event.keyCode === 39) {
-        $('#novel_color > .novel_bn > a')[1].click();
-    }
-});
+var [prev_btn, next_btn] = $('#novel_color > :first-child > a');
+var shortcut = {37: prev_btn, 39: next_btn};
+$(document.body).append(bookshelf, overlay).keydown(({keyCode}) => shortcut[keyCode]?.click());
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
