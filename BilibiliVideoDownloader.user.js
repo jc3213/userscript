@@ -2,13 +2,13 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.6.0
+// @version         1.6.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.min.js#sha256-ihMbJ4k9qjBOWmPz4Y+9B6cRyFcnjEWkjAYAKz4XBwo=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ceaca1a2060344909a408a1e157e3cd23e4dbfe0/js/nodeobserver.js#sha256-R3ptp1LZaBZu70+IAJ9KX1CJ7BN4wyrANtHb48wlROc=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
 // @grant           GM_addStyle
 // @grant           GM_getResourceURL
 // @grant           GM_download
@@ -21,6 +21,7 @@ var worker = true;
 var title;
 var aria2c = 'Download With Aria2';
 var bvplayer = watch.startsWith('/video/');
+var shortcut = {};
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
     '30232': {text: '音频 中码率', ext: '.128k.m4a'},
@@ -45,29 +46,26 @@ if (bvplayer) {
     var menuBox = 'div.video-toolbar-left';
     var wideBtn = 'div.bpx-player-ctrl-wide';
     var wideStat = 'bpx-state-entered';
-    var nextBtn = 'div.bpx-player-ctrl-next';
-    var prevBtn = 'div.bpx-player-ctrl-prev';
-    var cssOffset = '';
+    var current = 'div.video-section-list > div.video-episode-card > div.video-episode-card__info-playing';
 }
 else {
-    menuBox = 'div.toolbar';
+    menuBox = 'div[class*="toolbar_toolbar__"]';
     wideBtn = 'div.squirtle-video-widescreen'
     wideStat = 'active';
-    nextBtn = 'div.squirtle-video-next';
-    prevBtn = 'div.squirtle-video-prev';
-    cssOffset = `.jsui-video-menu {left: 20px; top: -6px;}`;
+    current = '#eplist_module > div:nth-child(2) > div[class*="numberListItem_select__"]';
 }
 
 var jsUI = new JSUI();
+var observer = new NodeObserver();
 
-jsUI.css.add(`.jsui-video-menu {position: relative; width: 240px;}
-.jsui-drop-menu, .jsui-options {width: 120px;}
+jsUI.css.add(`.jsui-video-menu {display: inline-block; position: relative;}
+.jsui-video-menu > .jsui-menu-item {display: inline-block; width: 120px;}
+.jsui-options, .jsui-drop-menu {width: 120px;}
 .jsui-analyse {display: flex;}
-.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px;}
+.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px; padding: 3px 5px !important;}
 .jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%; margin: 0px;}
-.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}
-${cssOffset}`);
+.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}`);
 
 var menu = jsUI.menu().class('jsui-video-menu');
 menu.add('设置').onclick(openOptions);
@@ -78,8 +76,6 @@ function openOptions() {
     options_win.switch();
 }
 async function analyseVideo() {
-    options_win.hide();
-    analyse_win.switch();
     if (worker || videocodec !== localStorage.videocodec) {
         worker = false;
         videocodec = localStorage.videocodec;
@@ -94,30 +90,35 @@ async function analyseVideo() {
             await biliVideoExtractor(name, thumbnailUrl[0], 'pgc/player/web/playurl?ep_id=' + id, 'result');
         }
     }
+    options_win.hide();
+    analyse_win.switch();
 }
 
-document.addEventListener('keydown', event => {
-    if (event.ctrlKey) {
-        if (event.key === 'ArrowRight') {
+document.addEventListener('keydown', (event) => {
+    var {ctrlKey, key} = event;
+    if (ctrlKey) {
+        if (key === 'ArrowLeft') {
             event.preventDefault();
-            document.querySelector(nextBtn).click();
+            observer.timeout(current, {timeout: 500}).then(playing => {
+                bvplayer ? playing.parentNode.previousElementSibling.click() : playing.previousElementSibling.click();
+            });
         }
-        if (event.key === 'ArrowLeft') {
+        else if (key === 'ArrowRight') {
             event.preventDefault();
-            document.querySelector(prevBtn).click();
+            observer.timeout(current, {timeout: 500}).then(playing => {
+                bvplayer ? playing.parentNode.nextElementSibling.click() : playing.nextElementSibling.click();
+            });
         }
     }
 });
 
-newNodeTimeoutObserver('div.bpx-player-video-wrap > :first-child').then(video => {
-    video.addEventListener('play', function biliVideoToolbar() {
-        setTimeout(() => {
-            document.querySelector(menuBox).append(menu);
-            var wide = document.querySelector(wideBtn);
-            if (!wide.classList.contains(wideStat) && autowide === '1' ) {
-                wide.click();
-            }
-        }, 500);
+observer.timeout('div.bpx-player-video-wrap > [crossorigin]').then(video => {
+    video.addEventListener('play', async function biliVideoToolbar() {
+        var wide = await observer.timeout(wideBtn);
+        document.querySelector(menuBox).append(menu);
+        if (!wide.classList.contains(wideStat) && autowide === '1' ) {
+            wide.click();
+        }
         video.removeEventListener('play', biliVideoToolbar);
     });
 });
@@ -157,7 +158,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
         var codec = codecs.slice(0, codecs.indexOf('.'));
         var {text, ext} = format[id];
         var {title, alt} = format[codec];
-        menu[codec].add(text).attr('title', title).onclick(event => downloadBiliVideo(event, baseUrl, alt + ext));
+        menu[codec].add(text).attr('title', title).onclick(event => downloadBiliVideo(event.altKey, baseUrl, alt + ext));
     });
     var thumb = getThumbnail(image);
     analyse_win.append(thumb, videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1, menu.mp4a);
@@ -171,11 +172,6 @@ function getThumbnail(url) {
     return thumb;
 }
 
-function downloadBiliVideo({altKey}, url, ext) {
-    if (altKey) {
-        postMessage({ aria2c, download: {url, options: {out: title + ext, referer: location.href }} });
-    }
-    else {
-        GM_download(url, title + ext);
-    }
+function downloadBiliVideo(altKey, url, ext) {
+    altKey ? postMessage({ aria2c, download: {url, options: {out: title + ext, referer: location.href }} }) : GM_download(url, title + ext);
 }
