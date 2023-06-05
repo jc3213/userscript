@@ -11,7 +11,7 @@
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.css.js#sha256-5+Wmo2jiMGUSS0X/4QY799VJ/x12SsfVE2udGGb+pcU=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@73a5d66c400ea0ca8ae18950bc2da36b30d1e22b/js/nodeobserver.js#sha256-8UCTt9FaaeUn/QePL4WWcB0ndsps/UYzLf8FB+CRLME=
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @run-at          document-idle
