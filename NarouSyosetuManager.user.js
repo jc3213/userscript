@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.8.0
+// @version      1.8.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -148,6 +148,13 @@ var submit_btn = $('<div class="jsui-menu-item">NCODE登録</div>').click(async 
         }
     }
 });
+function subscribeNcode(ncode, title) {
+    var book = {ncode, title, last: 0, next: 0};
+    fancyTableItem(book, bookmark.length);
+    bookmark.push(book);
+    saveBookmarkButton();
+    myFancyLog(ncode, title, 'は書庫に登録しました！');
+}
 var export_btn = $('<div class="jsui-menu-item">NCODE保存</div>').click(event => {
     if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
         var text = JSON.stringify(bookmark);
