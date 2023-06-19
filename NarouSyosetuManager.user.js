@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.8.1
+// @version      1.8.2
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -195,9 +195,18 @@ var debug_btn = $('<div class="jsui-menu-item" id="jsui-log-btn">ログ表示</d
 });
 shelf_menu.append(input_field, submit_btn, export_btn, download_btn, update_btn, debug_btn);
 
-var [prev_btn, next_btn] = $('#novel_color > :first-child > a');
-var shortcut = {37: prev_btn, 39: next_btn};
-$(document.body).append(bookshelf, overlay).keydown(({keyCode}) => shortcut[keyCode]?.click());
+// ショットカットマッピング
+var shortcut = {};
+$('#novel_color > :first-child > a').each((index, node) => {
+    var {textContent} = node;
+    if (textContent === '<< 前へ') {
+        shortcut.ArrowLeft = node;
+    }
+    else if (textContent === '次へ >>') {
+        shortcut.ArrowRight = node;
+    }
+});
+$(document.body).append(bookshelf, overlay).keydown(({key}) => shortcut[key]?.click());
 
 // ブックマーク表記生成
 function fancyTableItem(book, index) {
