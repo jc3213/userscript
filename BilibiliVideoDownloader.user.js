@@ -2,12 +2,13 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.6.1
+// @version         1.7.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.min.js#sha256-ihMbJ4k9qjBOWmPz4Y+9B6cRyFcnjEWkjAYAKz4XBwo=
+// @match           *://www.bilibili.com/v/*
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d96925455b372b39f7e714fa3babadfea82251db/ui/jsui.min.js#sha256-Iqt20RQfbOuKyWCZgdgivHwxBeN8ZkQ3MPRSanweBSk=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
 // @grant           GM_addStyle
 // @grant           GM_getResourceURL
@@ -20,7 +21,6 @@ var watch = location.pathname;
 var worker = true;
 var title;
 var aria2c = 'Download With Aria2';
-var bvplayer = watch.startsWith('/video/');
 var shortcut = {};
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
@@ -42,34 +42,45 @@ var format = {
     'mp4a': {title: '音频编码: AAC', alt: '.aac'}
 };
 
-if (bvplayer) {
+if (watch.startsWith('/video/')) {
+    var bvplayer = true;
     var menuBox = 'div.video-toolbar-left';
     var wideBtn = 'div.bpx-player-ctrl-wide';
     var wideStat = 'bpx-state-entered';
-    var current = 'div.video-section-list > div.video-episode-card > div.video-episode-card__info-playing';
+    var current = 'ul.bpx-player-ctrl-eplist-menu > li.bpx-state-active';
+    var offset = `.jsui-video-menu {position: relative;}`;
+}
+else if (watch.startsWith('/v/')) {
+    var history = true;
+    menuBox = 'div.select-type > ul.type';
+    wideBtn = 'div.bilibili-player-video-btn-widescreen';
+    wideStat = 'closed';
+    current = 'div.select-type > ul.type > li.active';
+    offset = `.jsui-video-menu {position: absolute;}`;
 }
 else {
-    menuBox = 'div[class*="toolbar_toolbar__"]';
+    menuBox = 'div.toolbar[mr-show]';
     wideBtn = 'div.squirtle-video-widescreen'
     wideStat = 'active';
-    current = '#eplist_module > div:nth-child(2) > div[class*="numberListItem_select__"]';
+    current = 'li.squirtle-pagelist-select-item.active';
+    offset = `.jsui-video-menu {position: relative;}`;
 }
 
 var jsUI = new JSUI();
 var observer = new NodeObserver();
 
-jsUI.css.add(`.jsui-video-menu {display: inline-block; position: relative;}
+jsUI.css.add(`.jsui-video-menu {display: inline-block;}
 .jsui-video-menu > .jsui-menu-item {display: inline-block; width: 120px;}
-.jsui-options, .jsui-drop-menu {width: 120px;}
+.jsui-options, .jsui-drop-menu {width: 140px;}
 .jsui-analyse {display: flex;}
 .jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px; padding: 3px 5px !important;}
-.jsui-options, .jsui-analyse {position: absolute; z-index: 9999; border: 1px solid #000; padding: 5px; top: 48px; left: 0px; background-color: #fff;}
+.jsui-options, .jsui-analyse {position: absolute; z-index: 99999999999; border: 1px solid #000; padding: 5px; top: 38px; left: 0px; background-color: #fff;}
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%; margin: 0px;}
-.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;}`);
+.jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;} ${offset}`);
 
-var menu = jsUI.menu().class('jsui-video-menu');
-menu.add('设置').onclick(openOptions);
-menu.add('解析').onclick(analyseVideo);
+var videoDL = jsUI.menu().class('jsui-video-menu');
+videoDL.add('设置').onclick(openOptions);
+videoDL.add('解析').onclick(analyseVideo);
 
 function openOptions() {
     analyse_win.hide();
@@ -81,13 +92,22 @@ async function analyseVideo() {
         videocodec = localStorage.videocodec;
         analyse_win.empty();
         if (bvplayer) {
-            var {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
-            await biliVideoExtractor(title, pic, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
+            let {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
+            biliVideoTitle(title);
+            biliVideoThumb(pic);
+            await biliVideoExtractor('x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
+        }
+        else if (history) {
+            let {aid, cid} = document.defaultView;
+            biliVideoTitle(document.querySelector('div.match-info-title').textContent);
+            await biliVideoExtractor('x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
         }
         else {
-            var {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').innerText).itemListElement[0];
-            var id = document.body.querySelector('li.squirtle-pagelist-select-item.active').getAttribute('data-value');
-            await biliVideoExtractor(name, thumbnailUrl[0], 'pgc/player/web/playurl?ep_id=' + id, 'result');
+            let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
+            let id = document.querySelector(current).getAttribute('data-value');
+            biliVideoTitle(name);
+            biliVideoThumb(thumbnailUrl[0]);
+            await biliVideoExtractor(`pgc/player/web/playurl?ep_id=${id}`, 'result');
         }
     }
     options_win.hide();
@@ -99,23 +119,20 @@ document.addEventListener('keydown', (event) => {
     if (ctrlKey) {
         if (key === 'ArrowLeft') {
             event.preventDefault();
-            observer.timeout(current, {timeout: 500}).then(playing => {
-                bvplayer ? playing.parentNode.previousElementSibling.click() : playing.previousElementSibling.click();
-            });
+            observer.timeout(current, {timeout: 500}).then(playing => playing.previousElementSibling.click());
         }
         else if (key === 'ArrowRight') {
             event.preventDefault();
-            observer.timeout(current, {timeout: 500}).then(playing => {
-                bvplayer ? playing.parentNode.nextElementSibling.click() : playing.nextElementSibling.click();
-            });
+            observer.timeout(current, {timeout: 500}).then(playing => playing.nextElementSibling.click());
         }
     }
 });
 
-observer.timeout('div.bpx-player-video-wrap > [crossorigin]').then(video => {
+observer.timeout('video[preload="auto"][crossorigin]').then(video => {
     video.addEventListener('play', async function biliVideoToolbar() {
         var wide = await observer.timeout(wideBtn);
-        document.querySelector(menuBox).append(menu);
+        var menu = await observer.timeout(menuBox);
+        menu.append(videoDL);
         if (!wide.classList.contains(wideStat) && autowide === '1' ) {
             wide.click();
         }
@@ -132,24 +149,35 @@ new MutationObserver(mutations => {
     }
 }).observe(document.head, {childList: true});
 
-var options_win = jsUI.new().class('jsui-options').onchange(optionChange).hide().parent(menu);
-var wide_opt = jsUI.new('select').html('<option value="0">关闭</option><option value="1">启用</option>');
-var code_opt = jsUI.new('select').html('<option value="0">H.264</option><option value="1">HEVC</option><option value="2">AV-1</option>');
+var options_win = jsUI.new().class('jsui-options').onchange(optionChange).hide().parent(videoDL);
+var wide_opt = jsUI.new('select').attr('id', 'autowide').body('<option value="0">关闭</option><option value="1">启用</option>');
+var code_opt = jsUI.new('select').attr('id', 'videocodec').body('<option value="0">H.264</option><option value="1">HEVC</option><option value="2">AV-1</option>');
 wide_opt.value = autowide;
 code_opt.value = videocodec;
-options_win.append(jsUI.new('p').text('自动宽屏'), wide_opt, jsUI.new('p').text('编码格式'), code_opt);
+options_win.append(jsUI.new('p').body('自动宽屏'), wide_opt, jsUI.new('p').body('编码格式'), code_opt);
 
-var analyse_win = jsUI.new().class('jsui-analyse').hide().parent(menu);
+var analyse_win = jsUI.new().class('jsui-analyse').hide().parent(videoDL);
 
 function optionChange(event) {
     var {id, value} = event.target;
     localStorage[id] = value;
 }
 
-async function biliVideoExtractor(name, image, playurl, key) {
-    var multi = document.querySelector('#multi_page li.on > a');
-    name = multi ? name + '-' + multi.innerText : name;
-    title = name.replace(/[\/\\\?\|\<\>:"'\r\n]/g, '_');
+function biliVideoTitle(name) {
+    var multi = document.querySelector(current);
+    name = multi ? `${name}-${multi.textContent}` : name;
+    title = name.trim().replace(/[\/\\\?\|\<\>:"'\r\n\s]+/g, '_');
+}
+
+function biliVideoThumb(url) {
+    var thumb = jsUI.menu(true);
+    var fixed = url.replace(/^(https?:)?\/\//, 'https://');
+    var ext = url.slice(url.lastIndexOf('.'));
+    thumb.add('视频封面').onclick(event => downloadBiliVideo(event, fixed, ext));
+    analyse_win.append(thumb);
+}
+
+async function biliVideoExtractor(playurl, key) {
     var response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
     var json = await response.json();
     var menu = {avc1: jsUI.menu(true), hev1: jsUI.menu(true), av01: jsUI.menu(true), mp4a: jsUI.menu(true)};
@@ -160,16 +188,7 @@ async function biliVideoExtractor(name, image, playurl, key) {
         var {title, alt} = format[codec];
         menu[codec].add(text).attr('title', title).onclick(event => downloadBiliVideo(event.altKey, baseUrl, alt + ext));
     });
-    var thumb = getThumbnail(image);
-    analyse_win.append(thumb, videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1, menu.mp4a);
-}
-
-function getThumbnail(url) {
-    var thumb = jsUI.menu(true);
-    var fixed = url.replace(/^(https?:)?\/\//, 'https://');
-    var ext = url.slice(url.lastIndexOf('.'));
-    thumb.add('视频封面').onclick(event => downloadBiliVideo(event, fixed, ext));
-    return thumb;
+    analyse_win.append(videocodec === '2' ? menu.av01.length !== 0 ? menu.av01 : menu.hev1.length !== 0 ? menu.hev1 : menu.avc1 : videocodec === '1' && menu.hev1.length !== 0 ? menu.hev1 : menu.avc1, menu.mp4a);
 }
 
 function downloadBiliVideo(altKey, url, ext) {
