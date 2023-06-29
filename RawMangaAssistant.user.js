@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9.0
+// @version         1.10.0
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -10,7 +10,7 @@
 // @match           https://weloma.art/*
 // @match           https://rawdevart.art/*
 // @connect         *
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/ui/jsui.max.js#sha256-474rXwhePKEEabtRcybkQptUGi43VxfwUZ6kUsj169k=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5aafb9d8f67d77c1b08854164d04498d1a2e5644/ui/jsui.slim.js#sha256-ZdvjCDSpKoBGzFJsnMGj5DxoofE4RW8SEj1qMX8yUEo=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/js/aria2.js#sha256-D59PF0HBvNaTfgK+nTUY+2nTQG12hp2f81MCaM5EHI8=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -31,6 +31,7 @@
 // @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*.diclotrans.com/*", "action": "cancel"}
 // @webRequest      {"selector": "*pavymoieter.com/*", "action": "cancel"}
+// @webRequest      {"selector": "*.*.top/*", "action": "cancel"}
 // @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
 // @                weloma.art
 // @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
@@ -45,7 +46,7 @@ var urls = [];
 var fail = [];
 var dir;
 var options = GM_getValue('options', {});
-var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = '', iconTop = 350, iconLeft = 200, ctxMenu = 1} = options;
+var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = ''} = options;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var aria2 = new Aria2(jsonrpc, secret);
 var jsUI = new JSUI();
@@ -120,20 +121,21 @@ var sites = {
     'klmanga.net': {
         manga: 'img.chapter-img',
         attr: 'data-aload',
-        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next',
-        ads: '#adLink1, .chapter-content > center'
+        ads: '#adLink1, .chapter-content > center, div.btn-back-to-top + center',
+        logo: ['https://h4.klimv1.xyz/images3/20230627/cr_649a4491439a0.jpg']
     },
     'weloma.art': {
         manga: 'img.chapter-img',
         attr: 'data-src',
-        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next'
     },
     'rawdevart.art': {
-        manga: 'div.chapter-img > canvas',
+        manga: 'canvas[data-srcset]',
         attr: 'data-srcset',
-        title: {selector: 'div.chapter-img > canvas', attr: 'alt', regexp: /^([\w\s\d]+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/, name: 1, chapter: 2},
+        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'div.chapter-btn.prev > a, div.chapter-btn.next > a'
     },
 };
@@ -146,36 +148,18 @@ function longDecimalNumber(sum, len = 3) {
 
 function extractMangaTitle() {
     var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-    var {selector, attr, regexp, name, chapter, exclude = ''} = watch.title;
+    var {selector, attr, regexp, exclude = ''} = watch.title;
     var temp = document.querySelector(selector).getAttribute(attr).match(regexp);
-    var title = symbol + temp[name] + symbol + longDecimalNumber(temp[chapter]);
+    var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
     return title.replace(/[:\?\"\']/g, '_');
 }
 
 // Create UI
 jsUI.css.add(` .jsui-menu-item {height: 36px; line-height: 28px; margin: 0px; width: 120px; font-size: 14px;}
-.jsui-drop-menu, .jsui-menu-float, .jsui-notify-popup {color: #000; background-color: #fff; border: 1px solid darkviolet;}
-.jsui-menu-float, .jsui-manager {position: fixed; z-index: 9999999;}
-.jsui-menu-float {top: ${iconTop}px; left: ${iconLeft}px; width: 38px; height: 38px;}
-.jsui-manager {top: ${iconTop}'px; left: ${iconLeft + 39}px;}`);
+.jsui-drop-menu, .jsui-notify-popup {color: #000; background-color: #fff; border: 1px solid darkviolet;}
+.jsui-manager {position: fixed; z-index: 9999999;}`);
 
-var float = jsUI.new().body('🖱️').class('jsui-menu-float, jsui-menu-item').onclick(event => container.show());
-
-var container = jsUI.new().class('jsui-manager').hide();
-document.body.append(float, container);
-
-document.addEventListener('click', event => {
-    if (!float.contains(event.target)) {
-        container.hide();
-    }
-});
-
-// Draggable button and menu
-jsUI.dragndrop(float, ({top, left}) => {
-    container.css({top: `${top}px`, left: `${left + 38}px`});
-    options = {...options, iconTop: top, iconLeft: left};
-    GM_setValue('options', options);
-});
+var container = jsUI.new().class('jsui-manager').parent(document.body).hide();
 
 var downMenu = jsUI.menu(true).parent(container).hide();
 downMenu.add(i18n.save.label).onclick(downloadAllUrls);
@@ -226,38 +210,22 @@ function sendAria2Error() {
 
 var modeMenu = jsUI.menu(true).parent(container);
 modeMenu.add(i18n.gotop.label).onclick(scrollToTop);
-var ctxBtn = modeMenu.add(i18n.menu.on).onclick(contextMenuMode);
 
 function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
-function contextMenuMode() {
-    ctxMenu = ctxMenu === 0 ? 1 : 0;
-    switchMenuMode();
-    options = {...options, ctxMenu};
-    GM_setValue('options', options);
-}
-function switchMenuMode() {
-    if (ctxMenu === 1) {
-        float.hide();
-        ctxBtn.body(i18n.menu.on);
-        document.addEventListener('contextmenu', contextMenuHandler);
-    }
-    else {
-        float.show();
-        ctxBtn.body(i18n.menu.off);
-        container.css({top: `${float.offsetTop}px`, left: `${float.offsetLeft + float.offsetWidth}px`});
-        document.removeEventListener('contextmenu', contextMenuHandler);
-    }
-}
-function contextMenuHandler(event) {
-    if (event.shiftKey || event.target.tagName === 'IMG' || event.target.tagName === 'INPUT') {
+
+document.addEventListener('contextmenu', (event) => {
+    if (event.shiftKey || event.ctrlKey || event.altKey) {
         return;
     }
     event.preventDefault();
     container.css({top: `${event.clientY}px`, left: `${event.clientX}px`}).show();
-}
-switchMenuMode();
+});
+
+document.addEventListener('click', event => {
+    container.hide();
+});
 
 // Extract images data
 if (watch) {
@@ -290,7 +258,13 @@ function extractImage() {
     images.forEach((element, index) => {
         var src = element.getAttribute(attr) ?? element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        logo?.includes(url) ? allimages -- : urls.push(url);
+        if (logo?.includes(url)) {
+            element.remove();
+            allimages --
+        }
+        else {
+            urls.push(url);
+        }
     });
 }
 
