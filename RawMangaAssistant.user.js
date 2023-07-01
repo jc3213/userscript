@@ -10,7 +10,7 @@
 // @match           https://weloma.art/*
 // @match           https://rawdevart.art/*
 // @connect         *
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@5aafb9d8f67d77c1b08854164d04498d1a2e5644/ui/jsui.slim.js#sha256-ZdvjCDSpKoBGzFJsnMGj5DxoofE4RW8SEj1qMX8yUEo=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.pro.js#sha256-CkxQg/AW5bHyyhBzktXoHRWbB2QRYiui5BJeMl8Myw8=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/js/aria2.js#sha256-D59PF0HBvNaTfgK+nTUY+2nTQG12hp2f81MCaM5EHI8=
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -46,7 +46,9 @@ var urls = [];
 var fail = [];
 var dir;
 var options = GM_getValue('options', {});
+var ctxmenu;
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = ''} = options;
+var {host, pathname} = location;
 var headers = {'cookie': document.cookie, 'referer': location.href, 'user-agent': navigator.userAgent};
 var aria2 = new Aria2(jsonrpc, secret);
 var jsUI = new JSUI();
@@ -119,6 +121,7 @@ var i18n = message[navigator.language] ?? message['en-US'];
 // Supported sites
 var sites = {
     'klmanga.net': {
+        viewer: '-chapter-',
         manga: 'img.chapter-img',
         attr: 'data-aload',
         title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
@@ -139,7 +142,23 @@ var sites = {
         shortcut: 'div.chapter-btn.prev > a, div.chapter-btn.next > a'
     },
 };
-var watch = sites[location.host];
+var watch = sites[host];
+
+// Extract images data
+if (watch?.ads) {
+    document.querySelectorAll(watch.ads).forEach(item => item.remove());
+}
+if (watch?.viewer && pathname.includes(watch.viewer)) {
+    var images = document.querySelectorAll(watch.manga);
+    var allimages = images.length;
+    contextMenu();
+    extractImage();
+}
+if (watch?.shortcut) {
+    var [prev, next] = document.querySelectorAll(watch.shortcut);
+    var shortcut = {ArrowLeft: prev, ArrowRight: next};
+    document.addEventListener('keydown', event => shortcut[event.key]?.click());
+}
 
 function longDecimalNumber(sum, len = 3) {
     var [, num, flt] = (sum + '').match(/(\d+)(\.\d+)?/);
@@ -155,16 +174,34 @@ function extractMangaTitle() {
 }
 
 // Create UI
-jsUI.css.add(` .jsui-menu-item {height: 36px; line-height: 28px; margin: 0px; width: 120px; font-size: 14px;}
+function contextMenu() {
+    jsUI.css.add(` .jsui-menu-item {height: 36px; line-height: 28px; margin: 0px; width: 120px; font-size: 14px;}
 .jsui-drop-menu, .jsui-notify-popup {color: #000; background-color: #fff; border: 1px solid darkviolet;}
 .jsui-manager {position: fixed; z-index: 9999999;}`);
 
-var container = jsUI.new().class('jsui-manager').parent(document.body).hide();
+    ctxmenu = jsUI.new().class('jsui-manager').parent(document.body).hide();
 
-var downMenu = jsUI.menu(true).parent(container).hide();
-downMenu.add(i18n.save.label).onclick(downloadAllUrls);
-downMenu.add(i18n.copy.label).onclick(copyAllUrls);
-downMenu.add(i18n.aria2.label).onclick(sendUrlsToAria2);
+    var downMenu = jsUI.menu(true).parent(ctxmenu);
+    downMenu.add(i18n.save.label).onclick(downloadAllUrls);
+    downMenu.add(i18n.copy.label).onclick(copyAllUrls);
+    downMenu.add(i18n.aria2.label).onclick(sendUrlsToAria2);
+
+    var modeMenu = jsUI.menu(true).parent(ctxmenu);
+    modeMenu.add(i18n.gotop.label).onclick(scrollToTop);
+
+    document.addEventListener('contextmenu', (event) => {
+        var {shiftKey, ctrlKey, altKey, clientY, clientX} = event;
+        if (shiftKey || ctrlKey || altKey) {
+            return;
+        }
+        event.preventDefault();
+        ctxmenu.css({top: `${clientY}px`, left: `${clientX}px`}).show();
+    });
+
+    document.addEventListener('click', (event) => {
+        ctxmenu.hide();
+    });
+}
 
 async function downloadAllUrls() {
     await Promise.all(urls.map(promiseDownload));
@@ -207,46 +244,12 @@ function sendAria2Error() {
     options = {...options, jsonrpc, secret};
     GM_setValue('options', options);
 }
-
-var modeMenu = jsUI.menu(true).parent(container);
-modeMenu.add(i18n.gotop.label).onclick(scrollToTop);
-
 function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
 
-document.addEventListener('contextmenu', (event) => {
-    if (event.shiftKey || event.ctrlKey || event.altKey) {
-        return;
-    }
-    event.preventDefault();
-    container.css({top: `${event.clientY}px`, left: `${event.clientX}px`}).show();
-});
-
-document.addEventListener('click', event => {
-    container.hide();
-});
-
-// Extract images data
-if (watch) {
-    if (watch.ads) {
-        document.querySelectorAll(watch.ads).forEach(item => item.remove());
-    }
-    var images = document.querySelectorAll(watch.manga);
-    var allimages = images.length;
-    if (allimages > 0) {
-        extractImage();
-    }
-    if (watch.shortcut) {
-        var [prev, next] = document.querySelectorAll(watch.shortcut);
-        var shortcut = {ArrowLeft: prev, ArrowRight: next};
-        document.addEventListener('keydown', event => shortcut[event.key]?.click());
-    }
-}
-
 function extractImage() {
     var warning = notification('extract', 'start');
-    downMenu.show();
     var {logo, attr} = watch;
     var observer = setInterval(() => {
         if (allimages === urls.length + fail.length) {
