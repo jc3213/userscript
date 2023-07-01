@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.10.0
+// @version         1.10.1
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -121,7 +121,7 @@ var i18n = message[navigator.language] ?? message['en-US'];
 // Supported sites
 var sites = {
     'klmanga.net': {
-        viewer: '-chapter-',
+        viewer: /-chapter-/,
         manga: 'img.chapter-img',
         attr: 'data-aload',
         title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
@@ -130,12 +130,14 @@ var sites = {
         logo: ['https://h4.klimv1.xyz/images3/20230627/cr_649a4491439a0.jpg']
     },
     'weloma.art': {
+        viewer: /^\/\d+\/\d+/,
         manga: 'img.chapter-img',
         attr: 'data-src',
         title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next'
     },
     'rawdevart.art': {
+        viewer: /\/chapter-/,
         manga: 'canvas[data-srcset]',
         attr: 'data-srcset',
         title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
@@ -148,7 +150,7 @@ var watch = sites[host];
 if (watch?.ads) {
     document.querySelectorAll(watch.ads).forEach(item => item.remove());
 }
-if (watch?.viewer && pathname.includes(watch.viewer)) {
+if (watch?.viewer?.test(pathname)) {
     var images = document.querySelectorAll(watch.manga);
     var allimages = images.length;
     contextMenu();
