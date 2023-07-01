@@ -10,7 +10,7 @@
 // @match           https://www.bilibili.com/bangumi/*
 // @match           https://space.bilibili.com/*/dynamic*
 // @match           https://t.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.css.js#sha256-5+Wmo2jiMGUSS0X/4QY799VJ/x12SsfVE2udGGb+pcU=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.css.js#sha256-5WH1G5f2FlTYaoss3LKpSdaTJ7UQA/kKR8NP9DPlz44=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@73a5d66c400ea0ca8ae18950bc2da36b30d1e22b/js/nodeobserver.js#sha256-8UCTt9FaaeUn/QePL4WWcB0ndsps/UYzLf8FB+CRLME=
 // @grant           GM_getValue
 // @grant           GM_setValue
