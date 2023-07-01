@@ -8,7 +8,7 @@
 // @author          jc3213
 // @match           *://www.bilibili.com/video/*
 // @match           *://www.bilibili.com/v/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d96925455b372b39f7e714fa3babadfea82251db/ui/jsui.min.js#sha256-Iqt20RQfbOuKyWCZgdgivHwxBeN8ZkQ3MPRSanweBSk=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.min.js#sha256-mnAxgBFxrf9LCVUKhR2ikxUBvTY0/sFs9wjF3kDV9Mg=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
 // @grant           GM_addStyle
 // @grant           GM_getResourceURL
@@ -90,7 +90,7 @@ async function analyseVideo() {
     if (worker || videocodec !== localStorage.videocodec) {
         worker = false;
         videocodec = localStorage.videocodec;
-        analyse_win.empty();
+        analyse_win.body();
         if (bvplayer) {
             let {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
             biliVideoTitle(title);
