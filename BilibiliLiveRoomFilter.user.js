@@ -7,7 +7,7 @@
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
 // @match           *://live.bilibili.com/*
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@d3fc37c1acd3b546838a1eb841600357823a74f5/ui/jsui.pro.js#sha256-kk8KI9/mPAf5Et9+Mka6rERAgyjotWUoncGN2wqz7bs=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.max.js#sha256-E/AFMg2Mf3pDPERaY7Zo1ZnDw1yGYkEWyWP15C3Gpd0=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7609e22d5506c10182773660667136e9b96fe744/js/nodeobserver.js#sha256-xG7yfLlwtkpejTuRCKVeI7LJPUtx+SvAtnjMhsqnHbM=
 // @grant           GM_getValue
 // @grant           GM_setValue
@@ -38,7 +38,7 @@ var entry = jsUI.new('textarea').attr('rows', 6).parent(manager);
 
 var jsTable = jsUI.table(['直播间ID', '主播昵称']).parent(manager);
 
-var opener = jsUI.new().text('管理列表').class('jsui-menu-item').css('width', '120px').onclick(event => {
+var opener = jsUI.new().body('管理列表').class('jsui-menu-item').css('width', '120px').onclick(event => {
     if (!show) {
         banned.forEach(({id, liver}) => makeBanlist(id, liver));
         show = true;
@@ -127,7 +127,7 @@ async function applyFilterToArea({menu, list, tagName, className}) {
 function banInsideLiveRoom(domPlayer, id) {
     var liver = domPlayer.querySelector('a.room-owner-username').innerText;
     var area = domPlayer.querySelector('a.area-link').href;
-    var block = jsUI.new().text('屏蔽直播间').class('jsui-menu-item').onclick(event => {
+    var block = jsUI.new().body('屏蔽直播间').class('jsui-menu-item').onclick(event => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             addBanlist(id, liver);
             saveBanlist();
