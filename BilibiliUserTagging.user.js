@@ -43,16 +43,16 @@ jsUI.css.add(` .jsui-tag-manager {position: relative; font-size: 16px; left: 25p
 .jsui-menu-cell {color: #fff;}`);
 
 var manager = jsUI.new().class('jsui-tag-manager');
-var button = jsUI.new().text('管理标签').class('jsui-menu-item, jsui-tag-menu').parent(manager).onclick(event => toggleManagerWindow(win, list));
+var button = jsUI.new().body('管理标签').class('jsui-menu-item', 'jsui-tag-menu').parent(manager).onclick(event => toggleManagerWindow(win, list));
 var win = jsUI.new().class('jsui-tag-window').parent(manager).hide();
 
 var menu = jsUI.new().class('jsui-tag-head').parent(win);
 var color_set = jsUI.new('input').attr('type', 'color');
 var name_set = jsUI.new('input');
 var keyword_set = jsUI.new('input');
-var submit = jsUI.new().text('添加').class('jsui-menu-item').parent(menu).onclick(event => submitNewBadge(menu, list));
-menu.append(jsUI.new().text('颜色'), color_set, jsUI.new().text('标签'), name_set, jsUI.new().text('关键词'), keyword_set, submit);
-var list = jsUI.new().class('jsui-table').parent(win).html('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
+var submit = jsUI.new().body('添加').class('jsui-menu-item').parent(menu).onclick(event => submitNewBadge(menu, list));
+menu.append(jsUI.new().body('颜色'), color_set, jsUI.new().body('标签'), name_set, jsUI.new().body('关键词'), keyword_set, submit);
+var list = jsUI.new().class('jsui-table').parent(win).body('<div class="jsui-table-title"><div>标签</div><div>关键词</div></div>');
 
 function toggleManagerWindow() {
     win.switch();
@@ -81,8 +81,8 @@ function submitNewBadge() {
 
 function addManageTag({color, keyword, name}, idx) {
     var rule = jsUI.new().parent(list);
-    jsUI.new().text(name).class('jsui-menu-cell').parent(rule).css('background-color', color).onclick(event => removeManageTag(rule, idx, name));
-    jsUI.new().text(keyword).parent(rule);
+    jsUI.new().body(name).class('jsui-menu-cell').parent(rule).css('background-color', color).onclick(event => removeManageTag(rule, idx, name));
+    jsUI.new().body(keyword).parent(rule);
 }
 
 function removeManageTag(rule, idx, name) {
@@ -174,5 +174,5 @@ async function createUserTag(user, mid) {
 }
 
 function createNewTag(user, color, name) {
-    jsUI.new('span').text(name).class('jsui-badge').css('background-color', color).parent(user);
+    jsUI.new('span').body(name).class('jsui-badge').css('background-color', color).parent(user);
 }
