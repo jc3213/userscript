@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.10.1
+// @version         1.10.2
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -11,7 +11,7 @@
 // @match           https://rawdevart.art/*
 // @connect         *
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.pro.js#sha256-CkxQg/AW5bHyyhBzktXoHRWbB2QRYiui5BJeMl8Myw8=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@ac5ad687e6a7b0f53cee615016d51451311e793c/js/aria2.js#sha256-D59PF0HBvNaTfgK+nTUY+2nTQG12hp2f81MCaM5EHI8=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@066a2c28442a9e191ea43dd6aaf334b2411026d3/aria2/aria2.js#sha256-OyKr9LrMvIwcFRsR7E+lcQwV0cAL1b405MbcczzThLA=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -124,7 +124,7 @@ var sites = {
         viewer: /-chapter-/,
         manga: 'img.chapter-img',
         attr: 'data-aload',
-        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next',
         ads: '#adLink1, .chapter-content > center, div.btn-back-to-top + center',
         logo: ['https://h4.klimv1.xyz/images3/20230627/cr_649a4491439a0.jpg']
@@ -133,14 +133,14 @@ var sites = {
         viewer: /^\/\d+\/\d+/,
         manga: 'img.chapter-img',
         attr: 'data-src',
-        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next'
     },
     'rawdevart.art': {
         viewer: /\/chapter-/,
         manga: 'canvas[data-srcset]',
         attr: 'data-srcset',
-        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
+        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]:\(\)+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: 'div.chapter-btn.prev > a, div.chapter-btn.next > a'
     },
 };
@@ -227,8 +227,8 @@ function copyAllUrls() {
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
     if (dir) {
-        var json = urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]}));
-        await aria2.batch(json);
+        var sessions = urls.map((url, index) => ['aria2.addUri', [url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]);
+        await aria2.batch(sessions);
         notification('aria2', 'done');
     }
     else {
@@ -243,7 +243,7 @@ function sendAria2Error() {
     jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
     secret = prompt('Aria2 Secret Token', secret ) ?? secret;
     aria2 = new Aria2(jsonrpc, secret);
-    options = {...options, jsonrpc, secret};
+    options = {jsonrpc, secret};
     GM_setValue('options', options);
 }
 function scrollToTop() {
