@@ -125,7 +125,7 @@ var sites = {
         manga: 'img.chapter-img',
         attr: 'data-aload',
         title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
-        shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next',
+        shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
         ads: '#adLink1, .chapter-content > center, div.btn-back-to-top + center',
         logo: ['https://h4.klimv1.xyz/images3/20230627/cr_649a4491439a0.jpg']
     },
@@ -134,14 +134,14 @@ var sites = {
         manga: 'img.chapter-img',
         attr: 'data-src',
         title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
-        shortcut: 'a.btn.btn-info.prev, a.btn.btn-info.next'
+        shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'}
     },
     'rawdevart.art': {
         viewer: /\/chapter-/,
         manga: 'canvas[data-srcset]',
         attr: 'data-srcset',
         title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]:\(\)+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
-        shortcut: 'div.chapter-btn.prev > a, div.chapter-btn.next > a'
+        shortcut: {prev: 'div.chapter-btn.prev > a', next: 'div.chapter-btn.next > a'}
     },
 };
 var watch = sites[host];
@@ -157,8 +157,7 @@ if (watch?.viewer?.test(pathname)) {
     extractImage();
 }
 if (watch?.shortcut) {
-    var [prev, next] = document.querySelectorAll(watch.shortcut);
-    var shortcut = {ArrowLeft: prev, ArrowRight: next};
+    var shortcut = {ArrowLeft: document.querySelector(watch.shortcut.prev), ArrowRight: document.querySelector(watch.shortcut.next)};
     document.addEventListener('keydown', event => shortcut[event.key]?.click());
 }
 
