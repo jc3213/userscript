@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.8.2
+// @version      1.8.3
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -157,11 +157,8 @@ function subscribeNcode(ncode, title) {
 }
 var export_btn = $('<div class="jsui-menu-item">NCODE保存</div>').click(event => {
     if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        var text = JSON.stringify(bookmark);
-        var blob = new Blob([text], {type: 'application/metalink+xml; charset=utf-8'})
-        var href = URL.createObjectURL(blob);
-        var download = '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.json';
-        var a = $('<a></a>').attr({href, download});
+        var blob = new Blob([JSON.stringify(bookmark, null, 4)], {type: 'application/json; charset=utf-8'});
+        var a = $('<a></a>').attr({href: URL.createObjectURL(blob), download: '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.json'});
         a[0].click();
         a.remove();
         saveBookmarkButton();
