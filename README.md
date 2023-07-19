@@ -13,4 +13,7 @@
 - [tsdmAutoSignAndWork.user.js](https://jc3213.github.io/userscript/tsdmAutoSignAndWork.user.js)
 
 ### Special Usage
-- 
+- [NarouSyosetuManager.user.js](https://jc3213.github.io/userscript/NarouSyosetuManager.user.js)
+- [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
+- [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.jss)
+- [jsDelivrLinkForGithub.user.js](https://jc3213.github.io/userscript/jsDelivrLinkForGithub.user.js)
