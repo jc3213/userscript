@@ -106,7 +106,7 @@ function createRecordWindow(id, title, top, content) {
     container.offset = document.querySelectorAll('.speedrun-window').length * 30;
     container.className = 'speedrun-window';
     container.innerHTML = `<div class="speedrun-record">${title}</div>
-<div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-maximum">🔲</div><div id="speedrun-restore">🔳</div><div id="speedrun-remove">❌</div></div>`;
+<div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-restore">🔳</div><div id="speedrun-maximum">🔲</div><div id="speedrun-remove">❌</div></div>`;
     container.style.cssText = style[id] = cssTextGetter(container.offset);
     container.appendChild(content);
     container.addEventListener('click', (event) => {
