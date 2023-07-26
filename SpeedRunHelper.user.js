@@ -28,7 +28,7 @@ css.innerHTML = `
 .speedrun-menu > :hover {filter: opacity(60%);}
 .speedrun-menu > :active {filter: opacity(30%);}
 #speedrun-minimum {line-height: 30px;}
-.speedrun-minimum {bottom: 0px; left: 0px; width: 25% !important; height: 20px !important; z-index: 99999;}
+.speedrun-minimum {bottom: 0px; left: 0px; width: 30% !important; height: 20px !important; z-index: 99999;}
 .speedrun-minimum iframe {display: none !important;}
 .speedrun-maximum {top: 0px; left: 0px; width: ${clientWidth}px !important; height: ${clientHeight}px !important; z-index: 999999;}
 .speedrun-maximum iframe {width: ${clientWidth}px !important; height: ${clientHeight - 20}px !important;}
@@ -62,7 +62,7 @@ function gameboard(event) {
     var record = event.target.closest('tr');
     if (record) {
         event.preventDefault();
-        var [rank, user, time] = record.querySelectorAll('a');
+        var [rank, player, time] = record.querySelectorAll('a');
         speedrunRecord(rank.href, rank, player, time);
     }
 }
@@ -73,7 +73,7 @@ function cssTextGetter(offset) {
     if (left < 0) {
         left = 0;
     }
-    return 'top: ' + top + 'px; left: ' + left + 'px;';
+    return `top: ${top}px; left: ${left}px;`;
 }
 
 async function speedrunRecord(src, rank, player, time) {
