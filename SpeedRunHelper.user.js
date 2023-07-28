@@ -17,6 +17,7 @@ var player = document.querySelector('.x-username.x-focus-inner');
 
 var css = document.createElement('style');
 css.innerHTML = `
+#app-main [class$="lg:w-[400px]"] {display: none !important;}
 .speedrun-window {position: fixed; width: 1280px; height: 742px; z-index: 999999; display: grid; grid-template-areas: "title menu" "player player"; grid-template-columns: calc(100% - 66px) 66px;}
 .speedrun-window iframe {width: 1280px !important; height: 720px !important; grid-area: "player";}
 .speedrun-record, .speedrun-menu {background-color: #181B1C; display: flex; height: 22px;}
@@ -36,7 +37,6 @@ css.innerHTML = `
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: block;}`;
 document.body.append(css);
 
-document.querySelector('.space-y-4 [class*="lg:w-[400px]"]').remove();
 document.querySelector('.relative.flex.w-full.max-w-full.flex-col.flex-nowrap.gap-4').addEventListener('contextmenu', pathname.startsWith('/series/') ? seriesboard : pathname.startsWith('/users/') ? userboard : gameboard);
 
 function seriesboard(event) {
