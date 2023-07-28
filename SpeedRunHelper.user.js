@@ -37,7 +37,6 @@ css.innerHTML = `
 document.body.append(css);
 
 document.querySelector('.space-y-4 [class*="lg:w-[400px]"]').remove();
-console.log(document.querySelector('.relative.flex.w-full.max-w-full.flex-col.flex-nowrap.gap-4'))
 document.querySelector('.relative.flex.w-full.max-w-full.flex-col.flex-nowrap.gap-4').addEventListener('contextmenu', pathname.startsWith('/series/') ? seriesboard : pathname.startsWith('/users/') ? userboard : gameboard);
 
 function seriesboard(event) {
