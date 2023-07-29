@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.10.2
+// @version         1.11.0
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -15,29 +15,6 @@
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
-// @grant           GM_webRequest
-// @webRequest      {"selector": "*.googlesyndication.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.googletagservices.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.googletagmanager.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.amazon-adsystem.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.doubleclick.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.cloudfront.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.disqus.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.facebook.net/*", "action": "cancel"}
-// @webRequest      {"selector": "*.sharethis.com/*", "action": "cancel"}
-// @                klmanga.net
-// @webRequest      {"selector": "*.wpadmngr.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*oralistnations.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*gumlahdeprint.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.diclotrans.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*pavymoieter.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.*.top/*", "action": "cancel"}
-// @webRequest      {"selector": "*.bidgear.com/*", "action": "cancel"}
-// @                weloma.art
-// @webRequest      {"selector": "*.pubfuture.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.highcpmrevenuenetwork.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*.profitabledisplaynetwork.com/*", "action": "cancel"}
-// @webRequest      {"selector": "*welovemanga.one/app/manga/themes/dark/ads/pop.js", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -126,8 +103,8 @@ var sites = {
         attr: 'data-aload',
         title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
-        ads: '#adLink1, .chapter-content > center, div.btn-back-to-top + center',
-        logo: ['https://h4.klimv1.xyz/images3/20230627/cr_649a4491439a0.jpg']
+        ads: '#list-imga > center, img[src$="knet_64ba650e3ad61.png"], img[src$="cr_649a4491439a0.jpg"]',
+        logo: ['olimposcan2_64c3d567c09a6.png', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']
     },
     'weloma.art': {
         viewer: /^\/\d+\/\d+/,
@@ -141,25 +118,34 @@ var sites = {
         manga: 'canvas[data-srcset]',
         attr: 'data-srcset',
         title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]:\(\)+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
-        shortcut: {prev: 'div.chapter-btn.prev > a', next: 'div.chapter-btn.next > a'}
+        shortcut: {prev: '#sub-app .chapter-btn.prev > a', next: '#sub-app .chapter-btn.next > a'},
+        ads: '[data-srcset$="450x375.png"]',
+        logo: ['450x375.png', '800x700.jpeg']
     },
 };
 var watch = sites[host];
 
 // Extract images data
-if (watch?.ads) {
-    document.querySelectorAll(watch.ads).forEach(item => item.remove());
-}
 if (watch?.viewer?.test(pathname)) {
     var images = document.querySelectorAll(watch.manga);
     var allimages = images.length;
     contextMenu();
     extractImage();
 }
-if (watch?.shortcut) {
-    var shortcut = {ArrowLeft: document.querySelector(watch.shortcut.prev), ArrowRight: document.querySelector(watch.shortcut.next)};
-    document.addEventListener('keydown', event => shortcut[event.key]?.click());
+if (watch?.ads) {
+    jsUI.css.add(`\n${watch.ads} \{display: none !important;\}\n`);
 }
+
+document.addEventListener('keydown', (event) => {
+    if (!watch.shortcut) {
+        return;
+    }
+    var shortcut = {ArrowLeft: document.querySelector(watch.shortcut.prev), ArrowRight: document.querySelector(watch.shortcut.next)};
+    var hotkey = shortcut[event.key];
+    if (hotkey) {
+        hotkey.href ? open(shortcut[event.key].href , '_self') : hotkey.click();
+    }
+});
 
 function longDecimalNumber(sum, len = 3) {
     var [, num, flt] = (sum + '').match(/(\d+)(\.\d+)?/);
@@ -262,9 +248,9 @@ function extractImage() {
     images.forEach((element, index) => {
         var src = element.getAttribute(attr) ?? element.getAttribute('src');
         var url = src.trim().replace(/^\/\//, 'http://');
-        if (logo?.includes(url)) {
+        if (logo.some((l) => url.includes(l))) {
             element.remove();
-            allimages --
+            allimages --;
         }
         else {
             urls.push(url);
