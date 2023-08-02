@@ -1,13 +1,11 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.8.9
+// @version      0.9.0
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
 // @grant        GM_openInTab
-// @grant        GM_webRequest
-// @webRequest   {"selector": "*://*.realsrv.com/*", "action": "cancel"}
 // ==/UserScript==
 
 if (location.pathname.startsWith('/view/')) {
@@ -20,7 +18,7 @@ var aria2c = 'Download With Aria2';
 
 // UI
 var keyword;
-var filter = [];
+var result = [];
 var messages = {
     'en-US': {
         keyword: 'Keyword...',
@@ -39,65 +37,58 @@ var messages = {
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
 
-var input = document.createElement('input');
-input.className = 'form-control search-bar';
-input.style.cssText = 'display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;';
-input.placeholder = i18n.keyword;
-input.addEventListener('keypress', event => {
+var search = document.createElement('div');
+search.innerHTML = `<input class="form-control search-bar" style="display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;" placeholder="${i18n.keyword}"><button class="btn btn-primary" style="margin: -3px 0px 0px -3px;">🔍</button>`;
+search.filter = '';
+search.addEventListener('change', (event) => search.filter = event.target.value);
+search.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
-        button.click()
-    }
-});
-
-var button = document.createElement('button');
-button.className = 'btn btn-primary';
-button.style.cssText = 'margin-top: -3px;';
-button.innerText = '🕸️';
-button.addEventListener('click', event => {
-    var {ctrlKey, altKey} = event;
-    if (altKey) {
-        var magnet = [...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet);
-        aria2Download(magnet);
-    }
-    else if (ctrlKey) {
-        batchCopy();
-    }
-    else {
         filterResult();
     }
 });
+search.addEventListener('click', filterResult);
 
-var menu = document.createElement('div');
-menu.append(input, button);
+var filter = document.createElement('th');
+filter.className = 'text-center';
+filter.innerHTML = '<a href="#" style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
+filter.addEventListener('click', (event) => {
+    var {altKey, target: {tagName}} = event;
+    if (tagName === 'A') {
+        event.preventDefault();
+        altKey ? aria2Download([...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet)) : batchCopy();
+    }
+});
 
-document.querySelector('#navbar').appendChild(menu);
+document.querySelector('#navbar').appendChild(search);
+document.querySelector('thead > tr').append(filter);
 
 function filterResult() {
-    var text = input.value;
+    var text = search.filter;
     if (keyword === text) {
         if (keyword === '') {
             return;
         }
-        filter.forEach(tr => {
+        result.forEach(tr => {
             tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none';
         });
     }
     else if (text === '') {
-        if (filter.length === 0) {
+        if (result.length === 0) {
             return;
         }
-        filter.forEach(tr => {
+        result.forEach(tr => {
             tr.style.display = 'table-row';
         });
     }
     else if (keyword !== text) {
         var keys = text.split(/[\|\/\\\+,:;\s]+/);
-        filter = [];
+        var match = keys.length;
+        result = [];
         Object.keys(torrents).forEach(id => {
             var {name, tr} = torrents[id];
-            if (keys.filter(key => name.includes(key)).length !== keys.length) {
+            if (keys.filter(key => name.includes(key)).length !== match) {
                 tr.style.display = 'none';
-                filter.push(tr);
+                result.push(tr);
             }
             else {
                 tr.style.display = 'table-row';
@@ -214,8 +205,10 @@ async function getPreview(id, url) {
     }
     else {
         var urls = desc.match(/\*\*(https?:\/\/[^\*]+)\*\*/g);
-        var site = urls[0];
-        site = site.slice(2, site.length - 2);
+        if (urls) {
+            var site = urls[0];
+            site = site.slice(2, site.length - 2);
+        }
     }
     torrents[id].image = image;
     torrents[id].site = site;
