@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.0
+// @version      0.9.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -22,17 +22,17 @@ var result = [];
 var messages = {
     'en-US': {
         keyword: 'Keyword...',
-        name: 'Name',
-        preview: 'Preview',
-        torrent: 'Torrent',
-        magnet: 'Magnet'
+        name: 'Name:',
+        preview: 'Preview:',
+        torrent: 'Torrent:',
+        magnet: 'Magnet:'
     },
     'zh-CN': {
-        keyword: '关键词...',
-        name: '名字',
-        preview: '预览',
-        torrent: '种子',
-        magnet: '磁链'
+        keyword: '关键词……',
+        name: '名字：',
+        preview: '预览：',
+        torrent: '种子：',
+        magnet: '磁链：'
     }
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
@@ -50,11 +50,12 @@ search.addEventListener('click', filterResult);
 
 var filter = document.createElement('th');
 filter.className = 'text-center';
-filter.innerHTML = '<a href="#" style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
+filter.innerHTML = '<a href style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
+filter.style.width = '40px';
 filter.addEventListener('click', (event) => {
+    event.preventDefault();
     var {altKey, target: {tagName}} = event;
     if (tagName === 'A') {
-        event.preventDefault();
         altKey ? aria2Download([...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet)) : batchCopy();
     }
 });
@@ -160,15 +161,16 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
 
 async function getInformation(id) {
     var {site, image, name, size, torrent, magnet, url} = torrents[id];
-    var txtl = i18n.name + ':\n' + name + ' (' + size + ')';
-    var txtr = torrent ? '\n' + i18n.torrent + ':\n' + torrent + '\n' + i18n.magnet + ':\n' + magnet : '\n' + i18n.magnet + ':\n' + magnet;
+    var txtLT = `${i18n.name}\n${name} (${size}`;
+    var txtRM = `${i18n.magnet}\n${magnet}`;
+    var txtRT = torrent ? `${i18n.torrent}\n'${torrent}\n${txtRM}` : txtRM;
     if (image === undefined && site === undefined) {
         var data = await getPreview(id, url);
         site = data.site;
         image = data.image;
     }
-    var txtd = image ? '\n' + i18n.preview + ':\n' + image : '\n' + i18n.preview + ':\n' + site;
-    return txtl + txtd + txtr;
+    var txtCT = `${i18n.preview}\n${image ? image : site}`;
+    return `${txtLT}\n${txtCT}\n${txtRT}`;
 }
 
 async function printPreview(id) {
