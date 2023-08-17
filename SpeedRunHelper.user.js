@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.3.0
+// @version      1.3.1
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
@@ -22,8 +22,8 @@ css.innerHTML = `
 .speedrun-window iframe {width: 1280px !important; height: 720px !important; grid-area: "player";}
 .speedrun-record, .speedrun-menu {background-color: #181B1C; display: flex; height: 22px;}
 .speedrun-record > * {flex: 1; margin: auto; padding: 0px 5px 0px 3px;}
-.speedrun-record div {display: inline-block !important;}
-.speedrun-record img {height: 16px !important; width: 16px !important; position: relative !important;}
+.speedrun-record * {display: inline-block !important;}
+.speedrun-record img {height: 16px !important; width: 16px !important; position: relative !important; margin-right: 3px;}
 .speedrun-menu {margin-left: auto;}
 .speedrun-menu > * {background-color: #fff; color: #000; cursor: pointer; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}
 .speedrun-menu > :hover {filter: opacity(60%);}
@@ -77,7 +77,7 @@ function cssTextGetter(offset) {
 
 async function speedrunRecord(src, rank, player, time) {
     var id = src.slice(src.lastIndexOf('/') + 1);
-    var title = `<div>Rank : ${rank.innerHTML}</div><div>Player : ${player.textContent}</div><div>Time : ${time.textContent}</div>`;
+    var title = `<div>Rank : ${rank.innerHTML}</div><div>Player : ${player.innerHTML}</div><div>Time : ${time.textContent}</div>`;
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
         view.style.cssText = style[id] = cssTextGetter(view.offset);
