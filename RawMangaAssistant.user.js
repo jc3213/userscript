@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.0
+// @version         1.11.2
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -19,8 +19,9 @@
 
 'use strict';
 // Initial variables
+var manga;
+var folder;
 var urls = [];
-var fail = [];
 var dir;
 var options = GM_getValue('options', {});
 var ctxmenu;
@@ -44,8 +45,7 @@ var message = {
         },
         aria2: {
             label: 'Send to Aria2',
-            done: 'All %n% image urls have been sent to Aria2 JSON-RPC',
-            error: 'JSONRPC: Failed to send request'
+            done: 'All %n% image urls have been sent to Aria2 JSON-RPC'
         },
         gotop: {
             label: 'Scroll to Top',
@@ -73,8 +73,7 @@ var message = {
         },
         aria2: {
             label: '发送至 Aria2',
-            done: '全部 %n% 图像链接已发送至Aria2 JSON-RPC',
-            error: 'JSONRPC: 请求错误'
+            done: '全部 %n% 图像链接已发送至Aria2 JSON-RPC'
         },
         gotop: {
             label: '回到顶部',
@@ -99,41 +98,40 @@ var i18n = message[navigator.language] ?? message['en-US'];
 var sites = {
     'klmanga.net': {
         viewer: /-chapter-/,
-        manga: 'img.chapter-img',
-        attr: 'data-aload',
-        title: {selector: 'li.current > a', attr: 'title', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2_64c3d567c09a6.png', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
+        title: {selector: 'ol.breadcrumb > :last-child > a', attr: 'title', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
         ads: '#list-imga > center, img[src$="knet_64ba650e3ad61.png"], img[src$="cr_649a4491439a0.jpg"]',
-        logo: ['olimposcan2_64c3d567c09a6.png', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']
+        patch: () => {
+            localStorage.setItem('shown_at', 3000000000000);
+            document.querySelector('#list-imga').oncontextmenu = '';
+        }
     },
     'weloma.art': {
         viewer: /^\/\d+\/\d+/,
-        manga: 'img.chapter-img',
-        attr: 'data-src',
-        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^([\w\s\d:\(\)]+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        manga: {selector: 'img.chapter-img', attr: 'data-src'},
+        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'}
     },
     'rawdevart.art': {
         viewer: /\/chapter-/,
-        manga: 'canvas[data-srcset]',
-        attr: 'data-srcset',
-        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^([\w\s\d]:\(\)+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
+        manga: {selector: 'canvas[data-srcset]', attr: 'data-srcset', except: ['450x375.png', '800x700.jpeg']},
+        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^(.+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: '#sub-app .chapter-btn.prev > a', next: '#sub-app .chapter-btn.next > a'},
-        ads: '[data-srcset$="450x375.png"]',
-        logo: ['450x375.png', '800x700.jpeg']
+        ads: '[data-srcset$="450x375.png"]'
     },
 };
 var watch = sites[host];
 
 // Extract images data
-if (watch?.viewer?.test(pathname)) {
-    var images = document.querySelectorAll(watch.manga);
-    var allimages = images.length;
+if (watch.viewer?.test(pathname)) {
     contextMenu();
-    extractImage();
 }
-if (watch?.ads) {
+if (watch.ads) {
     jsUI.css.add(`\n${watch.ads} \{display: none !important;\}\n`);
+}
+if (typeof watch.patch === 'function') {
+    watch.patch();
 }
 
 document.addEventListener('keydown', (event) => {
@@ -146,19 +144,6 @@ document.addEventListener('keydown', (event) => {
         hotkey.href ? open(shortcut[event.key].href , '_self') : hotkey.click();
     }
 });
-
-function longDecimalNumber(sum, len = 3) {
-    var [, num, flt] = (sum + '').match(/(\d+)(\.\d+)?/);
-    return (10 ** len + num).slice(- len) + (flt ? flt : '');
-}
-
-function extractMangaTitle() {
-    var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-    var {selector, attr, regexp, exclude = ''} = watch.title;
-    var temp = document.querySelector(selector).getAttribute(attr).match(regexp);
-    var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
-    return title.replace(/[:\?\"\']/g, '_');
-}
 
 // Create UI
 function contextMenu() {
@@ -190,7 +175,33 @@ function contextMenu() {
     });
 }
 
+function longDecimalNumber(sum, len = 3) {
+    var [, num, flt] = (sum + '').match(/(\d+)(\.\d+)?/);
+    return (10 ** len + num).slice(- len) + (flt ? flt : '');
+}
+
+function getAllMangaImages() {
+    if (isNaN(manga)) {
+        var warning = notification('extract', 'start');
+        manga = 0;
+        document.querySelectorAll(watch.manga.selector).forEach(i => {
+            var src = i.getAttribute(watch.manga.attr) ?? i.getAttribute('src');
+            var url = src.trim().replace(/^\/\//, 'http://');
+            if (!watch.manga.except?.some((s) => url.includes(s))) {
+                urls.push(url);
+                manga ++;
+            }
+        });
+        var symbol = navigator.platform === 'Win32' ? '\\' : '/';
+        var temp = document.querySelector(watch.title.selector).getAttribute(watch.title.attr).match(watch.title.regexp);
+        var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
+        folder = title.replace(/[:\?\"\']/g, '_');
+        warning.remove();
+        notification('extract', 'done');
+    }
+}
 async function downloadAllUrls() {
+    getAllMangaImages();
     await Promise.all(urls.map(promiseDownload));
     notification('save', 'done');
 }
@@ -206,11 +217,13 @@ function promiseDownload(url, index) {
     });
 }
 function copyAllUrls() {
+    getAllMangaImages();
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 }
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
+    getAllMangaImages();
     if (dir) {
         var sessions = urls.map((url, index) => ['aria2.addUri', [url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]);
         await aria2.batch(sessions);
@@ -218,13 +231,13 @@ async function sendUrlsToAria2() {
     }
     else {
         aria2.call('aria2.getGlobalOption').then((result) => {
-            dir = result.dir + extractMangaTitle();
+            dir = result.dir + folder;
             sendUrlsToAria2();
         }).catch(sendAria2Error);
     }
 }
-function sendAria2Error() {
-    alert(i18n.aria2.error);
+function sendAria2Error(error) {
+    alert(error.message);
     jsonrpc = prompt('Aria2 JSONRPC URI', jsonrpc) ?? jsonrpc;
     secret = prompt('Aria2 Secret Token', secret ) ?? secret;
     aria2 = new Aria2(jsonrpc, secret);
@@ -235,32 +248,9 @@ function scrollToTop() {
     document.documentElement.scrollTop = 0;
 }
 
-function extractImage() {
-    var warning = notification('extract', 'start');
-    var {logo, attr} = watch;
-    var observer = setInterval(() => {
-        if (allimages === urls.length + fail.length) {
-            clearInterval(observer);
-            warning.remove();
-            fail.length === 0 ? notification('extract', 'done') : notification('extract', 'fail', '\n' + fail.map(item => 'page ' + (item + 1)));
-        }
-    }, 250);
-    images.forEach((element, index) => {
-        var src = element.getAttribute(attr) ?? element.getAttribute('src');
-        var url = src.trim().replace(/^\/\//, 'http://');
-        if (logo.some((l) => url.includes(l))) {
-            element.remove();
-            allimages --;
-        }
-        else {
-            urls.push(url);
-        }
-    });
-}
-
 // Notifications
 function notification(action, status, url) {
     var warn = i18n[action][status] ?? i18n[action];
-    var message = '⚠️ ' + warn.replace('%n%', allimages);
+    var message = `⚠️ ${warn.replace('%n%', manga)}`;
     return jsUI.notification(message, 5000);
 }
