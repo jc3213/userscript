@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.0
+// @version         1.7.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,9 +10,8 @@
 // @match           *://www.bilibili.com/v/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.min.js#sha256-mnAxgBFxrf9LCVUKhR2ikxUBvTY0/sFs9wjF3kDV9Mg=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
-// @grant           GM_addStyle
-// @grant           GM_getResourceURL
-// @grant           GM_download
+// @grant           GM_xmlhttpRequest
+// @connect         *
 // @run-at          document-idle
 // ==/UserScript==
 
@@ -20,8 +19,8 @@ var {autowide = '0', videocodec = '0'} = localStorage;
 var watch = location.pathname;
 var worker = true;
 var title;
-var aria2c = 'Download With Aria2';
 var shortcut = {};
+var history = {};
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
     '30232': {text: '音频 中码率', ext: '.128k.m4a'},
@@ -128,17 +127,15 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-observer.timeout('video[preload="auto"][crossorigin]').then(video => {
-    video.addEventListener('play', async function biliVideoToolbar() {
-        var wide = await observer.timeout(wideBtn);
-        var menu = await observer.timeout(menuBox);
-        menu.append(videoDL);
-        if (!wide.classList.contains(wideStat) && autowide === '1' ) {
-            wide.click();
-        }
-        video.removeEventListener('play', biliVideoToolbar);
-    });
-});
+window.addEventListener('play', async function biliVideoToolbar() {
+    var wide = await observer.timeout(wideBtn);
+    var menu = await observer.timeout(menuBox);
+    menu.append(videoDL);
+    if (!wide.classList.contains(wideStat) && autowide === '1' ) {
+        wide.click();
+    }
+    window.removeEventListener('play', biliVideoToolbar);
+}, true);
 
 new MutationObserver(mutations => {
     if (watch !== location.pathname) {
@@ -166,7 +163,7 @@ function optionChange(event) {
 function biliVideoTitle(name) {
     var multi = document.querySelector(current);
     name = multi ? `${name}-${multi.textContent}` : name;
-    title = name.trim().replace(/[\/\\\?\|\<\>:"'\r\n\s]+/g, '_');
+    title = name.trim().replace(/[\/\\:*?"<>|\s\r\n]/g, '_');
 }
 
 function biliVideoThumb(url) {
@@ -192,5 +189,20 @@ async function biliVideoExtractor(playurl, key) {
 }
 
 function downloadBiliVideo(altKey, url, ext) {
-    altKey ? postMessage({ aria2c, download: {url, options: {out: title + ext, referer: location.href }} }) : GM_download(url, title + ext);
+    if (altKey) {
+        var json = Array.isArray(url) ? url.map(l => ({url: l})) : typeof url === 'string' ? {url} : url;
+        var options = {out: title + ext, referer: location.href};
+        window.postMessage({aria2c: 'Download With Aria2', download: {json, options}});
+    }
+    else if (history[url]) {
+        history[url].click();
+    }
+    else {
+        GM_xmlhttpRequest({url, responseType: 'blob', headers: {referer: location.href}, onload: (details) => {
+            var a = history[url] = document.createElement('a');
+            a.href = URL.createObjectURL(details.response);
+            a.download = title + ext;
+            a.click();
+        }});
+    }
 }
