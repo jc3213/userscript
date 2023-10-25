@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.2
+// @version         1.7.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -10,8 +10,7 @@
 // @match           *://www.bilibili.com/v/*
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.min.js#sha256-mnAxgBFxrf9LCVUKhR2ikxUBvTY0/sFs9wjF3kDV9Mg=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7cb4fb4348574f426417490c20e0ea7d8f0b3187/js/nodeobserver.js#sha256-v48u9yZlthnR8qPvz1AEnK7WLtQmn56wKT1qX76Ic+w=
-// @grant           GM_xmlhttpRequest
-// @connect         *
+// @grant           GM_download
 // @run-at          document-idle
 // ==/UserScript==
 
@@ -20,7 +19,6 @@ var watch = location.pathname;
 var worker = true;
 var title;
 var shortcut = {};
-var history = {};
 var archive;
 var format = {
     '30280': {text: '音频 高码率', ext: '.192k.m4a'},
@@ -195,15 +193,7 @@ function downloadBiliVideo(altKey, url, ext) {
         var options = {out: title + ext, referer: location.href};
         window.postMessage({aria2c: 'Download With Aria2', download: {json, options}});
     }
-    else if (history[url]) {
-        history[url].click();
-    }
     else {
-        GM_xmlhttpRequest({url, responseType: 'blob', headers: {referer: location.href}, onload: (details) => {
-            var a = history[url] = document.createElement('a');
-            a.href = URL.createObjectURL(details.response);
-            a.download = title + ext;
-            a.click();
-        }});
+        GM_download({url, responseType: 'blob', headers: {referer: location.href}, name: title + ext});
     }
 }
