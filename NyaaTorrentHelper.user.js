@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.2
+// @version      0.9.3
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -199,7 +199,7 @@ async function getPreview(id, url) {
     var idx = text.indexOf('"torrent-description"');
     var desc = text.slice(idx + 22);
     var result = desc.slice(0, desc.indexOf('</div>'));
-    var urls = result.match(/[\[\(]https?:\/\/[^\]\)]+[\]\)]/g);
+    var urls = result.match(/[\[\(*]https?:\/\/[^\]\)*]+[\]\*)]/g);
     var sites = [];
     var images = [];
     urls.forEach(url => {
