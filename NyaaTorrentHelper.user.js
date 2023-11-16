@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.1
+// @version      0.9.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -138,12 +138,12 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
     var td = document.createElement('td');
     td.className = 'text-center';
     td.style.width = '39px';
-    td.innerHTML = '<input type="checkbox" value="' + id + '">';
+    td.innerHTML = `<input type="checkbox" value="${id}">`;
     tr.appendChild(td);
     //
     title.addEventListener('contextmenu', async event => {
-        var {layerY, layerX, ctrlKey, altKey} = event;
         event.preventDefault();
+        var {layerY, layerX, ctrlKey, altKey} = event;
         torrents[id].top = layerY;
         torrents[id].left = layerX;
         if (altKey) {
@@ -161,7 +161,7 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
 
 async function getInformation(id) {
     var {site, image, name, size, torrent, magnet, url} = torrents[id];
-    var txtLT = `${i18n.name}\n${name} (${size}`;
+    var txtLT = `${i18n.name}\n${name} [${size}]`;
     var txtRM = `${i18n.magnet}\n${magnet}`;
     var txtRT = torrent ? `${i18n.torrent}\n'${torrent}\n${txtRM}` : txtRM;
     if (image === undefined && site === undefined) {
@@ -198,22 +198,16 @@ async function getPreview(id, url) {
     var text = await res.text();
     var idx = text.indexOf('"torrent-description"');
     var desc = text.slice(idx + 22);
-    var ldx = desc.indexOf('</div>');
-    desc = desc.slice(0, ldx);
-    var images = desc.match(/\(https?:\/\/[^\)]+\)/g);
-    if (images) {
-        var image = images.find(url => url.match(/(jpg|png|gif|avif|bmp)\)$/));
-        image = image.slice(1, image.length - 1);
-    }
-    else {
-        var urls = desc.match(/\*\*(https?:\/\/[^\*]+)\*\*/g);
-        if (urls) {
-            var site = urls[0];
-            site = site.slice(2, site.length - 2);
-        }
-    }
-    torrents[id].image = image;
-    torrents[id].site = site;
+    var result = desc.slice(0, desc.indexOf('</div>'));
+    var urls = result.match(/[\[\(]https?:\/\/[^\]\)]+[\]\)]/g);
+    var sites = [];
+    var images = [];
+    urls.forEach(url => {
+        var result = url.slice(1, -1);
+        result.match(/(jpg|png|gif|avif|bmp|webp)\)$/) ? !images.includes(result) && images.push(result) : !sites.includes(result) && sites.push(result);
+    });
+    torrents[id].image = images[0];
+    torrents[id].site = sites[0];
     working[id] = false;
     return torrents[id];
 }
@@ -227,7 +221,7 @@ function popupPreview(id, image) {
     img = document.createElement('img');
     img.id = 'preview' + id;
     img.src = image;
-    img.style.cssText = 'position: absolute; z-index: 3213; max-height: 800px; width: auto; top: ' + top + 'px; left: ' + left + 'px';
+    img.style.cssText = `position: absolute; z-index: 3213; max-height: 800px; width: auto; top: ${top}px; left: ${left}px`;
     img.addEventListener('click', event => img.remove());
     document.body.append(img);
 }
