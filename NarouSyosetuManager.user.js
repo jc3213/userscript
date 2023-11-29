@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.8.3
+// @version      1.9.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
 // @match        https://novel18.syosetu.com/*
+// @exclude      https://ncode.syosetu.com/novelpdf/creatingpdf/*
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -17,11 +18,12 @@
 
 'use strict';
 var {pathname} = location;
+var formdata = new FormData($('.js-pdf-form')[0]);
 var [, novelcode, novelread] = pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
 if (!novelcode) {
     return;
 }
-var novelname = pathname === '/' + novelcode + '/' ? document.title : $('#container a[href$="/' + novelcode + '/"]')[0].innerText;
+var novelname = pathname === '/' + novelcode + '/' ? document.title : $(`#container a[href$="${novelcode}/"]`)[0].innerText;
 var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
@@ -61,7 +63,7 @@ var css = $(`<style>
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
-.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
+.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 370px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 700px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
 .jsui-button-cell:nth-child(1) {line-height: 200%;}
 .jsui-table-column {display: flex; gap: 1px; margin: 1px;}
@@ -112,9 +114,8 @@ function removeHeaderFooter() {
 
 var bookshelf = $('<div class="jsui-book-shelf"></div>').hide();;
 var shelf_menu = $('<div class="jsui-basic-menu"></div>');
-var shelf_table = $('<div class="jsui-table"></div>').html('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div><div class="jsui-table-cell">更新間隔</div><div class="jsui-table-cell">ダウンロード</div></div>');
-var shelf_debug = $('<div class="jsui-logging"></div>');
-bookshelf.append(shelf_menu, shelf_table, shelf_debug);
+var shelf_table = $('<div class="jsui-table"></div>').html('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div></div>');
+bookshelf.append(shelf_menu, shelf_table);
 
 var input_field = $('<input>').change(event => {
     myncode = event.target.value ?? novelcode;
@@ -123,7 +124,7 @@ var submit_btn = $('<div class="jsui-menu-item">NCODE登録</div>').click(async 
     var book = bookmark.find(({ncode}) => ncode === myncode);
     if (book) {
         var {ncode, title} = book;
-        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は既に書庫に登録しています！');
+        fancyPopup(ncode, title, 'は既に書庫に登録しています！');
         validate[ncode] = title;
     }
     else if (myncode === novelcode) {
@@ -131,10 +132,10 @@ var submit_btn = $('<div class="jsui-menu-item">NCODE登録</div>').click(async 
     }
     else {
         if (validate[myncode]) {
-            return myFancyPopup('Nコード【' + myncode + '】が存在しません');;
+            return fancyPopup(myncode, null, 'が存在しません！');;
         }
         validate[myncode] = '検証中';
-        myFancyPopup('Nコード【' + myncode + '】を検証しています、しばらくお待ちください！');
+        fancyPopup(myncode, null, 'を検証しています、しばらくお待ちください！');
         var res = await fetch('/' + myncode);
         var text = await res.text();
         if (text.includes('class="nothing"')) {
@@ -153,29 +154,29 @@ function subscribeNcode(ncode, title) {
     fancyTableItem(book, bookmark.length);
     bookmark.push(book);
     saveBookmarkButton();
-    myFancyLog(ncode, title, 'は書庫に登録しました！');
+    fancyPopup(ncode, title, 'は書庫に登録しました！');
 }
-var export_btn = $('<div class="jsui-menu-item">NCODE保存</div>').click(event => {
-    if (confirm('全ての小説のダウンロード情報をエックスポートしますか？')) {
-        var blob = new Blob([JSON.stringify(bookmark, null, 4)], {type: 'application/json; charset=utf-8'});
-        var a = $('<a></a>').attr({href: URL.createObjectURL(blob), download: '小説家になろう書庫-' + new Date().toJSON().slice(0, -2).replace(/[T:\.\-]/g, '_') + '.json'});
-        a[0].click();
-        a.remove();
-        saveBookmarkButton();
-        alert('情報のエックスポートは無事に成功しました！');
-    }
-});
 var download_btn = $('<div class="jsui-menu-item">PDFダウンロード</div>').click(async event => {
-    if (confirm('全ての小説の縦書きPDFをダウンロードしますか？')) {
-        if (download.all) {
+    if (confirm('この小説の縦書きPDFをダウンロードしますか？')) {
+        var referer = `https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/${novelcode}/`;
+        var token = await getPDFDownloadURL(referer);
+        var url = `https://pdfnovels.net/${token}/${novelcode}.pdf`
+        var name = novelname + '.pdf';
+        if (aria2c) {
+            postMessage({aria2c, download: { url, options: {out: name, referer, 'user-agent': navigator.userAgent} } });
             return;
         }
-        download.all = true;
-        var session = bookmark.map(downloadPDFHelper);
-        var result = await Promise.all(session);
-        myFancyPopup('全ての小説の縦書きPDFのダウンロードがかんりょうしました！');
-        GM_setValue('bookmark', result);
-        download.all = false;
+        if (download[novelcode]) {
+            fancyPopup(novelcode, novelname, 'はまだ処理しています、しばらくお待ちください！');
+        }
+        download[novelcode] = true;
+        fancyPopup(novelcode, novelname, 'のダウンロードを開始しました！');
+        var details = await promisedXMLRequest(url);
+        var href = URL.createObjectURL(details.response);
+        var down = $('<a></a>').attr({href, download: name});
+        down[0].click();
+        down.remove();
+        download[novelcode] = false;
     }
 });
 var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save-btn">書庫更新</div>').click(event => {
@@ -186,11 +187,7 @@ var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save
         shelf_table.show();
     }
 });
-var debug_btn = $('<div class="jsui-menu-item" id="jsui-log-btn">ログ表示</div>').click(event => {
-    shelf_table.toggle();
-    debug_btn.toggleClass('jsui-menu-checked');
-});
-shelf_menu.append(input_field, submit_btn, export_btn, download_btn, update_btn, debug_btn);
+shelf_menu.append(input_field, submit_btn, download_btn, update_btn);
 
 // ショットカットマッピング
 var shortcut = {};
@@ -211,16 +208,14 @@ function fancyTableItem(book, index) {
     var mybook = $('<div class="jsui-table-column"></div>').attr('id', ncode);
     var cell_ncode = $('<div class="jsui-button-cell"></div>').text(ncode).click(event => removeNcodeFromShelf(mybook, index, ncode, title));
     var cell_title = $('<div class="jsui-button-cell"></div>').text(title).click(event => openNcodeInNewPage(ncode, title));
-    var cell_input = $('<input type="number" min="0" max="30" style="width: 126px;">').attr('title', next === 0 ? '自動更新をしません' : next + '日間隔で更新します').val(next).change(event => changeNcodeUpdatePeriod(book, ncode, title, event.target.value | 0));
-    var cell_update = $('<div class="jsui-button-cell"></div>').text(generateTimeFormat(book.last)).click(event => downloadCurrentNcode(book, title));
-    mybook.append(cell_ncode, cell_title, cell_input, cell_update).appendTo(shelf_table);
+    mybook.append(cell_ncode, cell_title).appendTo(shelf_table);
 }
 function removeNcodeFromShelf(mybook, index, ncode, title) {
     if (confirm('【 ' + title + ' 】を書庫から削除しますか？')) {
         mybook.remove();
         bookmark.splice(index, 1);
         saveBookmarkButton();
-        myFancyLog(ncode, title, 'は書庫から削除しました！');
+        fancyPopup(ncode, title, 'は書庫から削除しました！');
     }
 }
 function openNcodeInNewPage(ncode, title) {
@@ -236,13 +231,6 @@ async function downloadCurrentNcode(book, title) {
         }
     }
 }
-function changeNcodeUpdatePeriod(book, ncode, title, value) {
-    book.next = value;
-    saveBookmarkButton();
-    event.target.title = value === 0 ? '自動更新をしません' : value + '日間隔で更新します';
-    myFancyLog(ncode, title, value === 0 ? 'は更新しないように設定しました！' : 'は ' + value + ' 日間隔で更新するように設定しました！');
-}
-
 function generateTimeFormat(ms) {
     var time = new Date(ms);
     return time.getFullYear() + '/' + (time.getMonth() + 1) + '/' + time.getDate() + '\n' + time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds();
@@ -252,60 +240,23 @@ function saveBookmarkButton() {
     changed = true;
 }
 
-// ブックマーク自動更新
-if (today !== scheduler) {
-    var update = bookmark.map(book => {
-        var {ncode, title, next, last} = ncode;
-        if (next === 0) {
-            return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は更新しないように設定しています！！');
-        }
-        var update = next - (timeline - last) / 86400000;
-        if (update > 0) {
-            update = update >= 1 ? (next | 0) + '日' : (update * 24 | 0) + '時間';
-            return myFancyPopup('Nコード【' + ncode + '】、「' + title + '」は ' + update + ' 後に更新する予定です！');
-        }
-        else {
-            return downloadPDFHelper(book);
-        }
-    });
-    Promise.all(update).then(result => {
-        localStorage.scheduler = today;
-    });
-}
-
 // ダウンロード関連
 async function downloadPDFHelper(book) {
     var {ncode, title} = book;
-    var url = 'https://pdfnovels.net/' + ncode + '/main.pdf';
-    var name = title + '.pdf';
-    if (aria2c) {
-        postMessage({aria2c, download: { url, options: {out: name} } });
-        book.last = updateBookInfo(ncode);
-        return book;
-    }
-    if (download[ncode]) {
-        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」はまだ処理しています、しばらくお待ちください！');
-        return book;
-    }
-    download[ncode] = true;
-    myFancyPopup('Nコード【' + ncode + '】、「' + title + '」のダウンロードを開始しました！');
-    var details = await promisedXMLRequest(url);
-    if (details.response.type === 'application/pdf') {
-        var href = URL.createObjectURL(details.response);
-        var down = $('<a></a>').attr({href, download: name});
-        down[0].click();
-        down.remove();
-        book.last = updateBookInfo(ncode);
-        download[ncode] = false;
-        return book;
-    }
-    else {
-        return waitForRetryDownload(book);
-    }
+
 }
-function updateBookInfo(ncode) {
-    var date = shelf_table.find('#' + ncode + '> :last-child').text(generateTimeFormat(timeline));
-    return timeline;
+async function getPDFDownloadURL(referer) {
+    var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
+    var temp = $(`<div style="display: hidden;">${text}</div>`).appendTo(document.body);
+    return new Promise(resolve => {
+        var watcher = setInterval(() => {
+            var url = temp.find('a.js-pdf-downloadpage-link')[0].href;
+            if (url !== 'javascript:void(0)') {
+                clearInterval(watcher);
+                resolve(url.match(/\/([^\/]+)\/$/)[1]);
+            }
+        }, 200);
+    });
 }
 function promisedXMLRequest(url) {
     return new Promise((resolve, reject) => {
@@ -318,19 +269,9 @@ function promisedXMLRequest(url) {
         });
     });
 }
-function waitForRetryDownload(book) {
-    return new Promise(resolve => {
-        var {ncode, title} = book;
-        myFancyPopup('Nコード【' + ncode + '】、「' + title + '」の縦書きPDFは只今生成中です、 60秒後に再試行します！');
-        setTimeout(async () => {
-            var blob = await downloadPDFHelper(book);
-            resolve(blob);
-        }, 60000);
-    });
-}
 
 // ログ関連
-function myFancyLog(ncode, title, result) {
+function fancyPopup(ncode, title, result) {
     if (ncode && title) {
         var message = '「<span style="color: darkgreen" title="Nコード【' + ncode + '】">' + title + '</span>」 <span style="color: violet">' + result + '</span>';
     }
@@ -340,11 +281,6 @@ function myFancyLog(ncode, title, result) {
     else if (ncode && title === undefined) {
         message = '<span style="color: darkgreen">' + ncode + '</span> <span style="color: violet">' + result + '</span>';
     }
-    var log = $('<p></p>').html(message);
-    shelf_debug.prepend(log);
-    myFancyPopup(message);
-}
-function myFancyPopup(message) {
     var popup = $('<div class="jsui-notify-popup"></div>').html(message).click(event => popup.remove());
     overlay.append(popup);
     popup.css('left', ($(document).width() - popup.width()) / 2 + 'px');
