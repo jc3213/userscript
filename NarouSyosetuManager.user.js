@@ -63,7 +63,7 @@ var css = $(`<style>
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
-.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 370px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 700px; height: 600px; overflow: hidden;}
+.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 370px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 720px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
 .jsui-button-cell:nth-child(1) {line-height: 200%;}
 .jsui-table-column {display: flex; gap: 1px; margin: 1px;}
@@ -171,7 +171,7 @@ var download_btn = $('<div class="jsui-menu-item">PDFダウンロード</div>').
         }
         download[novelcode] = true;
         fancyPopup(novelcode, novelname, 'のダウンロードを開始しました！');
-        var details = await promisedXMLRequest(url);
+        var details = await promisedXMLRequest(url, referer);
         var href = URL.createObjectURL(details.response);
         var down = $('<a></a>').attr({href, download: name});
         down[0].click();
@@ -241,10 +241,6 @@ function saveBookmarkButton() {
 }
 
 // ダウンロード関連
-async function downloadPDFHelper(book) {
-    var {ncode, title} = book;
-
-}
 async function getPDFDownloadURL(referer) {
     var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
     var temp = $(`<div style="display: hidden;">${text}</div>`).appendTo(document.body);
@@ -258,10 +254,11 @@ async function getPDFDownloadURL(referer) {
         }, 200);
     });
 }
-function promisedXMLRequest(url) {
+function promisedXMLRequest(url, referer) {
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
             url,
+            header: {'Referer': referer},
             method: 'GET',
             responseType: 'blob',
             onload: resolve,
