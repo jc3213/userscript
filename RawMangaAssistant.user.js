@@ -102,7 +102,6 @@ var sites = {
         manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2_64c3d567c09a6.png', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
         title: {selector: 'ol.breadcrumb > :last-child > a', attr: 'title', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
-        ads: '#list-imga > center, img[src$="knet_64ba650e3ad61.png"], img[src$="cr_649a4491439a0.jpg"]',
         patch: () => {
             localStorage.setItem('shown_at', 3000000000000);
             document.querySelector('#list-imga').oncontextmenu = '';
@@ -110,7 +109,7 @@ var sites = {
     },
     'weloma.art': {
         viewer: /^\/\d+\/\d+/,
-        manga: {selector: 'img.chapter-img', attr: 'data-src'},
+        manga: {selector: 'img.chapter-img', attr: 'data-src', except: ['/uploads/']},
         title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'}
     },
@@ -119,7 +118,6 @@ var sites = {
         manga: {selector: 'canvas[data-srcset]', attr: 'data-srcset', except: ['450x375.png', '800x700.jpeg']},
         title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^(.+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: '#sub-app .chapter-btn.prev > a', next: '#sub-app .chapter-btn.next > a'},
-        ads: '[data-srcset$="450x375.png"]'
     },
     'manga1000.top': {
         viewer: /-chapter-/,
@@ -133,9 +131,7 @@ var watch = sites[host];
 // Extract images data
 if (watch.viewer?.test(pathname)) {
     contextMenu();
-}
-if (watch.ads) {
-    jsUI.css.add(`\n${watch.ads} \{display: none !important;\}\n`);
+    getAllMangaImages();
 }
 if (typeof watch.patch === 'function') {
     watch.patch();
@@ -198,6 +194,9 @@ function getAllMangaImages() {
                 urls.push(url);
                 manga ++;
             }
+            else {
+                i.remove();
+            }
         });
         var symbol = navigator.platform === 'Win32' ? '\\' : '/';
         var temp = document.querySelector(watch.title.selector).getAttribute(watch.title.attr).match(watch.title.regexp);
@@ -208,7 +207,6 @@ function getAllMangaImages() {
     }
 }
 async function downloadAllUrls() {
-    getAllMangaImages();
     await Promise.all(urls.map(promiseDownload));
     notification('save', 'done');
 }
@@ -224,13 +222,11 @@ function promiseDownload(url, index) {
     });
 }
 function copyAllUrls() {
-    getAllMangaImages();
     navigator.clipboard.writeText(urls.join('\n'));
     notification('copy', 'done');
 }
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
-    getAllMangaImages();
     if (dir) {
         var sessions = urls.map((url, index) => ['aria2.addUri', [url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]);
         await aria2.batch(sessions);
