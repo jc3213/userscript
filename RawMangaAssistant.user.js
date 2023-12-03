@@ -2,13 +2,14 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.2
+// @version         1.11.3
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
 // @match           https://klmanga.net/*
 // @match           https://weloma.art/*
 // @match           https://rawdevart.art/*
+// @match           https://manga1000.top/*
 // @connect         *
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.pro.js#sha256-CkxQg/AW5bHyyhBzktXoHRWbB2QRYiui5BJeMl8Myw8=
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@066a2c28442a9e191ea43dd6aaf334b2411026d3/aria2/aria2.js#sha256-OyKr9LrMvIwcFRsR7E+lcQwV0cAL1b405MbcczzThLA=
@@ -119,6 +120,12 @@ var sites = {
         title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^(.+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: '#sub-app .chapter-btn.prev > a', next: '#sub-app .chapter-btn.next > a'},
         ads: '[data-srcset$="450x375.png"]'
+    },
+    'manga1000.top': {
+        viewer: /-chapter-/,
+        manga: {selector: '#listImgs > img', attr: 'data-src'},
+        title: {selector: 'meta[name="description"]', attr: 'content', regexp: /^Read\sraw\smanga\sjp\s(.+)\s-\s(?:RAW)?\schap\s(\d+(?:\.\d)?)/},
+        shortcut: {prev: 'a.rd_top-left', next: 'a.rd_top-right'},
     },
 };
 var watch = sites[host];
