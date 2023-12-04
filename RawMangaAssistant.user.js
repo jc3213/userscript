@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.3
+// @version         1.11.4
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -99,13 +99,14 @@ var i18n = message[navigator.language] ?? message['en-US'];
 var sites = {
     'klmanga.net': {
         viewer: /-chapter-/,
-        manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2_64c3d567c09a6.png', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
+        manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
         title: {selector: 'ol.breadcrumb > :last-child > a', attr: 'title', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
         patch: () => {
             localStorage.setItem('shown_at', 3000000000000);
             document.querySelector('#list-imga').oncontextmenu = '';
-        }
+        },
+        ads: '#list-imga > center'
     },
     'weloma.art': {
         viewer: /^\/\d+\/\d+/,
@@ -152,7 +153,8 @@ document.addEventListener('keydown', (event) => {
 function contextMenu() {
     jsUI.css.add(` .jsui-menu-item {height: 36px; line-height: 28px; margin: 0px; width: 120px; font-size: 14px;}
 .jsui-drop-menu, .jsui-notify-popup {color: #000; background-color: #fff; border: 1px solid darkviolet;}
-.jsui-manager {position: fixed; z-index: 9999999;}`);
+.jsui-manager {position: fixed; z-index: 9999999;}
+${watch.ads} {display: none;}`);
 
     ctxmenu = jsUI.new().class('jsui-manager').parent(document.body).hide();
 
