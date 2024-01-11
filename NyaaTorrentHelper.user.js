@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.3
+// @version      0.9.4
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -40,18 +40,23 @@ var i18n = messages[navigator.language] ?? messages['en-US'];
 var search = document.createElement('div');
 search.innerHTML = `<input class="form-control search-bar" style="display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;" placeholder="${i18n.keyword}"><button class="btn btn-primary" style="margin: -3px 0px 0px -3px;">🔍</button>`;
 search.filter = '';
+
+var filter = document.createElement('th');
+filter.className = 'text-center';
+filter.innerHTML = '<a href style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
+filter.style.width = '40px';
+
+document.querySelector('#navbar').appendChild(search);
+document.querySelector('thead > tr').append(filter);
+
 search.addEventListener('change', (event) => search.filter = event.target.value);
 search.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
         filterResult();
     }
 });
-search.addEventListener('click', filterResult);
+search.querySelector('button').addEventListener('click', filterResult);
 
-var filter = document.createElement('th');
-filter.className = 'text-center';
-filter.innerHTML = '<a href style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
-filter.style.width = '40px';
 filter.addEventListener('click', (event) => {
     event.preventDefault();
     var {altKey, target: {tagName}} = event;
@@ -60,8 +65,6 @@ filter.addEventListener('click', (event) => {
     }
 });
 
-document.querySelector('#navbar').appendChild(search);
-document.querySelector('thead > tr').append(filter);
 
 function filterResult() {
     var text = search.filter;
@@ -163,7 +166,7 @@ async function getInformation(id) {
     var {site, image, name, size, torrent, magnet, url} = torrents[id];
     var txtLT = `${i18n.name}\n${name} [${size}]`;
     var txtRM = `${i18n.magnet}\n${magnet}`;
-    var txtRT = torrent ? `${i18n.torrent}\n'${torrent}\n${txtRM}` : txtRM;
+    var txtRT = torrent ? `${i18n.torrent}\n${torrent}\n${txtRM}` : txtRM;
     if (image === undefined && site === undefined) {
         var data = await getPreview(id, url);
         site = data.site;
