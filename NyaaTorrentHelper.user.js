@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.4
+// @version      0.9.5
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -37,26 +37,43 @@ var messages = {
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
 
-var search = document.createElement('div');
-search.innerHTML = `<input class="form-control search-bar" style="display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;" placeholder="${i18n.keyword}"><button class="btn btn-primary" style="margin: -3px 0px 0px -3px;">🔍</button>`;
-search.filter = '';
+var search = document.createElement('input');
+search.className = 'form-control search-bar';
+search.style.cssText = 'display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;';
+search.placeholder = i18n.keyword;
+search.addEventListener('change', (event) => {
+    var text = event.target.value;
+    switch (text) {
+        case '':
+            result.forEach((tr) => {
+                tr.style.display = 'table-row';
+            });
+            break;
+        case keyword:
+            result.forEach((tr) => {
+                tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none';
+            });
+            break;
+        default:
+            var regexp = new RegExp(text.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
+            Object.keys(torrents).forEach(id => {
+                var {name, tr} = torrents[id];
+                if (regexp.test(name)) {
+                    tr.style.display = 'table-row';
+                    return
+                }
+                tr.style.display = 'none';
+                result.push(tr);
+            });
+            keyword = text;
+            break;
+    }
+});
 
 var filter = document.createElement('th');
 filter.className = 'text-center';
 filter.innerHTML = '<a href style="opacity: 1; font-size: 12px; line-height: 42px;">🔎</a>';
 filter.style.width = '40px';
-
-document.querySelector('#navbar').appendChild(search);
-document.querySelector('thead > tr').append(filter);
-
-search.addEventListener('change', (event) => search.filter = event.target.value);
-search.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        filterResult();
-    }
-});
-search.querySelector('button').addEventListener('click', filterResult);
-
 filter.addEventListener('click', (event) => {
     event.preventDefault();
     var {altKey, target: {tagName}} = event;
@@ -65,41 +82,11 @@ filter.addEventListener('click', (event) => {
     }
 });
 
+document.querySelector('#navbar').appendChild(search);
+document.querySelector('thead > tr').append(filter);
 
-function filterResult() {
-    var text = search.filter;
-    if (keyword === text) {
-        if (keyword === '') {
-            return;
-        }
-        result.forEach(tr => {
-            tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none';
-        });
-    }
-    else if (text === '') {
-        if (result.length === 0) {
-            return;
-        }
-        result.forEach(tr => {
-            tr.style.display = 'table-row';
-        });
-    }
-    else if (keyword !== text) {
-        var keys = text.split(/[\|\/\\\+,:;\s]+/);
-        var match = keys.length;
-        result = [];
-        Object.keys(torrents).forEach(id => {
-            var {name, tr} = torrents[id];
-            if (keys.filter(key => name.includes(key)).length !== match) {
-                tr.style.display = 'none';
-                result.push(tr);
-            }
-            else {
-                tr.style.display = 'table-row';
-            }
-        });
-        keyword = text;
-    }
+function filterResult(text) {
+
 }
 
 async function batchCopy() {
