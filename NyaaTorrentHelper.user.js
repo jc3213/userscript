@@ -51,7 +51,7 @@ search.addEventListener('change', (event) => {
             break;
         case keyword:
             result.forEach((tr) => {
-                tr.style.display = tr.style.display === 'none' ? 'table-row' : 'none';
+                tr.style.display = tr.style.display === 'none' ? '' : 'none';
             });
             break;
         default:
