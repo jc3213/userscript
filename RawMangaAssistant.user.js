@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.4
+// @version         1.11.5
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -117,7 +117,7 @@ var sites = {
     'rawdevart.art': {
         viewer: /\/chapter-/,
         manga: {selector: 'canvas[data-srcset]', attr: 'data-srcset', except: ['450x375.png', '800x700.jpeg']},
-        title: {selector: 'canvas[data-srcset]', attr: 'alt', regexp: /^(.+)\s(?:RAW)?\s-\sChapter\s(\d+(?:\.\d)?)/},
+        title: {selector: 'meta[property="og:title"]', attr: 'content', regexp: /^(.+)\s(?:RAW)?\s?\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: '#sub-app .chapter-btn.prev > a', next: '#sub-app .chapter-btn.next > a'},
     },
     'manga1000.top': {
@@ -132,7 +132,7 @@ var watch = sites[host];
 // Extract images data
 if (watch.viewer?.test(pathname)) {
     contextMenu();
-    getAllMangaImages();
+    setTimeout(getAllMangaImages, 1000);
 }
 if (typeof watch.patch === 'function') {
     watch.patch();
@@ -201,7 +201,10 @@ function getAllMangaImages() {
             }
         });
         var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-        var temp = document.querySelector(watch.title.selector).getAttribute(watch.title.attr).match(watch.title.regexp);
+        var title_string = document.querySelector(watch.title.selector).getAttribute(watch.title.attr);
+        var temp = title_string.match(watch.title.regexp);
+        console.log(title_string,watch.title.regexp);
+        console.log(temp);
         var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
         folder = title.replace(/[:\?\"\']/g, '_');
         warning.remove();
