@@ -197,7 +197,7 @@ function downloadBiliVideo(altKey, url, ext) {
     if (altKey) {
         var json = Array.isArray(url) ? url.map(l => ({url: l})) : typeof url === 'string' ? {url} : url;
         var options = {out: title + ext, referer: location.href};
-        window.postMessage({aria2c: 'Download With Aria2', params: {json, options}});
+        window.postMessage({aria2c: 'aria2c-jsonrpc-call', params: {json, options}});
     }
     else {
         GM_download({url, responseType: 'blob', headers: {referer: location.href}, name: title + ext});
