@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.0
+// @version      1.9.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -40,15 +40,7 @@ var overlay = $('<div class="jsui-notify-overlay"></div>');
 addEventListener('message', event => {
     var {extension_name} = event.data;
     if (extension_name === 'Download With Aria2') {
-        aria2c = extension_name;
-    }
-});
-
-var tategaki = $('#head_nav > :nth-child(5) > a');
-tategaki.attr('href', 'https://pdfnovels.net/' + novelcode + '/main.pdf').click(event => {
-    if (aria2c) {
-        event.preventDefault();
-        postMessage({aria2c, download: { url: tategaki.href, options: {out: novelname + '.pdf'} } });
+        aria2c = 'aria2c-jsonrpc-call';
     }
 });
 
@@ -63,7 +55,7 @@ var css = $(`<style>
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
-.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 370px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 720px; height: 600px; overflow: hidden;}
+.jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
 .jsui-button-cell:nth-child(1) {line-height: 200%;}
 .jsui-table-column {display: flex; gap: 1px; margin: 1px;}
@@ -73,6 +65,7 @@ var css = $(`<style>
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
 .jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
 .jsui-notify-popup {position: relative; background-color: #fff; cursor: pointer; padding: 5px 10px; margin: 5px; width: fit-content; border-radius: 3px; border: 1px outset #cccccc;}
+#head_nav, #novel_color {width: 880px !important; margin: auto;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
 .novel_view > p {margin: 30px 0px;}
@@ -88,16 +81,40 @@ var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => 
     bookshelf.toggle();
     button.toggleClass('jsui-menu-checked');
 });
+var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').click(async event => {
+    if (download[novelcode]) {
+        fancyPopup(novelcode, novelname, 'はまだ処理しています、しばらくお待ちください！');
+    }
+    fancyPopup(novelcode, novelname, 'ダウンロード情報を収集をしています、しばらくお待ちください！');
+    download[novelcode] = true;
+    var referer = `https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/${novelcode}/`;
+    var token = await getPDFDownloadURL(referer);
+    var url = `https://pdfnovels.net/${token}/${novelcode}.pdf`
+    var name = novelname + '.pdf';
+    if (aria2c) {
+        postMessage({aria2c, params: { url, options: {out: name, referer, 'user-agent': navigator.userAgent} } });
+        download[novelcode] = false;
+        fancyPopup(novelcode, novelname, 'はaria2cのJSON-RPCへ送りました！');
+        return;
+    }
+    fancyPopup(novelcode, novelname, 'のダウンロードを開始しました！');
+    var details = await promisedXMLRequest(url, referer);
+    var href = URL.createObjectURL(details.response);
+    var down = $('<a></a>').attr({href, download: name});
+    down[0].click();
+    down.remove();
+    download[novelcode] = false;
+    fancyPopup(novelcode, novelname, 'のダウンロードを完了しました！');
+});
 
-manager.append(css, button);
+manager.append(css, button, download_btn);
 $('#head_nav').append(manager);
 
 if (novelread) {
-    $('#novel_color').css('width', '60%');
-    var clearfix = $('<div class="jsui-menu-item">本文のみ</div>').click(event => {
+    var clearfix = $('<span class="jsui-menu-item">本文のみ</span>').click(event => {
         localStorage.clearfix = localStorage.clearfix === '0' ? '1' : '0';
         removeHeaderFooter();
-    });;
+    });
     manager.append(clearfix);
     removeHeaderFooter();
 }
@@ -156,29 +173,6 @@ function subscribeNcode(ncode, title) {
     saveBookmarkButton();
     fancyPopup(ncode, title, 'は書庫に登録しました！');
 }
-var download_btn = $('<div class="jsui-menu-item">PDFダウンロード</div>').click(async event => {
-    if (confirm('この小説の縦書きPDFをダウンロードしますか？')) {
-        var referer = `https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/${novelcode}/`;
-        var token = await getPDFDownloadURL(referer);
-        var url = `https://pdfnovels.net/${token}/${novelcode}.pdf`
-        var name = novelname + '.pdf';
-        if (aria2c) {
-            postMessage({aria2c, download: { url, options: {out: name, referer, 'user-agent': navigator.userAgent} } });
-            return;
-        }
-        if (download[novelcode]) {
-            fancyPopup(novelcode, novelname, 'はまだ処理しています、しばらくお待ちください！');
-        }
-        download[novelcode] = true;
-        fancyPopup(novelcode, novelname, 'のダウンロードを開始しました！');
-        var details = await promisedXMLRequest(url, referer);
-        var href = URL.createObjectURL(details.response);
-        var down = $('<a></a>').attr({href, download: name});
-        down[0].click();
-        down.remove();
-        download[novelcode] = false;
-    }
-});
 var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save-btn">書庫更新</div>').click(event => {
     if (changed) {
         GM_setValue('bookmark', bookmark);
@@ -187,7 +181,7 @@ var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save
         shelf_table.show();
     }
 });
-shelf_menu.append(input_field, submit_btn, download_btn, update_btn);
+shelf_menu.append(input_field, submit_btn, update_btn);
 
 // ショットカットマッピング
 var shortcut = {};
@@ -243,7 +237,7 @@ function saveBookmarkButton() {
 // ダウンロード関連
 async function getPDFDownloadURL(referer) {
     var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
-    var temp = $(`<div style="display: hidden;">${text}</div>`).appendTo(document.body);
+    var temp = $(`<div style="display: none;">${text}</div>`).appendTo(document.body);
     return new Promise(resolve => {
         var watcher = setInterval(() => {
             var url = temp.find('a.js-pdf-downloadpage-link')[0].href;
