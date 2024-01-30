@@ -84,10 +84,6 @@ filter.addEventListener('click', (event) => {
 document.querySelector('#navbar').appendChild(search);
 document.querySelector('thead > tr').append(filter);
 
-function filterResult(text) {
-
-}
-
 async function batchCopy() {
     var array = [...document.querySelectorAll('td > input:checked')].map(i => getInformation(i.value));
     var result = await Promise.all(array);
@@ -97,11 +93,13 @@ async function batchCopy() {
 //
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') {
-        document.querySelector('ul.pagination > li:first-child > a').click();
-    }
-    if (event.key === 'ArrowRight') {
-        document.querySelector('ul.pagination > li:last-child > a').click();
+    switch (event.key) {
+        case 'ArrowLeft':
+            document.querySelector('ul.pagination > li:first-child > a').click();
+            break;
+        case 'ArrowRight':
+            document.querySelector('ul.pagination > li:last-child > a').click();
+            break;
     }
 });
 
@@ -136,15 +134,13 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
         torrents[id].top = layerY;
         torrents[id].left = layerX;
         if (altKey) {
-            aria2Download(magnet);
+            return aria2Download(magnet);
         }
-        else if (ctrlKey) {
+        if (ctrlKey) {
             var text = await getInformation(id);
-            navigator.clipboard.writeText(text);
+            return navigator.clipboard.writeText(text);
         }
-        else {
-            printPreview(id);
-        }
+        printPreview(id);
     });
 });
 
@@ -170,15 +166,15 @@ async function printPreview(id) {
     if (image) {
         popupPreview(id, image);
         working[id] = false;
+        return;
     }
-    else if (site) {
+    if (site) {
         GM_openInTab(site);
         working[id] = false;
+        return;
     }
-    else {
-        await getPreview(id, url)
-        printPreview(id);
-    }
+    await getPreview(id, url);
+    printPreview(id);
 }
 
 async function getPreview(id, url) {
