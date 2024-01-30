@@ -4,6 +4,7 @@
 // @version      0.9.7
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
+// @match        *://*.nyaa.si/*
 // @match        *://*.nyaa.mom/*
 // @grant        GM_openInTab
 // ==/UserScript==
