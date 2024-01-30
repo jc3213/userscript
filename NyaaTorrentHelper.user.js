@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.6
+// @version      0.9.7
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
-// @match        *://*.nyaa.si/*
+// @match        *://*.nyaa.mom/*
 // @grant        GM_openInTab
 // ==/UserScript==
 
