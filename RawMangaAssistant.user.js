@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.5
+// @version         1.11.6
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -12,10 +12,11 @@
 // @match           https://manga1000.top/*
 // @connect         *
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.pro.js#sha256-CkxQg/AW5bHyyhBzktXoHRWbB2QRYiui5BJeMl8Myw8=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@066a2c28442a9e191ea43dd6aaf334b2411026d3/aria2/aria2.js#sha256-OyKr9LrMvIwcFRsR7E+lcQwV0cAL1b405MbcczzThLA=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@187b24aa1194aab0d3967c18e9919e219ca48227/aria2/aria2.xs.js#sha256-jJ+YLettCNCS0lHrPbBOrErkXhLKALizHMNzg2wWhG0=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
+// @run-at          document-idle
 // ==/UserScript==
 
 'use strict';
@@ -23,7 +24,6 @@
 var manga;
 var folder;
 var urls = [];
-var dir;
 var options = GM_getValue('options', {});
 var ctxmenu;
 var {jsonrpc = 'http://localhost:6800/jsonrpc', secret = ''} = options;
@@ -132,7 +132,8 @@ var watch = sites[host];
 // Extract images data
 if (watch.viewer?.test(pathname)) {
     contextMenu();
-    setTimeout(getAllMangaImages, 1000);
+    let exstart = notification('extract', 'start');
+    setTimeout(() => getAllMangaImages(exstart), 2000);
 }
 if (typeof watch.patch === 'function') {
     watch.patch();
@@ -185,9 +186,8 @@ function longDecimalNumber(sum, len = 3) {
     return (10 ** len + num).slice(- len) + (flt ? flt : '');
 }
 
-function getAllMangaImages() {
+function getAllMangaImages(warning) {
     if (isNaN(manga)) {
-        var warning = notification('extract', 'start');
         manga = 0;
         document.querySelectorAll(watch.manga.selector).forEach(i => {
             var src = i.getAttribute(watch.manga.attr) ?? i.getAttribute('src');
@@ -232,17 +232,12 @@ function copyAllUrls() {
 }
 // Aria2 Menuitems
 async function sendUrlsToAria2() {
-    if (dir) {
-        var sessions = urls.map((url, index) => ['aria2.addUri', [url], {out: longDecimalNumber(index) + '.' + url.match(/(png|jpg|jpeg|webp|av1)/)[0], dir, ...headers}]);
-        await aria2.batch(sessions);
-        notification('aria2', 'done');
+    if (this.dir) {
+        var sessions = urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + url.match(/.(png|jpe?g|webp|av1)/)[0], dir: this.dir, ...headers}]}));
+        await aria2.fetch(...sessions);
+        return notification('aria2', 'done');
     }
-    else {
-        aria2.call('aria2.getGlobalOption').then((result) => {
-            dir = result.dir + folder;
-            sendUrlsToAria2();
-        }).catch(sendAria2Error);
-    }
+    aria2.fetch({method: 'aria2.getGlobalOption'}).then(([result]) => sendUrlsToAria2(this.dir = result.dir + folder)).catch(sendAria2Error);
 }
 function sendAria2Error(error) {
     alert(error.message);
