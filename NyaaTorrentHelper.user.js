@@ -153,7 +153,7 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
 async function getTorrentInfo(id) {
     var {sites, images, name, size, torrent, magnet, url} = id in archive ? torrents[id] : await getTorrentDetails(id);
     var output = i18n.name + '\n' + name + ' (' + size + ')\n' + i18n.preview + '\n';
-    output += (images.length !== 0 ? images[0] : sites.length !== 0 ? sites[0] : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
+    output += (images.length !== 0 ? images.join('\n') : sites.length !== 0 ? sites.join('\n') : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
     return output;
 }
 
