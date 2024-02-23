@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.9.7
+// @version      0.10.0
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
-// @match        *://*.nyaa.mom/*
 // @grant        GM_openInTab
 // ==/UserScript==
 
@@ -15,6 +14,7 @@ if (location.pathname.startsWith('/view/')) {
 
 var torrents = {};
 var working = {};
+var archive = {};
 
 // UI
 var keyword;
@@ -42,8 +42,8 @@ search.className = 'form-control search-bar';
 search.style.cssText = 'display: inline-block; width: 150px !important; margin-top: 8px; margin-left: 20px;';
 search.placeholder = i18n.keyword;
 search.addEventListener('change', (event) => {
-    var text = event.target.value;
-    switch (text) {
+    var entry = event.target.value;
+    switch (entry) {
         case '':
             result.forEach((tr) => {
                 tr.style.display = 'table-row';
@@ -55,7 +55,7 @@ search.addEventListener('change', (event) => {
             });
             break;
         default:
-            var regexp = new RegExp(text.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
+            var regexp = new RegExp(entry.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
             Object.keys(torrents).forEach(id => {
                 var {name, tr} = torrents[id];
                 if (regexp.test(name)) {
@@ -65,7 +65,7 @@ search.addEventListener('change', (event) => {
                 tr.style.display = 'none';
                 result.push(tr);
             });
-            keyword = text;
+            keyword = entry;
             break;
     }
 });
@@ -78,15 +78,20 @@ filter.addEventListener('click', (event) => {
     event.preventDefault();
     var {altKey, target: {tagName}} = event;
     if (tagName === 'A') {
-        altKey ? aria2Download([...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet)) : batchCopy();
+        altKey ? batchDownloadTorrent() : batchCopyTorrent();
     }
 });
 
 document.querySelector('#navbar').appendChild(search);
 document.querySelector('thead > tr').append(filter);
 
-async function batchCopy() {
-    var array = [...document.querySelectorAll('td > input:checked')].map(i => getInformation(i.value));
+function batchDownloadTorrent() {
+    let urls = [...document.querySelectorAll('td > input:checked')].map(i => torrents[i.value].magnet);
+    aria2Download(urls);
+}
+
+async function batchCopyTorrent() {
+    var array = [...document.querySelectorAll('td > input:checked')].map(i => getTorrentInfo(i.value));
     var result = await Promise.all(array);
     var text = result.join('\n\n');
     navigator.clipboard.writeText(text);
@@ -138,64 +143,52 @@ document.querySelectorAll('tbody > tr').forEach(tr => {
             return aria2Download(magnet);
         }
         if (ctrlKey) {
-            var text = await getInformation(id);
+            var text = await getTorrentInfo(id);
             return navigator.clipboard.writeText(text);
         }
         printPreview(id);
     });
 });
 
-async function getInformation(id) {
-    var {site, image, name, size, torrent, magnet, url} = torrents[id];
-    var txtLT = `${i18n.name}\n${name} [${size}]`;
-    var txtRM = `${i18n.magnet}\n${magnet}`;
-    var txtRT = torrent ? `${i18n.torrent}\n${torrent}\n${txtRM}` : txtRM;
-    if (image === undefined && site === undefined) {
-        var data = await getPreview(id, url);
-        site = data.site;
-        image = data.image;
-    }
-    var txtCT = `${i18n.preview}\n${image ? image : site}`;
-    return `${txtLT}\n${txtCT}\n${txtRT}`;
+async function getTorrentInfo(id) {
+    var {sites, images, name, size, torrent, magnet, url} = id in archive ? torrents[id] : await getTorrentDetails(id);
+    var output = i18n.name + '\n' + name + ' (' + size + ')\n' + i18n.preview + '\n';
+    output += (images.length !== 0 ? images[0] : sites.length !== 0 ? sites[0] : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
+    return output;
+}
+
+async function getTorrentDetails(id) {
+    working[id] = true;
+    var res = await fetch(torrents[id].url);
+    var text = await res.text();
+    var idx = text.indexOf('"torrent-description"');
+    var desc = text.slice(idx + 22);
+    var result = desc.slice(0, desc.indexOf('</div>'));
+    var urls = result.match(/[\[\(*]https?:\/\/[^\]\)*]+[\]\*)]/g);
+    var sites = torrents[id].sites = [];
+    var images = torrents[id].images = [];
+    urls?.forEach(url => {
+        var result = url.slice(1, -1);
+        result.match(/.(jpg|png|gif|avif|bmp|webp)\)$/) ? !images.includes(result) && images.push(result) : !sites.includes(result) && sites.push(result);
+    });
+    archive[id] = true;
+    working[id] = false;
+    return torrents[id];
 }
 
 async function printPreview(id) {
     if (working[id]) {
         return;
     }
-    var {url, image, site} = torrents[id];
-    if (image) {
-        popupPreview(id, image);
-        working[id] = false;
+    var {images, sites} = id in archive ? torrents[id] : await getTorrentDetails(id, torrents[id].url);
+    if (images.length !== 0) {
+        popupPreview(id, images[0]);
         return;
     }
-    if (site) {
-        GM_openInTab(site);
-        working[id] = false;
+    if (sites.length !== 0) {
+        GM_openInTab(sites[0]);
         return;
     }
-    await getPreview(id, url);
-    printPreview(id);
-}
-
-async function getPreview(id, url) {
-    working[id] = true;
-    var res = await fetch(url);
-    var text = await res.text();
-    var idx = text.indexOf('"torrent-description"');
-    var desc = text.slice(idx + 22);
-    var result = desc.slice(0, desc.indexOf('</div>'));
-    var urls = result.match(/[\[\(*]https?:\/\/[^\]\)*]+[\]\*)]/g);
-    var sites = [];
-    var images = [];
-    urls.forEach(url => {
-        var result = url.slice(1, -1);
-        result.match(/(jpg|png|gif|avif|bmp|webp)\)$/) ? !images.includes(result) && images.push(result) : !sites.includes(result) && sites.push(result);
-    });
-    torrents[id].image = images[0];
-    torrents[id].site = sites[0];
-    working[id] = false;
-    return torrents[id];
 }
 
 function popupPreview(id, image) {
@@ -207,12 +200,12 @@ function popupPreview(id, image) {
     img = document.createElement('img');
     img.id = 'preview' + id;
     img.src = image;
-    img.style.cssText = `position: absolute; z-index: 3213; max-height: 800px; width: auto; top: ${top}px; left: ${left}px`;
+    img.style.cssText = 'position: absolute; z-index: 3213; max-height: 800px; width: auto; top: ' + top + 'px; left: ' + left + 'px;';
     img.addEventListener('click', event => img.remove());
     document.body.append(img);
 }
 
 function aria2Download(url) {
-    var json = Array.isArray(url) ? url.map(url=> json = {url}) : [{url}];
-    postMessage({ aria2c: 'aria2c-jsonrpc-call', params: { json } });
+    var urls = Array.isArray(url) ? url.map(url => ({url})) : [{url}];
+    postMessage({ aria2c: 'aria2c-jsonrpc-call', params: { urls } });
 }
