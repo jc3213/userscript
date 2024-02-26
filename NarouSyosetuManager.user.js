@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.1
+// @version      1.9.2
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -37,9 +37,8 @@ var bookmark = GM_getValue('bookmark', []);
 var scheduler = localStorage.scheduler ?? today;
 var overlay = $('<div class="jsui-notify-overlay"></div>');
 
-addEventListener('message', event => {
-    var {extension_name} = event.data;
-    if (extension_name === 'Download With Aria2') {
+addEventListener('message', (event) => {
+    if (event.data.extension_name === 'Download With Aria2') {
         aria2c = 'aria2c-jsonrpc-call';
     }
 });
@@ -92,7 +91,8 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
     var url = `https://pdfnovels.net/${token}/${novelcode}.pdf`
     var name = novelname + '.pdf';
     if (aria2c) {
-        postMessage({aria2c, params: { url, options: {out: name, referer, 'user-agent': navigator.userAgent} } });
+        var urls = [{ url, options: {out: name, referer, 'user-agent': navigator.userAgent} }];
+        postMessage({ aria2c, params: {urls} });
         download[novelcode] = false;
         fancyPopup(novelcode, novelname, 'はaria2cのJSON-RPCへ送りました！');
         return;
@@ -185,13 +185,14 @@ shelf_menu.append(input_field, submit_btn, update_btn);
 
 // ショットカットマッピング
 var shortcut = {};
-$('#novel_color > :first-child > a').each((index, node) => {
-    var {textContent} = node;
-    if (textContent === '<< 前へ') {
+$('a.novelview_pager-before, a.novelview_pager-next').each((index, node) => {
+    if (node.textContent === ' 前へ') {
         shortcut.ArrowLeft = node;
+        return;
     }
-    else if (textContent === '次へ >>') {
+    if (node.textContent === '次へ ') {
         shortcut.ArrowRight = node;
+        return;
     }
 });
 $(document.body).append(bookshelf, overlay).keydown(({key}) => shortcut[key]?.click());
