@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.3.1
+// @version      1.4.0
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
@@ -13,7 +13,6 @@ var logger = {};
 var style = {};
 var {clientWidth, clientHeight} = document.documentElement;
 var {pathname} = location;
-var player = document.querySelector('.x-username.x-focus-inner');
 
 var css = document.createElement('style');
 css.innerHTML = `
@@ -37,33 +36,35 @@ css.innerHTML = `
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: block;}`;
 document.body.append(css);
 
-document.querySelector('.relative.flex.w-full.max-w-full.flex-col.flex-nowrap.gap-4').addEventListener('contextmenu', pathname.startsWith('/series/') ? seriesboard : pathname.startsWith('/users/') ? userboard : gameboard);
+document.querySelector('main').addEventListener('contextmenu', pathname === '/' ? mainboard : pathname.startsWith('/series/') ? seriesboard : pathname.startsWith('/users/') ? userboard : gameboard);
+
+function mainboard(event) {
+    speedrunRecord(event, 'div.flex.flex-row.flex-wrap.items-start.justify-start.p-2', (record) => {
+        var [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
+        return {url: rank.parentNode.href, rank, player, time};
+    });
+}
 
 function seriesboard(event) {
-    var record = event.target.closest('div.flex.flex-row.flex-wrap.items-start.justify-start.p-2');
-    if (record) {
-        event.preventDefault();
+    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
         var [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
-        speedrunRecord(rank.parentNode.href, rank, player, time);
-    }
+        return {url: rank.parentNode.href, rank, player, time};
+    });
 }
 
 function userboard(event) {
-    var record = event.target.closest('div.flex.flex-row.flex-wrap.items-start.justify-start.p-2');
-    if (record) {
-        event.preventDefault();
+    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
+        var player = document.querySelector('.x-username > span');
         var [rank, time] = record.querySelectorAll('a > .truncate');
-        speedrunRecord(rank.parentNode.href, rank, player, time);
-    }
+        return {url: rank.parentNode.href, rank, player, time};
+    });
 }
 
 function gameboard(event) {
-    var record = event.target.closest('tr');
-    if (record) {
-        event.preventDefault();
+    speedrunRecord(event, 'tr', (record) => {
         var [rank, player, time] = record.querySelectorAll('a');
-        speedrunRecord(rank.href, rank, player, time);
-    }
+        return {url: rank.href, rank, player, time};
+    });
 }
 
 function cssTextGetter(offset) {
@@ -75,9 +76,15 @@ function cssTextGetter(offset) {
     return `top: ${top}px; left: ${left}px;`;
 }
 
-async function speedrunRecord(src, rank, player, time) {
-    var id = src.slice(src.lastIndexOf('/') + 1);
-    var title = `<div>Rank : ${rank.innerHTML}</div><div>Player : ${player.innerHTML}</div><div>Time : ${time.textContent}</div>`;
+async function speedrunRecord(event, selector, callback) {
+    var record = event.target.closest(selector);
+    if (record === undefined || event.ctrlKey) {
+        return;
+    }
+    event.preventDefault();
+    var {url, rank, player, time} = callback(record);
+    var id = url.slice(url.lastIndexOf('/') + 1);
+    var title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
         view.style.cssText = style[id] = cssTextGetter(view.offset);
@@ -86,7 +93,7 @@ async function speedrunRecord(src, rank, player, time) {
         createRecordWindow(id, title, top, logger[id]);
     }
     else {
-        var response = await fetch(src);
+        var response = await fetch(url);
         var html = await response.text();
         var xml = document.createElement('div');
         xml.innerHTML = html;
