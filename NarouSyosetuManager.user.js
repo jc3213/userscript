@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.2
+// @version      1.9.3
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -37,9 +37,9 @@ var bookmark = GM_getValue('bookmark', []);
 var scheduler = localStorage.scheduler ?? today;
 var overlay = $('<div class="jsui-notify-overlay"></div>');
 
-addEventListener('message', (event) => {
+addEventListener('message', event => {
     if (event.data.extension_name === 'Download With Aria2') {
-        aria2c = 'aria2c-jsonrpc-call';
+        aria2c = 'aria2c_jsonrpc_call';
     }
 });
 
