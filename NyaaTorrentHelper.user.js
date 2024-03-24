@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.10.1
+// @version      0.10.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -109,15 +109,14 @@ document.addEventListener('keydown', event => {
     }
 });
 
-document.querySelectorAll('tbody > tr').forEach(tr => {
-    var child = tr.querySelectorAll('td');
-    var title = child[1].querySelectorAll('a');
-    title = title[title.length - 1];
-    var name = title.innerText;
-    var url = title.href;
+document.querySelectorAll('tbody > tr').forEach((tr) => {
+    var [gendre, title, links, filesize] = tr.querySelectorAll('td');
+    var notcoment = title.querySelector('a:last-child');
+    var name = notcoment.textContent;
+    var url = notcoment.href;
     var id = url.slice(url.lastIndexOf('/') + 1);
-    var dl = child[2].querySelectorAll('a');
-    var size = child[3].innerText;
+    var dl = links.querySelectorAll('a');
+    var size = filesize.textContent;
     if (dl.length === 2) {
         var torrent = dl[0].href;
         var magnet = dl[1].href;
@@ -207,5 +206,5 @@ function popupPreview(id, image) {
 
 function aria2Download(url) {
     var urls = Array.isArray(url) ? url.map(url => ({url})) : [{url}];
-    postMessage({ aria2c: 'aria2c-jsonrpc-call', params: { urls } });
+    postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls } });
 }
