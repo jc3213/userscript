@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.5
+// @version         1.7.6
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -196,7 +196,7 @@ async function biliVideoExtractor(vid, playurl, key) {
 function downloadBiliVideo(altKey, url, ext) {
     if (altKey) {
         var urls = [{url, options: {out: title + ext, referer: location.href} }];
-        window.postMessage({aria2c: 'aria2c-jsonrpc-call', params: {urls}});
+        window.postMessage({aria2c: 'aria2c_jsonrpc_call', params: {urls}});
     }
     else {
         GM_download({url, responseType: 'blob', headers: {referer: location.href}, name: title + ext});
