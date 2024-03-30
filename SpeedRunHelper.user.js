@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.0
+// @version      1.4.1
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
@@ -78,7 +78,7 @@ function cssTextGetter(offset) {
 
 async function speedrunRecord(event, selector, callback) {
     var record = event.target.closest(selector);
-    if (record === undefined || event.ctrlKey) {
+    if (!record || event.ctrlKey) {
         return;
     }
     event.preventDefault();
@@ -88,19 +88,18 @@ async function speedrunRecord(event, selector, callback) {
     var view = document.querySelector('#speedrun-' + id);
     if (view) {
         view.style.cssText = style[id] = cssTextGetter(view.offset);
+        return;
     }
-    else if (logger[id]) {
-        createRecordWindow(id, title, top, logger[id]);
+    if (logger[id]) {
+        return createRecordWindow(id, title, top, logger[id]);
     }
-    else {
-        var response = await fetch(url);
-        var html = await response.text();
-        var xml = document.createElement('div');
-        xml.innerHTML = html;
-        logger[id] = xml.querySelector('iframe[class]');
-        createRecordWindow(id, title, top, logger[id]);
-        xml.remove();
-    }
+    var response = await fetch(url);
+    var html = await response.text();
+    var xml = document.createElement('div');
+    xml.innerHTML = html;
+    logger[id] = xml.querySelector('iframe[class]');
+    createRecordWindow(id, title, top, logger[id]);
+    xml.remove();
 }
 
 function createRecordWindow(id, title, top, content) {
@@ -116,23 +115,24 @@ function createRecordWindow(id, title, top, content) {
     container.style.cssText = style[id] = cssTextGetter(container.offset);
     container.appendChild(content);
     container.addEventListener('click', (event) => {
-        var btn = event.target.id;
-        if (btn === 'speedrun-minimum') {
-            container.classList.add('speedrun-minimum');
-            container.classList.remove('speedrun-maximum');
-            container.style.cssText = '';
-        }
-        else if (btn === 'speedrun-maximum') {
-            container.classList.add('speedrun-maximum');
-            container.classList.remove('speedrun-minimum');
-            container.style.cssText = '';
-        }
-        else if (btn === 'speedrun-restore') {
-            container.classList.remove('speedrun-maximum', 'speedrun-minimum');
-            container.style.cssText = style[id];
-        }
-        else if (btn === 'speedrun-remove') {
-            container.remove();
+        switch (event.target.id) {
+            case 'speedrun-minimum':
+                container.classList.add('speedrun-minimum');
+                container.classList.remove('speedrun-maximum');
+                container.style.cssText = '';
+                break;
+            case 'speedrun-maximum':
+                container.classList.add('speedrun-maximum');
+                container.classList.remove('speedrun-minimum');
+                container.style.cssText = '';
+                break;
+            case 'speedrun-restore':
+                container.classList.remove('speedrun-maximum', 'speedrun-minimum');
+                container.style.cssText = style[id];
+                break;
+            case 'speedrun-remove':
+                container.remove();
+                break;
         }
     });
     document.body.appendChild(container);
@@ -140,9 +140,8 @@ function createRecordWindow(id, title, top, content) {
     dragdrop.ondragend = position => {
         if (container.className === 'speedrun-window') {
             style[id] = container.style.cssText;
+            return;
         }
-        else {
-            container.style.cssText = '';
-        }
+        container.style.cssText = '';
     }
 }
