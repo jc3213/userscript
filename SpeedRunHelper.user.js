@@ -9,7 +9,9 @@
 // ==/UserScript==
 
 'use strict';
-var logger = {};
+var speedrun = {};
+var opened = 0;
+var worker = {};
 var style = {};
 var {clientWidth, clientHeight} = document.documentElement;
 var {pathname} = location;
@@ -84,36 +86,34 @@ async function speedrunRecord(event, selector, callback) {
     event.preventDefault();
     var {url, rank, player, time} = callback(record);
     var id = url.slice(url.lastIndexOf('/') + 1);
-    var title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
-    var view = document.querySelector('#speedrun-' + id);
-    if (view) {
-        view.style.cssText = style[id] = cssTextGetter(view.offset);
+    if (worker[id]) {
         return;
     }
-    if (logger[id]) {
-        return createRecordWindow(id, title, top, logger[id]);
+    worker[id] = true;
+    var title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
+    if (speedrun[id]) {
+        worker[id] = false;
+        speedrun[id].style.cssText = style[id] = cssTextGetter(speedrun[id].offset);
+        return document.body.appendChild(speedrun[id]);
     }
     var response = await fetch(url);
     var html = await response.text();
     var xml = document.createElement('div');
     xml.innerHTML = html;
-    logger[id] = xml.querySelector('iframe[class]');
-    createRecordWindow(id, title, top, logger[id]);
+    var iframe = xml.querySelector('iframe[class]');
+    createRecordWindow(id, title, top, iframe);
     xml.remove();
 }
 
-function createRecordWindow(id, title, top, content) {
-    if (content.tagName === 'A') {
-        return open(content.href, '_blank');
-    }
+function createRecordWindow(id, title, top, player) {
     var container = document.createElement('div');
     container.id = 'speedrun-' + id;
-    container.offset = document.querySelectorAll('.speedrun-window').length * 30;
+    container.offset = opened * 30;
     container.className = 'speedrun-window';
     container.innerHTML = `<div class="speedrun-record">${title}</div>
 <div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-restore">🔳</div><div id="speedrun-maximum">🔲</div><div id="speedrun-remove">❌</div></div>`;
     container.style.cssText = style[id] = cssTextGetter(container.offset);
-    container.appendChild(content);
+    container.appendChild(player);
     container.addEventListener('click', (event) => {
         switch (event.target.id) {
             case 'speedrun-minimum':
@@ -136,6 +136,8 @@ function createRecordWindow(id, title, top, content) {
         }
     });
     document.body.appendChild(container);
+    speedrun[id] = container;
+    opened ++;
     var dragdrop = new DragDrop(container);
     dragdrop.ondragend = position => {
         if (container.className === 'speedrun-window') {
@@ -144,4 +146,5 @@ function createRecordWindow(id, title, top, content) {
         }
         container.style.cssText = '';
     }
+    worker[id] = false;
 }
