@@ -2,17 +2,17 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.6
+// @version         1.11.7
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
-// @match           https://klmanga.net/*
+// @match           https://jestful.net/*
 // @match           https://weloma.art/*
 // @match           https://rawdevart.art/*
 // @match           https://manga1000.top/*
 // @connect         *
 // @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@e7814b44512263b5e8125657aff4c1be5fe093a5/ui/jsui.pro.js#sha256-CkxQg/AW5bHyyhBzktXoHRWbB2QRYiui5BJeMl8Myw8=
-// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@187b24aa1194aab0d3967c18e9919e219ca48227/aria2/aria2.xs.js#sha256-jJ+YLettCNCS0lHrPbBOrErkXhLKALizHMNzg2wWhG0=
+// @require         https://cdn.jsdelivr.net/gh/jc3213/jslib@7714548461cdca1a74c91d79d46a9f81cf61142e/aria2/aria2.xs.js#sha256-FGE+As3ayxNOH7vlDxDANfjTh7ZbChbzk8TMjuHvuCc=
 // @grant           GM_setValue
 // @grant           GM_getValue
 // @grant           GM_xmlhttpRequest
@@ -97,7 +97,7 @@ var i18n = message[navigator.language] ?? message['en-US'];
 
 // Supported sites
 var sites = {
-    'klmanga.net': {
+    'jestful.net': {
         viewer: /-chapter-/,
         manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
         title: {selector: 'ol.breadcrumb > :last-child > a', attr: 'title', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
@@ -207,6 +207,7 @@ function getAllMangaImages(warning) {
         console.log(temp);
         var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
         folder = title.replace(/[:\?\"\']/g, '_');
+        console.log(folder);
         warning.remove();
         notification('extract', 'done');
     }
@@ -219,10 +220,11 @@ function promiseDownload(url, index) {
     return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({url, headers, method: 'GET', responseType: 'blob', onload: (details) => {
             var blob = details.response;
-            var a = jsUI.new('a').attr({href: URL.createObjectURL(blob), download: `${longDecimalNumber(index)}.${blob.type.slice(blob.type.indexOf('/') + 1)}`});
+            var a = jsUI.new('a').attr({href: URL.createObjectURL(blob), download: longDecimalNumber(index) + '.' + blob.type.slice(blob.type.indexOf('/') + 1)});
             a.click();
-            a.remove();
             resolve(true);
+            a.remove();
+            a = null;
         }, onerror: reject});
     });
 }
@@ -234,10 +236,10 @@ function copyAllUrls() {
 async function sendUrlsToAria2() {
     if (this.dir) {
         var sessions = urls.map((url, index) => ({method: 'aria2.addUri', params: [[url], {out: longDecimalNumber(index) + url.match(/.(png|jpe?g|webp|av1)/)[0], dir: this.dir, ...headers}]}));
-        await aria2.fetch(...sessions);
+        await aria2.post(...sessions);
         return notification('aria2', 'done');
     }
-    aria2.fetch({method: 'aria2.getGlobalOption'}).then(([result]) => sendUrlsToAria2(this.dir = result.dir + folder)).catch(sendAria2Error);
+    aria2.post({method: 'aria2.getGlobalOption'}).then(([result]) => sendUrlsToAria2(this.dir = result.dir + folder)).catch(sendAria2Error);
 }
 function sendAria2Error(error) {
     alert(error.message);
