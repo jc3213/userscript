@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.3
+// @version      1.9.4
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
-// @match        https://ncode.syosetu.com/*
-// @match        https://novel18.syosetu.com/*
-// @exclude      https://ncode.syosetu.com/novelpdf/creatingpdf/*
+// @match        https://*.syosetu.com/n*
+// @exclude      https://*.syosetu.com/impression/*
+// @exclude      https://*.syosetu.com/novelreview/*
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -19,7 +19,7 @@
 'use strict';
 var {pathname} = location;
 var formdata = new FormData($('.js-pdf-form')[0]);
-var [, novelcode, novelread] = pathname.match(/(n\w+)\/(?:(\d+)\/)?$/);
+var [, novelcode, novelread] = pathname.match(/^\/(?:.*\/ncode\/)?(n\w+)\/(?:(\d+)\/)?$/);
 if (!novelcode) {
     return;
 }
@@ -118,6 +118,7 @@ if (novelread) {
     manager.append(clearfix);
     removeHeaderFooter();
 }
+
 function removeHeaderFooter() {
     if (localStorage.clearfix === '1') {
         clearfix.addClass('jsui-menu-checked');
@@ -129,6 +130,22 @@ function removeHeaderFooter() {
     }
 };
 
+// ショットカットマッピング
+var shortcut = {};
+$('a.novelview_pager-before, a.novelview_pager-next').each((index, node) => {
+    var txt = node.textContent;
+    switch (node.textContent.trim()) {
+        case '前へ':
+            shortcut.ArrowLeft = node;
+            break;
+        case '次へ':
+            shortcut.ArrowRight = node;
+            break;
+    }
+});
+$(document).keydown(({key}) => shortcut[key]?.click());
+
+// 書庫管理UI
 var bookshelf = $('<div class="jsui-book-shelf"></div>').hide();;
 var shelf_menu = $('<div class="jsui-basic-menu"></div>');
 var shelf_table = $('<div class="jsui-table"></div>').html('<div class="jsui-table-head jsui-table-column"><div class="jsui-table-cell">NCODE</div><div class="jsui-table-cell">小説タイトル</div></div>');
@@ -182,22 +199,9 @@ var update_btn = $('<div class="jsui-menu-item jsui-menu-disabled" id="jsui-save
     }
 });
 shelf_menu.append(input_field, submit_btn, update_btn);
+$(document.body).append(bookshelf, overlay);
 
-// ショットカットマッピング
-var shortcut = {};
-$('a.novelview_pager-before, a.novelview_pager-next').each((index, node) => {
-    if (node.textContent === ' 前へ') {
-        shortcut.ArrowLeft = node;
-        return;
-    }
-    if (node.textContent === '次へ ') {
-        shortcut.ArrowRight = node;
-        return;
-    }
-});
-$(document.body).append(bookshelf, overlay).keydown(({key}) => shortcut[key]?.click());
-
-// ブックマーク表記生成
+// 書庫表記生成
 function fancyTableItem(book, index) {
     var {ncode, title, next, last} = book;
     var mybook = $('<div class="jsui-table-column"></div>').attr('id', ncode);
