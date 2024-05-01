@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.4
+// @version      1.9.5
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -30,6 +30,7 @@ var today = now.getFullYear() + now.getMonth() + now.getDate();
 var timeline = now.getTime();
 var validate = {};
 var download = {};
+var novels = {};
 var changed = false;
 var shelf = false;
 var aria2c;
@@ -37,11 +38,12 @@ var bookmark = GM_getValue('bookmark', []);
 var scheduler = localStorage.scheduler ?? today;
 var overlay = $('<div class="jsui-notify-overlay"></div>');
 
-addEventListener('message', event => {
+addEventListener('message', (event) => {
     if (event.data.extension_name === 'Download With Aria2') {
         aria2c = 'aria2c_jsonrpc_call';
     }
 });
+postMessage({aria2c: 'aria2c_jsonrpc_echo'});
 
 // UI作成関連
 var manager = $('<div class="jsui-basic-menu jsui-book-manager"></div>');
@@ -86,10 +88,10 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
     }
     fancyPopup(novelcode, novelname, 'ダウンロード情報を収集をしています、しばらくお待ちください！');
     download[novelcode] = true;
-    var referer = `https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/${novelcode}/`;
-    var token = await getPDFDownloadURL(referer);
-    var url = `https://pdfnovels.net/${token}/${novelcode}.pdf`
-    var name = novelname + '.pdf';
+    if (!novels[novelcode]) {
+        novels[novelcode] = await getPDFDownloadURL(novelcode, novelname);
+    }
+    var {url, name, referer} = novels[novelcode];
     if (aria2c) {
         var urls = [{ url, options: {out: name, referer, 'user-agent': navigator.userAgent} }];
         postMessage({ aria2c, params: {urls} });
@@ -240,15 +242,17 @@ function saveBookmarkButton() {
 }
 
 // ダウンロード関連
-async function getPDFDownloadURL(referer) {
-    var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
-    var temp = $(`<div style="display: none;">${text}</div>`).appendTo(document.body);
-    return new Promise(resolve => {
+function getPDFDownloadURL(ncode, name) {
+    return new Promise(async (resolve, reject) => {
+        var referer = 'https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/' + ncode + '/';
+        var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
+        var temp = $(`<div style="display: none;">${text}</div>`).appendTo(document.body);
         var watcher = setInterval(() => {
             var url = temp.find('a.js-pdf-downloadpage-link')[0].href;
             if (url !== 'javascript:void(0)') {
                 clearInterval(watcher);
-                resolve(url.match(/\/([^\/]+)\/$/)[1]);
+                var token = url.match(/\/([^\/]+)\/$/)[1];
+                resolve({url: 'https://pdfnovels.net/' + token + '/' + 'novelcode.pdf', name: name + '.pdf', referer});
             }
         }, 200);
     });
