@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.5
+// @version      1.9.5.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -252,7 +252,7 @@ function getPDFDownloadURL(ncode, name) {
             if (url !== 'javascript:void(0)') {
                 clearInterval(watcher);
                 var token = url.match(/\/([^\/]+)\/$/)[1];
-                resolve({url: 'https://pdfnovels.net/' + token + '/' + 'novelcode.pdf', name: name + '.pdf', referer});
+                resolve({url: 'https://pdfnovels.net/' + token + '/' + ncode + '.pdf', name: name + '.pdf', referer});
             }
         }, 200);
     });
