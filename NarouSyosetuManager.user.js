@@ -24,7 +24,7 @@ if (!novelcode) {
 }
 var formdata = new FormData($('.js-pdf-form')[0]);
 var shortcut = '';
-var shorttime;
+var shortime;
 var novelname = pathname === '/' + novelcode + '/' ? document.title : $(`#container a[href$="${novelcode}/"]`)[0].innerText;
 var myncode = novelcode;
 var now = new Date();
@@ -147,9 +147,9 @@ $(document).keydown((event) => {
         case '8':
         case '9':
             event.preventDefault();
-            clearTimeout(shorttime);
+            clearTimeout(shortime);
             shortcut += event.key;
-            setTimeout(() => {
+            shortime = setTimeout(() => {
                 open('https://ncode.syosetu.com/' + novelcode + '/' + shortcut, '_blank');
                 shortcut = '';
             }, 1000);
