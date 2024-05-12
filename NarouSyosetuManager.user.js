@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.9.5.1
+// @version      1.10.0
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -18,11 +18,13 @@
 
 'use strict';
 var {pathname} = location;
-var formdata = new FormData($('.js-pdf-form')[0]);
 var [, novelcode, novelread] = pathname.match(/^\/(?:.*\/ncode\/)?(n\w+)\/(?:(\d+)\/)?$/);
 if (!novelcode) {
     return;
 }
+var formdata = new FormData($('.js-pdf-form')[0]);
+var shortcut = '';
+var shorttime;
 var novelname = pathname === '/' + novelcode + '/' ? document.title : $(`#container a[href$="${novelcode}/"]`)[0].innerText;
 var myncode = novelcode;
 var now = new Date();
@@ -55,13 +57,12 @@ var css = $(`<style>
 .jsui-menu-checked {padding: 4px 9px; border-style: inset; border-width: 1px;}
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
+.jsui-basic-menu > input {flex: 2;}
 .jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
 .jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
-.jsui-button-cell:nth-child(1) {line-height: 200%;}
-.jsui-table-column {display: flex; gap: 1px; margin: 1px;}
-.jsui-table-column > :not(:nth-child(2)) {flex: none; width: 120px;}
-.jsui-table-cell, .jsui-button-cell {flex: auto; padding: 5px; text-align: center; line-height: 100%; border-width: 1px; border-style: solid;}
+.jsui-table-column {display: grid; gap: 1px; margin: 1px; grid-template-columns: 180px auto;}
+.jsui-table-cell, .jsui-button-cell {padding: 5px; text-align: center; line-height: 200%; border-width: 1px; border-style: solid;}
 .jsui-table-head > * {background-color: #000000; color: #ffffff; padding: 10px 5px;}
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
 .jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
@@ -133,19 +134,36 @@ function removeHeaderFooter() {
 };
 
 // ショットカットマッピング
-var shortcut = {};
-$('a.novelview_pager-before, a.novelview_pager-next').each((index, node) => {
-    var txt = node.textContent;
-    switch (node.textContent.trim()) {
-        case '前へ':
-            shortcut.ArrowLeft = node;
+$(document).keydown((event) => {
+    switch (event.key) {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            event.preventDefault();
+            clearTimeout(shorttime);
+            shortcut += event.key;
+            setTimeout(() => {
+                open('https://ncode.syosetu.com/' + novelcode + '/' + shortcut, '_blank');
+                shortcut = '';
+            }, 1000);
             break;
-        case '次へ':
-            shortcut.ArrowRight = node;
+        case 'ArrowLeft':
+            event.preventDefault();
+            $('a.novelview_pager-before')[0].click();
+            break;
+        case 'ArrowRight':
+            event.preventDefault();
+            $('a.novelview_pager-next')[0].click();
             break;
     }
 });
-$(document).keydown(({key}) => shortcut[key]?.click());
 
 // 書庫管理UI
 var bookshelf = $('<div class="jsui-book-shelf"></div>').hide();;
@@ -252,6 +270,7 @@ function getPDFDownloadURL(ncode, name) {
             if (url !== 'javascript:void(0)') {
                 clearInterval(watcher);
                 var token = url.match(/\/([^\/]+)\/$/)[1];
+                console.log(token);
                 resolve({url: 'https://pdfnovels.net/' + token + '/' + ncode + '.pdf', name: name + '.pdf', referer});
             }
         }, 200);
