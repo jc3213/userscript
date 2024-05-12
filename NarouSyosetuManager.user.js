@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.10.0
+// @version      1.10.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -23,7 +23,7 @@ if (!novelcode) {
 var formdata = new FormData($('.js-pdf-form')[0]);
 var shortcut = '';
 var shortime;
-var novelname = $('#container a[href$="' + novelcode + '/"], #novel_color > .novel_title')[0].innerText;
+var novelname = $('#container a[href$="' + novelcode + '/"], #novel_color > .novel_title')[0].textContent;
 var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
@@ -148,7 +148,7 @@ $(document).keydown((event) => {
             clearTimeout(shortime);
             shortcut += event.key;
             shortime = setTimeout(() => {
-                open('https://ncode.syosetu.com/' + novelcode + '/' + shortcut + '/', '_blank');
+                open('https://ncode.syosetu.com/' + novelcode + (shortcut[0] === '0' ? '/' : '/' + shortcut + '/'), '_blank');
                 shortcut = '';
             }, 1000);
             break;
