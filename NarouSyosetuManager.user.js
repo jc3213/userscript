@@ -5,7 +5,6 @@
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
-// @exclude      https://*.syosetu.com/impression/*
 // @exclude      https://*.syosetu.com/novelreview/*
 // @connect      pdfnovels.net
 // @grant        GM_getValue
@@ -17,15 +16,14 @@
 // ==/UserScript==
 
 'use strict';
-var {pathname} = location;
-var [, novelcode, novelread] = pathname.match(/^\/(?:.*\/ncode\/)?(n\w+)\/(?:(\d+)\/)?$/);
+var [, novelcode, novelread] = location.pathname.match(/^\/(?:.*\/ncode\/)?(n\w+)\/(?:(\d+))?\/?$/);
 if (!novelcode) {
     return;
 }
 var formdata = new FormData($('.js-pdf-form')[0]);
 var shortcut = '';
 var shortime;
-var novelname = pathname === '/' + novelcode + '/' ? document.title : $(`#container a[href$="${novelcode}/"]`)[0].innerText;
+var novelname = $('#container a[href$="' + novelcode + '/"], #novel_color > .novel_title')[0].innerText;
 var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
@@ -150,7 +148,7 @@ $(document).keydown((event) => {
             clearTimeout(shortime);
             shortcut += event.key;
             shortime = setTimeout(() => {
-                open('https://ncode.syosetu.com/' + novelcode + '/' + shortcut, '_blank');
+                open('https://ncode.syosetu.com/' + novelcode + '/' + shortcut + '/', '_blank');
                 shortcut = '';
             }, 1000);
             break;
