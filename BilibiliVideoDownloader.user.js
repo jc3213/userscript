@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.6
+// @version         1.7.7
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -58,21 +58,21 @@ else if (watch.startsWith('/v/')) {
 }
 else {
     menuBox = 'div.toolbar[mr-show]';
-    wideBtn = 'div.squirtle-video-widescreen'
-    wideStat = 'active';
-    current = 'li.squirtle-pagelist-select-item.active';
-    offset = `.jsui-video-menu {position: relative;}`;
+    wideBtn = 'div.bpx-player-ctrl-wide';
+    wideStat = 'bpx-state-entered';
+    current = 'div.numberListItem_number_list_item__T2VKO.numberListItem_select__WgCVr > a';
+    offset = `.jsui-video-menu {top: 14px; left: 580px;}`;
 }
 
 var jsUI = new JSUI();
 var observer = new NodeObserver();
 
-jsUI.css.add(`.jsui-video-menu {display: inline-block;}
+jsUI.css.add(`.jsui-video-menu {position: absolute; display: inline-block; z-index: 99999999999;}
 .jsui-video-menu > .jsui-menu-item {display: inline-block; width: 100px;}
 .jsui-options, .jsui-drop-menu {width: 140px;}
 .jsui-analyse {display: flex;}
 .jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px; padding: 3px 5px !important;}
-.jsui-options, .jsui-analyse {position: absolute; z-index: 99999999999; border: 1px solid #000; padding: 5px; top: 38px; left: 0px; background-color: #fff;}
+.jsui-options, .jsui-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 38px; left: 0px; background-color: #fff;}
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%; margin: 0px;}
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;} ${offset}`);
 
@@ -102,7 +102,7 @@ async function analyseVideo() {
         }
         else {
             let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
-            let id = document.querySelector(current).getAttribute('data-value');
+            let id = document.querySelector(current).href.match(/(\d+)\//)[1];
             biliVideoTitle(name);
             biliVideoThumb(thumbnailUrl[0]);
             await biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`, 'result');
