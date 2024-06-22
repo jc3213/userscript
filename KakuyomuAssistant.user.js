@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         カクヨム「」助手
+// @name         「」カクヨム助手
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.1
-// @description  カクヨム「」のリーディング体験をより良くするためのツールです
+// @version      0.2
+// @description  「」カクヨムのリーディング体験をより良くするためのツールです
 // @author       jc3213
 // @match        https://kakuyomu.jp/works/*/episodes/*
 // ==/UserScript==
@@ -18,10 +18,12 @@ document.querySelector('div.widget-episodeBody').style['font-family'] = '"Segoe 
 
 // Shortcut hotkey
 document.addEventListener('keydown', event => {
-    if (event.keyCode === 37) {
-        document.querySelector('#contentMain-previousEpisode > a').click();
-    }
-    else if (event.keyCode === 39) {
-        document.querySelector('#contentMain-nextEpisode > a').click();
+    switch (event.key) {
+        case 'ArrowLeft':
+            open(document.querySelector('#contentMain-previousEpisode > a').href.slice(0, -4), '_self');
+            break;
+        case 'ArrowRight':
+            open(document.querySelector('#contentMain-nextEpisode > a').href, '_self');
+            break;
     }
 });
