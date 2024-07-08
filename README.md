@@ -14,5 +14,6 @@
 
 ### Special Usage
 - [NarouSyosetuManager.user.js](https://jc3213.github.io/userscript/NarouSyosetuManager.user.js)
+- [NyaaTorrentHelper.user.js](https://jc3213.github.io/userscript/NyaaTorrentHelper.user.js)
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
 - [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.jss)
