@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.10.2
+// @version      0.10.3
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -163,13 +163,10 @@ async function getTorrentDetails(id) {
     var idx = text.indexOf('"torrent-description"');
     var desc = text.slice(idx + 22);
     var result = desc.slice(0, desc.indexOf('</div>'));
-    var urls = result.match(/https?:\/\/[^)\]*?&]+[)\]*?&]/g);
+    var urls = result.match(/https?:\/\/[^)\];!]*/g);
     var sites = torrents[id].sites = [];
     var images = torrents[id].images = [];
-    urls?.forEach(url => {
-        var result = url.slice(0, -1);
-        result.match(/.(jpg|png|gif|avif|bmp|webp)/) ? !images.includes(result) && images.push(result) : !sites.includes(result) && sites.push(result);
-    });
+    urls?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !images.includes(url) && images.push(url) : !sites.includes(url) && sites.push(url));
     archive[id] = true;
     working[id] = false;
     return torrents[id];
@@ -179,7 +176,7 @@ async function printPreview(id) {
     if (working[id]) {
         return;
     }
-    var {images, sites} = id in archive ? torrents[id] : await getTorrentDetails(id, torrents[id].url);
+    var {images, sites} = id in archive ? torrents[id] : await getTorrentDetails(id);
     if (images.length !== 0) {
         popupPreview(id, images[0]);
         return;
