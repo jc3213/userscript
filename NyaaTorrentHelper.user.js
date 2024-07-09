@@ -163,7 +163,7 @@ async function getTorrentDetails(id) {
     var idx = text.indexOf('"torrent-description"');
     var desc = text.slice(idx + 22);
     var result = desc.slice(0, desc.indexOf('</div>'));
-    var urls = result.match(/https?:\/\/[^)\];!]*/g);
+    var urls = result.match(/https?:\/\/[^\]\[);!*]*/g);
     var sites = torrents[id].sites = [];
     var images = torrents[id].images = [];
     urls?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !images.includes(url) && images.push(url) : !sites.includes(url) && sites.push(url));
