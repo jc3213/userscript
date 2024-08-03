@@ -68,7 +68,7 @@ function downloadWithAria2() {
     var urls = [];
     document.querySelectorAll('tr.nyaa-checked').forEach((tr) => {
         var magnet = tr.querySelector('td:nth-child(3) > a:last-child').href;
-        urls.push(magnet.slice(0, magnet.indexOf('&')));
+        urls.push({ url: magnet.slice(0, magnet.indexOf('&')) });
     });
     postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls } });
 }
@@ -142,7 +142,7 @@ document.querySelector('tbody').addEventListener('contextmenu', async (event) =>
     event.preventDefault();
     var torrent = await getNyaaItemDetails(tr);
     if (event.altKey) {
-        return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls: [torrent.magnet] } });
+        return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls: [ {url: torrent.magnet } ] } });
     }
     if (event.ctrlKey) {
         return navigator.clipboard.writeText(torrent.copy);
