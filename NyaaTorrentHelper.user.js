@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.10.3
+// @version      0.10.4
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -76,9 +76,8 @@ filter.innerHTML = '<a href style="opacity: 1; font-size: 12px; line-height: 42p
 filter.style.width = '40px';
 filter.addEventListener('click', (event) => {
     event.preventDefault();
-    var {altKey, target: {tagName}} = event;
-    if (tagName === 'A') {
-        altKey ? batchDownloadTorrent() : batchCopyTorrent();
+    if (event.target.tagName === 'A') {
+        event.altKey ? batchDownloadTorrent() : batchCopyTorrent();
     }
 });
 
@@ -96,15 +95,14 @@ async function batchCopyTorrent() {
     var text = result.join('\n\n');
     navigator.clipboard.writeText(text);
 }
-//
 
 document.addEventListener('keydown', event => {
     switch (event.key) {
         case 'ArrowLeft':
-            document.querySelector('ul.pagination > li:first-child > a').click();
+            event.ctrlKey && event.altKey ? history.go(-1) : document.querySelector('ul.pagination > li:first-child > a').click();
             break;
         case 'ArrowRight':
-            document.querySelector('ul.pagination > li:last-child > a').click();
+            event.ctrlKey && event.altKey ? history.go(1) : document.querySelector('ul.pagination > li:last-child > a').click();
             break;
     }
 });
@@ -115,16 +113,10 @@ document.querySelectorAll('tbody > tr').forEach((tr) => {
     var name = notcoment.textContent;
     var url = notcoment.href;
     var id = url.slice(url.lastIndexOf('/') + 1);
-    var dl = links.querySelectorAll('a');
     var size = filesize.textContent;
-    if (dl.length === 2) {
-        var torrent = dl[0].href;
-        var magnet = dl[1].href;
-    }
-    else {
-        magnet = dl[0].href;
-    }
-    magnet = magnet.slice(0, magnet.indexOf('&'));
+    var [magnet, torrent] = [...links.querySelectorAll('a')].reverse();
+    magnet = magnet.hreft.slice(0, magnet.href.indexOf('&'));
+    torrent = torrent.href;
     torrents[id] = {url, torrent, magnet, name, size, tr};
     // UI
     var td = document.createElement('td');
@@ -178,12 +170,10 @@ async function printPreview(id) {
     }
     var {images, sites} = id in archive ? torrents[id] : await getTorrentDetails(id);
     if (images.length !== 0) {
-        popupPreview(id, images[0]);
-        return;
+        return popupPreview(id, images[0]);
     }
     if (sites.length !== 0) {
-        GM_openInTab(sites[0]);
-        return;
+        return GM_openInTab(sites[0]);
     }
 }
 
