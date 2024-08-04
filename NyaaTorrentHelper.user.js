@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.11.0
+// @version      0.11.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -191,9 +191,10 @@ function popupPreview(id, image, top, left) {
         img = document.createElement('img');
         img.id = 'preview' + id;
         img.src = image;
-        img.clssName = 'nyaa-preview';
+        img.className = 'nyaa-preview';
         img.addEventListener('click', event => img.remove());
-        document.body.append(img);
+        previews[id] = img;
     }
     img.style.cssText = 'top: ' + top + 'px; left: ' + left + 'px;';
+    document.body.append(img);
 }
