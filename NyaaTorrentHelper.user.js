@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.11.1
+// @version      0.11.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -153,22 +153,21 @@ document.querySelector('tbody').addEventListener('contextmenu', async (event) =>
 async function getNyaaItemDetails(tr) {
     var id = [...tr.parentNode.children].indexOf(tr);
     if (!torrents[id] && !working[id]) {
-        var [gendre, title, links, filesize] = tr.querySelectorAll('td');
-        var a = title.querySelector('a:last-child');
+        var sites = [];
+        var images = [];
+        var a = tr.querySelector('td:nth-child(2) > a:last-child');
+        var [magnet, torrent] = [...tr.querySelectorAll('td:nth-child(3) > a')].reverse();
+        var size = tr.querySelector('td:nth-child(4)').textContent;
         var url = a.href;
         var name = tr.name = a.textContent;
-        var size = filesize.textContent;
-        var [magnet, torrent] = [...links.querySelectorAll('a')].reverse();
         tr.dataset.nyaa = id;
         magnet = magnet.href.slice(0, magnet.href.indexOf('&'));
         torrent = torrent?.href;
-        var sites = [];
-        var images = [];
         working[id] = true;
-        var detail = await fetch(url);
-        var text = await detail.text();
-        var result = text.slice(text.indexOf('"torrent-description"') + 22);
-        result.match(/https?:\/\/[^\]\[);!*]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !images.includes(url) && images.push(url) : !sites.includes(url) && sites.push(url));
+        var container = document.createElement('div');
+        container.innerHTML = await fetch(url).then((res) => res.text());
+        var result = container.querySelector('#torrent-description').textContent;
+        result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !images.includes(url) && images.push(url) : !sites.includes(url) && sites.push(url));
         var copy = i18n.name + '\n' + name + ' (' + size + ')\n' + i18n.preview + '\n' + (images.length !== 0 ? images.join('\n') : sites.length !== 0 ? sites.join('\n') : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
         working[id] = false;
         torrents[id] = {id, name, size, torrent, magnet, sites, images, copy};
