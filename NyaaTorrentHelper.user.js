@@ -1,18 +1,14 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.11.2
+// @version      0.12.0
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
+// @exclude      *://*.nyaa.si/view/*
 // @grant        GM_openInTab
 // ==/UserScript==
 
-if (location.pathname.startsWith('/view/')) {
-    return;
-}
-
-var torrents = {};
 var previews = {};
 var working = {};
 var tblines = document.querySelectorAll('tbody > tr');
@@ -26,14 +22,18 @@ var messages = {
         name: 'Name:',
         preview: 'Preview:',
         torrent: 'Torrent:',
-        magnet: 'Magnet:'
+        magnet: 'Magnet:',
+        oncopy: 'Copy selected torrents to clipboard?',
+        onrpc: 'Send selected torrents to JSON-RPC?'
     },
     'zh-CN': {
         keyword: '关键词……',
         name: '名字：',
         preview: '预览：',
         torrent: '种子：',
-        magnet: '磁链：'
+        magnet: '磁链：',
+        oncopy: '将所选种子复制到粘贴板吗？',
+        onrpc: '将所选种子发送至JSON-RPC？'
     }
 };
 var i18n = messages[navigator.language] ?? messages['en-US'];
@@ -52,36 +52,17 @@ search.placeholder = i18n.keyword;
 search.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
         event.preventDefault();
-        event.altKey ? downloadWithAria2() : event.ctrlKey ? copyTorrentsToClipboard() : filterNyaaTorrents();
+        filterNyaaTorrents();
     }
 });
 
 var button = document.createElement('div');
 button.className = 'input-group-btn search-btn';
-button.innerHTML = '<button class="btn btn-primary">💾</button>';
+button.innerHTML = '<button class="btn btn-primary">🔎</button>';
 button.addEventListener('click', (event) => {
     event.preventDefault();
-    event.altKey ? downloadWithAria2() : event.ctrlKey ? copyTorrentsToClipboard() : filterNyaaTorrents();
+    filterNyaaTorrents();
 });
-
-function downloadWithAria2() {
-    var urls = [];
-    document.querySelectorAll('tr.nyaa-checked').forEach((tr) => {
-        var magnet = tr.querySelector('td:nth-child(3) > a:last-child').href;
-        urls.push({ url: magnet.slice(0, magnet.indexOf('&')) });
-    });
-    postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls } });
-}
-
-async function copyTorrentsToClipboard() {
-    button.classList.add('nyaa-fetch');
-    var result = await Promise.all([...document.querySelectorAll('tr.nyaa-checked')].map(async (tr) => {
-        var torrent = await getNyaaItemDetails(tr);
-        return torrent.copy;
-    }));
-    navigator.clipboard.writeText(result.join('\r\n'));
-    button.classList.remove('nyaa-fetch');
-}
 
 function filterNyaaTorrents() {
     switch (search.value) {
@@ -116,71 +97,80 @@ document.addEventListener('keydown', (event) => {
         case 'ArrowRight':
             event.ctrlKey && event.altKey ? history.go(1) : document.querySelector('ul.pagination > li:last-child > a').click();
             break;
+        case 'c':
+            event.ctrlKey && event.altKey && copyTorrentsToClipboard();
+            break;
+        case 's':
+            event.ctrlKey && event.altKey && downloadWithAria2();
     }
 });
 
-document.querySelector('tbody').addEventListener('click', (event) => {
-    if (!event.ctrlKey) {
-        return;
+async function copyTorrentsToClipboard() {
+    if (confirm(i18n.oncopy)) {
+        var selected = await Promise.all([...document.querySelectorAll('tr.nyaa-checked')].map(async (tr) => {
+            await getNyaaTorrentDetail(tr.info);
+            return tr.info.copy;
+        }));
+        var result = selected.join('\r\n');
+        navigator.clipboard.writeText(result);
+        alert(result);
     }
-    var tr = event.target.closest('tr');
-    if (!tr) {
-        return;
+}
+
+function downloadWithAria2() {
+    if (confirm(i18n.onrpc)) {
+        var urls = [...document.querySelectorAll('tr.nyaa-checked')].map((tr) => tr.torrent.magnet);
+        postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls } });
+        alert('Done');
     }
-    event.preventDefault();
-    tr.classList.toggle('nyaa-checked');
+}
+
+document.querySelectorAll('tbody > tr').forEach((tr) => {
+    var [name, link, size] = tr.querySelectorAll('td:nth-child(2) > a:last-child, td:nth-child(3), td:nth-child(4)');
+    var url = name.href;
+    var id = url.slice(url.lastIndexOf('/') + 1);
+    var [magnet, torrent] = [...link.children].reverse().map((a) => a?.href);
+    tr.info = {id, url, name: name.textContent, torrent, magnet: magnet.slice(0, magnet.indexOf('&')), size: size.textContent};
+    name.addEventListener('contextmenu', async (event) => {
+        event.preventDefault();
+        if (event.altKey) {
+            return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls: [ {url: magnet } ] } });
+        }
+        await getNyaaTorrentDetail(tr.info);
+        event.ctrlKey ? navigator.clipboard.writeText(tr.info.copy) : getNyaaTorrentPreview(tr.info, event.layerY, event.layerX);
+    });
+    tr.addEventListener('click', (event) => {
+        if (event.ctrlKey) {
+            event.preventDefault();
+            tr.classList.toggle('nyaa-checked');
+        }
+    });
 });
 
-document.querySelector('tbody').addEventListener('contextmenu', async (event) => {
-    if (!event.target.title) {
-        return;
-    }
-    var tr = event.target.closest('tr');
-    if (!tr) {
-        return;
-    }
-    event.preventDefault();
-    var torrent = await getNyaaItemDetails(tr);
-    if (event.altKey) {
-        return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls: [ {url: torrent.magnet } ] } });
-    }
-    if (event.ctrlKey) {
-        return navigator.clipboard.writeText(torrent.copy);
-    }
-    printPreview(torrent, event.layerY, event.layerX);
-});
-
-async function getNyaaItemDetails(tr) {
-    var id = [...tr.parentNode.children].indexOf(tr);
-    if (!torrents[id] && !working[id]) {
-        var sites = [];
-        var images = [];
-        var a = tr.querySelector('td:nth-child(2) > a:last-child');
-        var [magnet, torrent] = [...tr.querySelectorAll('td:nth-child(3) > a')].reverse();
-        var size = tr.querySelector('td:nth-child(4)').textContent;
-        var url = a.href;
-        var name = tr.name = a.textContent;
-        tr.dataset.nyaa = id;
-        magnet = magnet.href.slice(0, magnet.href.indexOf('&'));
-        torrent = torrent?.href;
+async function getNyaaTorrentDetail(info) {
+    var {id, url, name, torrent, magnet, size} = info;
+    if (!working[id]) {
+        var site = [];
+        var image = [];
         working[id] = true;
         var container = document.createElement('div');
         container.innerHTML = await fetch(url).then((res) => res.text());
         var result = container.querySelector('#torrent-description').textContent;
-        result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !images.includes(url) && images.push(url) : !sites.includes(url) && sites.push(url));
-        var copy = i18n.name + '\n' + name + ' (' + size + ')\n' + i18n.preview + '\n' + (images.length !== 0 ? images.join('\n') : sites.length !== 0 ? sites.join('\n') : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
+        result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? !image.includes(url) && image.push(url) : !site.includes(url) && site.push(url));
+        info.site = site;
+        info.image = image;
+        info.copy = i18n.name + '\n' + name + ' (' + size + ')\n' + i18n.preview + '\n' + (image.length !== 0 ? image.join('\n') : site.length !== 0 ? site.join('\n') : 'Null') + '\n' + (torrent ? i18n.torrent + '\n' + torrent + '\n' : '') + i18n.magnet + '\n' + magnet;
         working[id] = false;
-        torrents[id] = {id, name, size, torrent, magnet, sites, images, copy};
     }
-    return torrents[id];
+    return info;
 }
 
-async function printPreview({id, images, sites}, top, left) {
-    if (images.length !== 0) {
-        return popupPreview(id, images[0], top, left);
+async function getNyaaTorrentPreview({id, image, site}, top, left) {
+    if (image.length !== 0) {
+        return popupPreview(id, image[0], top, left);
     }
-    if (sites.length !== 0) {
-        return GM_openInTab(sites[0]);
+    if (site.length !== 0) {
+        return GM_openInTab(site[0]);
     }
 }
 
