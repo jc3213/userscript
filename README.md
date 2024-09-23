@@ -17,3 +17,5 @@
 - [NyaaTorrentHelper.user.js](https://jc3213.github.io/userscript/NyaaTorrentHelper.user.js)
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
 - [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.js)
+
+<link rel="stylesheet" type="text/css" href="https://github.githubassets.com/assets/app/assets/stylesheets/bundles/global/syntax-theme-codemirror.scss"></link>
