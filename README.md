@@ -1,7 +1,6 @@
 # UserScript for TamperMonkey
 
 ## How to use
-
 - Download [Tampermonkey](https://www.tampermonkey.net/) browser extension
 - Click `Userscript` below to install them
 
