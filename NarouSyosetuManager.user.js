@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.10.2
+// @version      1.10.3
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -65,10 +65,7 @@ var css = $(`<style>
 .jsui-notify-popup {position: relative; background-color: #fff; cursor: pointer; padding: 5px 10px; margin: 5px; width: fit-content; border-radius: 3px; border: 1px outset #cccccc;}
 nav {width: fit-content !important;}
 main {width: 55% !important;}
-.novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
-.novel_subtitle {margin-bottom: 100px !important;}
-.p-novel__body p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 16px !important;}
-.novel_bn:last-child {margin-top: 100px !important;}
+p {font-size: 18px !important; line-height: 1.6; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif;}
 </style>`);
 
 var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => {
