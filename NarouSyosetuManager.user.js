@@ -21,7 +21,7 @@ if (!novelcode) {
 var formdata = new FormData($('.js-pdf-form')[0]);
 var shortcut = '';
 var shortime;
-var novelname = $('#container a[href$="' + novelcode + '/"], #novel_color > .novel_title')[0].textContent;
+var novelname = $('.c-announce-box > :last-child > :first-child, h1.novel_title')[0].textContent;
 var myncode = novelcode;
 var now = new Date();
 var today = now.getFullYear() + now.getMonth() + now.getDate();
@@ -54,7 +54,7 @@ var css = $(`<style>
 .jsui-menu-disabled {filter: contrast(15%);}
 .jsui-basic-menu {margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px;}
 .jsui-basic-menu > input {flex: 2;}
-.jsui-book-manager {position: relative; font-weight: bold; top: 8px; width: fit-content;}
+.jsui-book-manager {position: relative; font-weight: bold; left: 5px; width: fit-content;}
 .jsui-book-shelf {position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden;}
 .jsui-table, .jsui-logging {height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid;}
 .jsui-table-column {display: grid; gap: 1px; margin: 1px; grid-template-columns: 180px auto;}
@@ -63,11 +63,12 @@ var css = $(`<style>
 .jsui-table-body > :nth-child(2n) {background-color: #efefef;}
 .jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
 .jsui-notify-popup {position: relative; background-color: #fff; cursor: pointer; padding: 5px 10px; margin: 5px; width: fit-content; border-radius: 3px; border: 1px outset #cccccc;}
-#head_nav, #novel_color {width: 880px !important; margin: auto;}
+nav {width: fit-content !important;}
+main {width: 55% !important;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
-.novel_view > p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 17.5px !important;}
-.novel_view > p > br {display: none;}
+.p-novel__body p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 17.5px !important;}
+.p-novel__body p > br {display: none;}
 .novel_bn:last-child {margin-top: 100px !important;}
 </style>`);
 
@@ -106,7 +107,7 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
 });
 
 manager.append(css, button, download_btn);
-$('#head_nav').append(manager);
+$('nav').append(manager);
 
 if (novelread) {
     var clearfix = $('<span class="jsui-menu-item">本文のみ</span>').click(event => {
@@ -154,11 +155,11 @@ $(document).keydown((event) => {
             break;
         case 'ArrowLeft':
             event.preventDefault();
-            $('a.novelview_pager-before')[0].click();
+            $('a.c-pager__item--before')[0]?.click();
             break;
         case 'ArrowRight':
             event.preventDefault();
-            $('a.novelview_pager-next')[0].click();
+            $('a.c-pager__item--next')[0]?.click();
             break;
     }
 });
