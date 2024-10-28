@@ -67,8 +67,7 @@ nav {width: fit-content !important;}
 main {width: 55% !important;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
-.p-novel__body p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 17.5px !important;}
-.p-novel__body p > br {display: none;}
+.p-novel__body p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 16px !important;}
 .novel_bn:last-child {margin-top: 100px !important;}
 </style>`);
 
