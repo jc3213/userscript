@@ -1,18 +1,16 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.10.1
+// @version      1.10.2
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
+// @exclude      https://*.syosetu.com/novelview/*
 // @exclude      https://*.syosetu.com/novelreview/*
 // @connect      pdfnovels.net
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @grant        GM_webRequest
-// @webRequest   {"selector": "*.microad.net/*", "action": "cancel"}
-// @webRequest   {"selector": "*.microad.jp/*", "action": "cancel"}
 // ==/UserScript==
 
 'use strict';
@@ -39,7 +37,7 @@ var scheduler = localStorage.scheduler ?? today;
 var overlay = $('<div class="jsui-notify-overlay"></div>');
 
 addEventListener('message', (event) => {
-    if (event.data.extension_name === 'Download With Aria2') {
+    if (event.data.extension_name && event.data.extension_version) {
         aria2c = 'aria2c_jsonrpc_call';
     }
 });
@@ -68,7 +66,7 @@ var css = $(`<style>
 #head_nav, #novel_color {width: 880px !important; margin: auto;}
 .novel_subtitle, .novel_view {margin: 0px !important; padding: 0px !important; width: 100% !important;}
 .novel_subtitle {margin-bottom: 100px !important;}
-.novel_view > p {margin: 30px 0px;}
+.novel_view > p {margin: 30px 0px; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif; font-size: 17.5px !important;}
 .novel_view > p > br {display: none;}
 .novel_bn:last-child {margin-top: 100px !important;}
 </style>`);
@@ -92,8 +90,8 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
     }
     var {url, name, referer} = novels[novelcode];
     if (aria2c) {
-        var urls = [{ url, options: {out: name, referer, 'user-agent': navigator.userAgent} }];
-        postMessage({ aria2c, params: {urls} });
+        var params = [{ url, options: {out: name, referer, 'user-agent': navigator.userAgent} }];
+        postMessage({ aria2c, params });
         download[novelcode] = false;
         fancyPopup(novelcode, novelname, 'はaria2cのJSON-RPCへ送りました！');
         return;
@@ -103,7 +101,6 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
     var href = URL.createObjectURL(details.response);
     var down = $('<a></a>').attr({href, download: name});
     down[0].click();
-    down.remove();
     download[novelcode] = false;
     fancyPopup(novelcode, novelname, 'のダウンロードを完了しました！');
 });
@@ -151,6 +148,9 @@ $(document).keydown((event) => {
                 open('https://ncode.syosetu.com/' + novelcode + (shortcut[0] === '0' ? '/' : '/' + shortcut + '/'), '_blank');
                 shortcut = '';
             }, 1000);
+            break;
+        case 'Escape':
+            clearTimeout(shortime);
             break;
         case 'ArrowLeft':
             event.preventDefault();
