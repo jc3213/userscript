@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.12.0
+// @version      0.12.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -98,10 +98,10 @@ document.addEventListener('keydown', (event) => {
             event.ctrlKey && event.altKey ? history.go(1) : document.querySelector('ul.pagination > li:last-child > a').click();
             break;
         case 'c':
-            event.ctrlKey && event.altKey && copyTorrentsToClipboard();
+            event.ctrlKey && event.shiftKey && copyTorrentsToClipboard();
             break;
         case 's':
-            event.ctrlKey && event.altKey && downloadWithAria2();
+            event.ctrlKey && event.shiftKey && downloadWithAria2();
     }
 });
 
@@ -134,7 +134,7 @@ document.querySelectorAll('tbody > tr').forEach((tr) => {
     name.addEventListener('contextmenu', async (event) => {
         event.preventDefault();
         if (event.altKey) {
-            return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls: [ {url: magnet } ] } });
+            return postMessage({ aria2c: 'aria2c_jsonrpc_call', params: [ {url: magnet } ] });
         }
         await getNyaaTorrentDetail(tr.info);
         event.ctrlKey ? navigator.clipboard.writeText(tr.info.copy) : getNyaaTorrentPreview(tr.info, event.layerY, event.layerX);
