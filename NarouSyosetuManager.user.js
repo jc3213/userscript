@@ -117,11 +117,11 @@ if (novelread) {
 function removeHeaderFooter() {
     if (localStorage.clearfix === '1') {
         clearfix.addClass('jsui-menu-checked');
-        $('#novel_p, #novel_a').hide();
+        $('.p-novel__text--preface, .p-novel__text--afterword').hide();
     }
     else {
         clearfix.removeClass('jsui-menu-checked');
-        $('#novel_p, #novel_a').show();
+        $('.p-novel__text--preface, .p-novel__text--afterword').show();
     }
 };
 
