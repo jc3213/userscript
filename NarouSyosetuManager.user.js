@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.10.3
+// @version      1.10.4
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://*.syosetu.com/n*
@@ -18,7 +18,7 @@ var [, novelcode, novelread] = location.pathname.match(/^\/(?:.*\/ncode\/)?(n\w+
 if (!novelcode) {
     return;
 }
-var formdata = new FormData($('.js-pdf-form')[0]);
+
 var shortcut = '';
 var shortime;
 var novelname = $('.c-announce-box > :last-child > :first-child, h1.novel_title')[0].textContent;
@@ -64,8 +64,8 @@ var css = $(`<style>
 .jsui-notify-overlay {position: fixed; top: 20px; left: 0px; z-index: 99999999;}
 .jsui-notify-popup {position: relative; background-color: #fff; cursor: pointer; padding: 5px 10px; margin: 5px; width: fit-content; border-radius: 3px; border: 1px outset #cccccc;}
 nav {width: fit-content !important;}
-main {width: 55% !important;}
-p {font-size: 18px !important; line-height: 1.6; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif;}
+main {width: 50% !important;}
+.p-novel__body > :nth-child(2) {margin: 0px; font-size: 18px !important; font-family: "Segoe UI", Verdana, "メイリオ", Meiryo, sans-serif;}
 </style>`);
 
 var button = $('<div class="jsui-menu-item">書庫管理</div>').click(event => {
@@ -82,10 +82,7 @@ var download_btn = $('<div class="jsui-menu-item">ダウンロード</div>').cli
     }
     fancyPopup(novelcode, novelname, 'ダウンロード情報を収集をしています、しばらくお待ちください！');
     download[novelcode] = true;
-    if (!novels[novelcode]) {
-        novels[novelcode] = await getPDFDownloadURL(novelcode, novelname);
-    }
-    var {url, name, referer} = novels[novelcode];
+    var {url, name, referer} = novels[novelcode] ??= await getPDFDownloadURL(novelcode, novelname);
     if (aria2c) {
         var params = [{ url, options: {out: name, referer, 'user-agent': navigator.userAgent} }];
         postMessage({ aria2c, params });
@@ -258,17 +255,27 @@ function saveBookmarkButton() {
 function getPDFDownloadURL(ncode, name) {
     return new Promise(async (resolve, reject) => {
         var referer = 'https://ncode.syosetu.com/novelpdf/creatingpdf/ncode/' + ncode + '/';
+        var formdata = new FormData($('nav > form')[0]);
         var text = await fetch(referer, {method: 'POST', body: formdata, referer: location.origin}).then(response => response.text());
-        var temp = $(`<div style="display: none;">${text}</div>`).appendTo(document.body);
-        var watcher = setInterval(() => {
-            var url = temp.find('a.js-pdf-downloadpage-link')[0].href;
-            if (url !== 'javascript:void(0)') {
-                clearInterval(watcher);
-                var token = url.match(/\/([^\/]+)\/$/)[1];
-                console.log(token);
-                resolve({url: 'https://pdfnovels.net/' + token + '/' + ncode + '.pdf', name: name + '.pdf', referer});
-            }
-        }, 200);
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.onload = (event) => {
+            var idoc = iframe.contentDocument || iframe.contentWindoe.document;
+            idoc.open();
+            idoc.write(text);
+            idoc.close();
+            var watcher = setInterval(() => {
+                var url = idoc.querySelector('a.js-pdf-downloadpage-link').href;
+                if (url !== 'javascript:void(0)') {
+                    var token = url.match(/\/([^\/]+)\/$/)[1];
+                    console.log(token);
+                    iframe.remove();
+                    clearInterval(watcher);
+                    resolve({url: 'https://pdfnovels.net/' + token + '/' + ncode + '.pdf', name: name + '.pdf', referer});
+                }
+            }, 500);
+        };
+        document.body.append(iframe);
     });
 }
 function promisedXMLRequest(url, referer) {
