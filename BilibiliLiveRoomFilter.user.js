@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.1
+// @version         1.7.2
 // @description     Filtering Bilibili liveroom, batch management, export, import banlist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -35,31 +35,30 @@ let bilicss = document.createElement('style');
 bilicss.textContent = '.bililive-button {background-color: #00ADEB; border-radius: 5px; color: #ffffff; cursor: pointer; font-size: 16px; padding: 3px 10px; user-select: none; text-align: center;} .bililive-button:hover {filter: contrast(75%);} .bililive-button:active {filter: contrast(45%);} ';
 
 let area = location.pathname.slice(1);
-if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
+if (isNaN(area)) {
     biliLiveSpecialArea();
 }
-if (area === 'all') {
-    biliLiveAllStreams();
-}
-if (!isNaN(area)) {
-    PromiseDOMSelector('.header-info-ctnr > .rows-content').then((liver) => biliLiveShowRoom(liver, area)).catch((error) => biliLiveShowFrame(area));
-}
 else {
-    console.error('尚未支持的特殊区间，请到NGA原帖或Github反馈');
+    PromiseDOMSelector('.header-info-ctnr > .rows-content').then((liver) => biliLiveShowRoom(liver, area)).catch((error) => biliLiveShowFrame(area));
 }
 
 async function biliLiveSpecialArea() {
     let area = await PromiseDOMSelector('#room-card-list');
-    let tabs = await PromiseDOMSelector('.tabs');
     biliLiveManagerCSS()
-    biliLiveManagerDeployed(tabs);
     area.append(bilicss);
-    area.querySelectorAll('.index_item_JSGkw').forEach(biliLiveShowCover);
-    newDOMObserver(area, 'index_item_JSGkw', biliLiveShowCover);
-}
-
-async function biliLiveAllStreams() {
-  // Still under development
+    document.querySelectorAll('.index_item_JSGkw').forEach(biliLiveShowCover);
+    let observer = new MutationObserver((mutationsList) => {
+        mutationsList.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.tagName === 'DIV' && node.className === 'index_item_JSGkw') {
+                        biliLiveShowCover(node);
+                    }
+                });
+            }
+        });
+    });
+    observer.observe(area, { childList: true, subtree: true });
 }
 
 async function biliLiveShowCover(node) {
@@ -201,7 +200,7 @@ function biliLiveManagerCSS() {
 .bililive-filters > :last-child > :nth-child(2n + 1) > :last-child {background-color: #F1F2F3;}';
 }
 
-function biliLiveManagerDeployed(dom) {
+function biliLiveManagerDeployed() {
     let saver = document.createElement('a');
 
     let upload = document.createElement('input');
@@ -293,7 +292,8 @@ function biliLiveManagerDeployed(dom) {
     container.className = 'bililive-container';
 
     showRooms.filter = tbody;
-    dom.append(container);
+
+    document.querySelector('.tabs').appendChild(container);
 }
 
 function PromiseFileReader(file) {
@@ -320,19 +320,4 @@ function PromiseDOMSelector(selector, anchor = document) {
             }
         }, 250);
     });
-}
-
-function newDOMObserver(dom, classId, callback) {
-    let observer = new MutationObserver((mutationsList) => {
-        mutationsList.forEach((mutation) => {
-            if (mutation.type === 'childList') {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.tagName === 'DIV' && node.className === classId) {
-                        callback(node);
-                    }
-                });
-            }
-        });
-    });
-    observer.observe(dom, { childList: true, subtree: true });
 }
