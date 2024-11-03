@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.0
+// @version         1.7.1
 // @description     Filtering Bilibili liveroom, batch management, export, import banlist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -36,7 +36,7 @@ bilicss.textContent = '.bililive-button {background-color: #00ADEB; border-radiu
 
 let area = location.pathname.slice(1);
 if (area === 'p/eden/area-tags' || area === 'lol' || area.startsWith('area/')) {
-    biliLiveSpecialArea('#room-card-list', 'index_item_JSGkw', '.tabs');
+    biliLiveSpecialArea();
 }
 if (area === 'all') {
     biliLiveAllStreams();
@@ -48,14 +48,14 @@ else {
     console.error('尚未支持的特殊区间，请到NGA原帖或Github反馈');
 }
 
-async function biliLiveSpecialArea(selector, classId, menuId) {
-    let area = await PromiseDOMSelector(selector);
-    let tabs = await PromiseDOMSelector(menuId);
+async function biliLiveSpecialArea() {
+    let area = await PromiseDOMSelector('#room-card-list');
+    let tabs = await PromiseDOMSelector('.tabs');
     biliLiveManagerCSS()
     biliLiveManagerDeployed(tabs);
     area.append(bilicss);
-    area.querySelectorAll('.' + classId).forEach(biliLiveShowCover);
-    newDOMObserver(area, classId, biliLiveShowCover);
+    area.querySelectorAll('.index_item_JSGkw').forEach(biliLiveShowCover);
+    newDOMObserver(area, 'index_item_JSGkw', biliLiveShowCover);
 }
 
 async function biliLiveAllStreams() {
@@ -80,7 +80,7 @@ async function biliLiveShowCover(node) {
     filter.addEventListener('click', (event) => {
         event.preventDefault();
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-            addToTimeoutList(id, liver);
+            blockLiveRoom(id, liver);
             GM_setValue('storage', storage);
         }
     });
@@ -122,7 +122,7 @@ async function biliLiveShowRoom(dom, id) {
     filter.className = 'bililive-button';
     filter.addEventListener('click', (event) => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
-            addToTimeoutList(id, liver);
+            blockLiveRoom(id, liver);
             GM_setValue('storage', storage);
             open(area, '_self');
         }
@@ -162,11 +162,14 @@ function addToFilterList(id, liver) {
     showRooms.filter.appendChild(cell);
 }
 
-function addToTimeoutList(id, liver) {
+function blockLiveRoom(id, liver) {
     if (!storage[id]) {
         storage.every.push(id);
         storage[id] = liver;
-        showRooms[id].style.display = 'none';
+        let room = showRooms[id];
+        if (room) {
+            room.style.display = 'none';
+        }
         if (!firstRun) {
             addToFilterList(id, liver);
         }
@@ -208,7 +211,7 @@ function biliLiveManagerDeployed(dom) {
         let file = event.target.files[0];
         if (confirm('确定要导入屏蔽列表【' + file.name.slice(0, -5) + '】吗？')) {
             let json = await PromiseFileReader(file);
-            json.forEach(({id, liver}) => addToTimeoutList(id, liver));
+            json.forEach(({id, liver}) => console.log(id, liver) || blockLiveRoom(id, liver));
             GM_setValue('storage', storage);
             upload.value = '';
         }
@@ -219,9 +222,9 @@ function biliLiveManagerDeployed(dom) {
     batch.addEventListener('click', (event) => {
         if (confirm('确定要屏蔽列表中的直播间吗？')) {
             entry.value.match(/[^\r\n]+/g)?.forEach((str) => {
-                var rule = str.match(/(\d+)[\\\/\|\s\n\(\)\[\]\{\},.:;'"!@#$%^&*]+(.+)/);
+                var rule = str.match(/(\d+)[\\/:*?"<>|[\](){}+\-*/`,.;!@#%^&]+(.+)/);
                 if (rule?.length === 3) {
-                    addToTimeoutList(rule[1], rule[2]);
+                    blockLiveRoom(rule[1], rule[2]);
                 }
             });
             GM_setValue('storage', storage);
