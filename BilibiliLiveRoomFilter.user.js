@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.2
+// @version         1.7.3
 // @description     Filtering Bilibili liveroom, batch management, export, import banlist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -45,6 +45,7 @@ else {
 async function biliLiveSpecialArea() {
     let area = await PromiseDOMSelector('#room-card-list');
     biliLiveManagerCSS()
+    biliLiveManagerDeployed();
     area.append(bilicss);
     document.querySelectorAll('.index_item_JSGkw').forEach(biliLiveShowCover);
     let observer = new MutationObserver((mutationsList) => {
