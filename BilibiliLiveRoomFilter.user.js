@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.3
+// @version         1.7.4
 // @description     Filtering Bilibili liveroom, batch management, export, import banlist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -187,7 +187,7 @@ function biliLiveManagerCSS() {
     bilicss.textContent += '.bililive-button {flex: 1;}\
 .bililive-preview {display: none; gap: 5px; margin: 8px 12px 0px 6px;}\
 .bililive-container {position: relative;}\
-.bililive-manager {background-color: #ffffff; border: 1px solid #000000; display: none; padding: 5px; margin-top: 3px; position: absolute; width: 520px; z-index: 3213;}\
+.bililive-manager {background-color: #ffffff; border: 1px solid #000000; display: none; font-size: 16px; padding: 5px; margin-top: 3px; position: absolute; width: 520px; z-index: 3213;}\
 .bililive-manager > textarea {font-size: 16px; margin: 3px 0px; padding: 5px; resize: none; width: 508px;}\
 .bililive-manager > :first-child {display: flex; gap: 3px; width: 100%;}\
 .bililive-popup {display: block;}\
@@ -307,7 +307,7 @@ function PromiseFileReader(file) {
 
 function PromiseDOMSelector(selector, anchor = document) {
     return new Promise((resolve, reject) => {
-        let quota = 20;
+        let quota = 10;
         let timer = setInterval(() => {
             let node = anchor.querySelector(selector);
             if (node) {
