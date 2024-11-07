@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      0.12.1
+// @version      0.12.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -98,10 +98,10 @@ document.addEventListener('keydown', (event) => {
             event.ctrlKey && event.altKey ? history.go(1) : document.querySelector('ul.pagination > li:last-child > a').click();
             break;
         case 'c':
-            event.ctrlKey && event.shiftKey && copyTorrentsToClipboard();
+            event.altKey && copyTorrentsToClipboard();
             break;
         case 's':
-            event.ctrlKey && event.shiftKey && downloadWithAria2();
+            event.altKey && downloadWithAria2();
     }
 });
 
@@ -112,16 +112,16 @@ async function copyTorrentsToClipboard() {
             return tr.info.copy;
         }));
         var result = selected.join('\r\n');
-        navigator.clipboard.writeText(result);
         alert(result);
+        navigator.clipboard.writeText(result);
     }
 }
 
 function downloadWithAria2() {
     if (confirm(i18n.onrpc)) {
         var urls = [...document.querySelectorAll('tr.nyaa-checked')].map((tr) => tr.torrent.magnet);
+        alert('Download request has been sent to aria2 JSON-RPC');
         postMessage({ aria2c: 'aria2c_jsonrpc_call', params: { urls } });
-        alert('Done');
     }
 }
 
@@ -148,6 +148,9 @@ document.querySelectorAll('tbody > tr').forEach((tr) => {
 });
 
 async function getNyaaTorrentDetail(info) {
+    if (info.copy) {
+        return info;
+    }
     var {id, url, name, torrent, magnet, size} = info;
     if (!working[id]) {
         var site = [];
