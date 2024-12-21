@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.1
+// @version      1.4.2
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
@@ -13,14 +13,15 @@ var speedrun = {};
 var opened = 0;
 var worker = {};
 var style = {};
+var player = fixedPlayerSize();
 var {clientWidth, clientHeight} = document.documentElement;
 var {pathname} = location;
 
 var css = document.createElement('style');
 css.innerHTML = `
 #app-main [class$="lg:w-[400px]"] {display: none !important;}
-.speedrun-window {position: fixed; width: 1280px; height: 742px; z-index: 999999; display: grid; grid-template-areas: "title menu" "player player"; grid-template-columns: calc(100% - 66px) 66px;}
-.speedrun-window iframe {width: 1280px !important; height: 720px !important; grid-area: "player";}
+.speedrun-window {position: fixed; z-index: 999999; display: grid; grid-template-columns: calc(100% - 66px) 66px;}
+.speedrun-window iframe {${player} grid-column: span 2;}
 .speedrun-record, .speedrun-menu {background-color: #181B1C; display: flex; height: 22px;}
 .speedrun-record > * {flex: 1; margin: auto; padding: 0px 5px 0px 3px;}
 .speedrun-record * {display: inline-block !important;}
@@ -147,4 +148,21 @@ function createRecordWindow(id, title, top, player) {
         container.style.cssText = '';
     }
     worker[id] = false;
+}
+
+function fixedPlayerSize() {
+    const viewportHeight = window.innerHeight;
+    if (viewportHeight < 720) {
+        return 'width: 854px; height: 480px;';
+    }
+    if (viewportHeight < 1080) {
+        return 'width: 1280px; height: 720px;';
+    }
+    if (viewportHeight < 1440) {
+        return 'width: 1920px; height: 1080px;';
+    }
+    if (viewportHeight < 2160) {
+        return 'width: 2560px; height: 1440px;';
+    }
+    return 'width: 3840px; height: 2160px;';
 }
