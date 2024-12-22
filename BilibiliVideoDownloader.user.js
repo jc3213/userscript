@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.8
+// @version         1.7.9
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -45,23 +45,21 @@ if (watch.startsWith('/video/')) {
     var menuBox = 'div.video-toolbar-left';
     var wideBtn = 'div.bpx-player-ctrl-wide';
     var wideStat = 'bpx-state-entered';
-    var current = 'ul.bpx-player-ctrl-eplist-menu > li.bpx-state-active';
+    var current = 'li.bpx-state-multi-active-item';
     var offset = `.jsui-video-menu {position: relative;}`;
-}
-else if (watch.startsWith('/v/')) {
+} else if (watch.startsWith('/v/')) {
     archive = true;
     menuBox = 'div.select-type > ul.type';
     wideBtn = 'div.bilibili-player-video-btn-widescreen';
     wideStat = 'closed';
     current = 'div.select-type > ul.type > li.active';
     offset = `.jsui-video-menu {position: absolute;}`;
-}
-else {
+} else {
     menuBox = 'div.toolbar[mr-show]';
     wideBtn = 'div.bpx-player-ctrl-wide';
     wideStat = 'bpx-state-entered';
     current = '[class*="numberListItem_select"]';
-    offset = `.jsui-video-menu {top: 14px; left: 580px;}`;
+    offset = `.jsui-video-menu {top: 16px; left: 520px;}`;
 }
 
 var jsUI = new JSUI();
@@ -71,8 +69,8 @@ jsUI.css.add(`.jsui-video-menu {position: absolute; display: inline-block; z-ind
 .jsui-video-menu > .jsui-menu-item {display: inline-block; width: 100px;}
 .jsui-options, .jsui-drop-menu {width: 140px;}
 .jsui-analyse {display: flex;}
-.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px; padding: 3px 5px !important;}
-.jsui-options, .jsui-analyse {position: absolute; border: 1px solid #000; padding: 5px; top: 38px; left: 0px; background-color: #fff;}
+.jsui-menu-item {background-color: #c26; color: #fff; font-size: 16px; padding: 3px 5px !important; line-height: 26px;}
+.jsui-options, .jsui-analyse {position: absolute; border: 1px solid #000; padding: 5px; left: 100%; top: 0px; background-color: #fff;}
 .jsui-options * {font-size: 16px; text-align: center; padding: 5px; width: 100%; margin: 0px;}
 .jsui-options p, .jsui-options option:checked {color: #c26; font-weight: bold;} ${offset}`);
 
@@ -102,7 +100,7 @@ async function analyseVideo() {
         }
         else {
             let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
-            let id = document.querySelector(current).href.match(/(\d+)\//)[1];
+            let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
             biliVideoTitle(name);
             biliVideoThumb(thumbnailUrl[0]);
             await biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`, 'result');
@@ -117,11 +115,11 @@ document.addEventListener('keydown', (event) => {
     if (ctrlKey) {
         if (key === 'ArrowLeft') {
             event.preventDefault();
-            observer.timeout(current, {timeout: 500}).then(playing => playing.previousElementSibling.click());
+            document.querySelector(current).previousElementSibling.click();
         }
         else if (key === 'ArrowRight') {
             event.preventDefault();
-            observer.timeout(current, {timeout: 500}).then(playing => playing.nextElementSibling.click());
+            document.querySelector(current).nextElementSibling.click();
         }
     }
 });
@@ -196,7 +194,7 @@ async function biliVideoExtractor(vid, playurl, key) {
 function downloadBiliVideo(altKey, url, ext) {
     if (altKey) {
         var urls = [{url, options: {out: title + ext, referer: location.href} }];
-        window.postMessage({aria2c: 'aria2c_jsonrpc_call', params: {urls}});
+        window.postMessage({aria2c: 'aria2c_jsonrpc_call', params: urls});
     }
     else {
         GM_download({url, responseType: 'blob', headers: {referer: location.href}, name: title + ext});
