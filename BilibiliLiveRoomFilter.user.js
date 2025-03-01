@@ -2,7 +2,7 @@
 // @name            Bilibili Liveroom Filter
 // @name:zh         哔哩哔哩直播间屏蔽工具
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.7.4
+// @version         1.7.5
 // @description     Filtering Bilibili liveroom, batch management, export, import banlist...
 // @description:zh  哔哩哔哩直播间屏蔽工具，支持管理列表，批量屏蔽，导出、导入列表等……
 // @author          jc3213
@@ -109,9 +109,9 @@ async function biliLiveShowCover(node) {
     node.addEventListener('mouseout', (event) => { menu.style.display = ''; });
 }
 
-async function biliLiveShowRoom(dom, id) {
-    let liver = await PromiseDOMSelector('a.room-owner-username', dom).then((user) => user.textContent);
-    let area = await PromiseDOMSelector('a.area-link', dom).then((area) => area.href);
+async function biliLiveShowRoom(xdom, id, xid) {
+    let liver = await PromiseDOMSelector('a.room-owner-username', xdom).then((user) => user.textContent);
+    let area = await PromiseDOMSelector('a.area-link', xdom).then((area) => area.href);
 
     if (storage[id] && !confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
         open(area, '_self');
@@ -123,12 +123,15 @@ async function biliLiveShowRoom(dom, id) {
     filter.addEventListener('click', (event) => {
         if (confirm('确定要永久屏蔽【 ' + liver + ' 】的直播间吗？')) {
             blockLiveRoom(id, liver);
+            if (xid) {
+                blockLiveRoom(xid, liver);
+            }
             GM_setValue('storage', storage);
             open(area, '_self');
         }
     });
 
-    let menu = await PromiseDOMSelector('.upper-row > .left-ctnr', dom);
+    let menu = await PromiseDOMSelector('.upper-row > .left-ctnr', xdom);
     bilicss.textContent += '.bililive-button {margin-left: 10px;}';
     menu.append(filter, bilicss);
 }
@@ -136,7 +139,8 @@ async function biliLiveShowRoom(dom, id) {
 async function biliLiveShowFrame(id) {
     let iframe = await PromiseDOMSelector('iframe[src*="live.bilibili.com"]');
     let player = await PromiseDOMSelector('#player-ctnr', iframe.contentDocument);
-    biliLiveShowRoom(player, id);
+    let xid = iframe.src.match(/\/(\d+)/)[1];
+    biliLiveShowRoom(player, id, xid);
 }
 
 function addToFilterList(id, liver) {
