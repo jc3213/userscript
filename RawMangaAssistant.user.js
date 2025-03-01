@@ -2,7 +2,7 @@
 // @name            Raw Manga Assistant
 // @name:zh         漫画生肉网站助手
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.7
+// @version         1.11.8
 // @description     Assistant for raw manga online website
 // @description:zh  漫画生肉网站助手脚本
 // @author          jc3213
@@ -100,7 +100,10 @@ var sites = {
     'jestful.net': {
         viewer: /-chapter-/,
         manga: {selector: 'img.chapter-img', attr: 'data-aload', except: ['olimposcan2', 'knet_64ba650e3ad61.png', 'cr_649a4491439a0.jpg']},
-        title: {selector: 'ol.breadcrumb > :last-child > a', attr: 'title', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        title: () => {
+            var [, title, chap] = document.title.match(/^(.+)(?:\s-\sRaw)?\sChapter\s(\d+\.?\d?)/);
+            return {name: title.replace(' - Raw', ''), chap};
+        },
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'},
         patch: () => {
             localStorage.setItem('shown_at', 3000000000000);
@@ -111,7 +114,7 @@ var sites = {
     'weloma.art': {
         viewer: /^\/\d+\/\d+/,
         manga: {selector: 'img.chapter-img', attr: 'data-src', except: ['/uploads/']},
-        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^(.+)(?:\s-\sRAW)?\sChapter\s(\d+(?:\.\d)?)/},
+        title: {selector: 'img.chapter-img', attr: 'alt', regexp: /^(.+)(?:\s-\sRAW)\sChapter\s(\d+(?:\.\d)?)/},
         shortcut: {prev: 'a.btn.btn-info.prev', next: 'a.btn.btn-info.next'}
     },
     'rawdevart.art': {
@@ -201,11 +204,17 @@ function getAllMangaImages(warning) {
             }
         });
         var symbol = navigator.platform === 'Win32' ? '\\' : '/';
-        var title_string = document.querySelector(watch.title.selector).getAttribute(watch.title.attr);
-        var temp = title_string.match(watch.title.regexp);
-        console.log(title_string,watch.title.regexp);
-        console.log(temp);
-        var title = symbol + temp[1] + symbol + longDecimalNumber(temp[2]);
+        if (typeof watch.title === 'function') {
+            var {name, chap} = watch.title();
+        } else {
+            var title_string = document.querySelector(watch.title.selector).getAttribute(watch.title.attr);
+            var temp = title_string.match(watch.title.regexp);
+            console.log(title_string, watch.title.regexp);
+            console.log(temp);
+            name = temp[1];
+            chap = temp[2]
+        }
+        var title = symbol + name + symbol + longDecimalNumber(chap);
         folder = title.replace(/[:\?\"\']/g, '_');
         console.log(folder);
         warning.remove();
