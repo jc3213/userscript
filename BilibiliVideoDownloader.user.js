@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.0
+// @version         1.8.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -23,16 +23,18 @@ let format = {
     '30232': {text: '音频 中码率', ext: '.128k.m4a'},
     '30216': {text: '音频 低码率', ext: '.64k.m4a'},
     '127': {text: '8K 超高清', ext: '.8k.mp4'},
+    '125': {text: '4K 超清+', ext: '.4k+.mp4'},
     '120': {text: '4K 超清', ext: '.4k.mp4'},
     '116': {text: '1080P 60帧', ext: '.1080f60.mp4'},
-    '112': {text: '1080P 高码率', ext: '.1080hbr.mp4'},
+    '112': {text: '1080P 高码率', ext: '.1080+.mp4'},
     '80': {text: '1080P 高清', ext: '.1080.mp4'},
     '74': {text: '720P 60帧', ext: '.720f60.mp4'},
     '64': {text: '720P 高清', ext: '.720.mp4'},
     '32': {text: '480P 清晰', ext: '.480.mp4'},
     '16': {text: '360P 流畅', ext: '.360.mp4'},
-    '15': {text: '360P 流畅', ext: '.360lq.mp4'},
+    '15': {text: '360P 流畅', ext: '.360-.mp4'},
     'avc1': {title: '视频编码: H.264', alt: 'h264', type: 'video'},
+    'hvc1': {title: '视频编码: HEVC 增强', alt: 'h265', type: 'video'},
     'hev1': {title: '视频编码: HEVC', alt: 'h265', type: 'video'},
     'av01': {title: '视频编码：AV1', alt: 'av1', type: 'video'},
     'mp4a': {title: '音频编码: AAC', alt: 'aac', type: 'audio'}
@@ -41,6 +43,8 @@ let format = {
 const videoTypeHandlers = {
     'video': {
         bvPlayer: true,
+        bvKey: 'data',
+        bvOffset: 'left: -300px;',
         menuBox: 'div.video-toolbar-left',
         wideBtn: 'div.bpx-player-ctrl-wide',
         wideStat: 'bpx-state-entered',
@@ -48,13 +52,17 @@ const videoTypeHandlers = {
     },
     'v': {
         bvArchive: true,
+        bvKey: 'data',
+        bvOffset: 'left: -300px;',
         menuBox: 'div.select-type > ul.type',
         wideBtn: 'div.bilibili-player-video-btn-widescreen',
         wideStat: 'closed',
         current: 'div.select-type > ul.type > li.active',
     },
     '!': {
-        menuBox: 'div.toolbar[mr-show]',
+        bvKey: 'result',
+        bvOffset: 'left: -400px; top: -6px;',
+        menuBox: 'div.toolbar > div.toolbar-left',
         wideBtn: 'div.bpx-player-ctrl-wide',
         wideStat: 'bpx-state-entered',
         current: '[class*="numberListItem_select"]',
@@ -73,7 +81,7 @@ window.addEventListener('play', async function biliVideoToolbar() {
     if (!wide.classList.contains(bvType.wideStat) && localStorage.autowide === '1' ) {
         wide.click();
     }
-    menu.append(mainPane, cssPane);
+    menu.after(mainPane, cssPane);
     window.removeEventListener('play', biliVideoToolbar);
 }, true);
 
@@ -129,19 +137,19 @@ const menuEventHandlers = {
                 let {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
                 biliVideoTitle(title);
                 biliVideoThumb(pic);
-                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
+                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
             }
             else if (bvType.bvArchive) {
                 let {aid, cid} = document.defaultView;
                 biliVideoTitle(document.querySelector('div.match-info-title').textContent);
-                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid, 'data');
+                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
             }
             else {
                 let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
                 let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
                 biliVideoTitle(name);
                 biliVideoThumb(thumbnailUrl[0]);
-                await biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`, 'result');
+                await biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`);
             }
         }
     }
@@ -168,16 +176,18 @@ function biliVideoThumb(url) {
     analysePane.appendChild(thumb);
 }
 
-async function biliVideoExtractor(vid, playurl, key) {
+async function biliVideoExtractor(vid, playurl) {
     if (history[vid]) {
         analysePane.innerHTML = '';
         analysePane.append(...history[vid]);
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        let {video, audio} = json[key].dash;
-        [...video, ...audio].forEach(({id, codecs, baseUrl}) => {
+        let {video, audio} = json[bvType.bvKey].dash;
+        [...video, ...audio].forEach((a) => {
+            let {id, codecs, baseUrl} = a;
             let codec = codecs.slice(0, codecs.indexOf('.'));
+            console.log(codec, id, a);
             let {text, ext} = format[id];
             let {title, alt, type} = format[codec];
             let menu = menuItem.cloneNode(true);
@@ -223,13 +233,13 @@ optionCodec.value = videocodec;
 
 let cssPane = document.createElement('style');
 cssPane.textContent = `
-#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px;}
+#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvType.bvOffset}}
 #bili_video_menu {display: flex; gap: 5px;}
 .bili_video_button {border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px;}
 .bili_video_button:hover {filter: contrast(80%);}
 .bili_video_button:active {filter: contrast(60%); border-style: inset;}
-.bili_video_pane {position: absolute; top: 0px; left: 100%; background-color: #fff; border: solid 1px #000; padding: 5px; z-index: 999;}
-.bili_video_pane > h4, .bili_video_pane > select {width: 110px !important; padding: 5px;}
+.bili_video_pane {position: absolute; top: 0px; left: 100%; background-color: #fff; border: solid 1px #000; padding: 5px;}
+.bili_video_pane > h4, .bili_video_pane > select {width: 110px !important; padding: 5px; text-align: center;}
 .bili_video_pane > h4 {color: #c26; font-weight: bold; margin: auto;}
 .bili_video_result {display: grid; grid-template-columns: 1fr 1fr 1fr; grid-auto-flow: dense; gap: 5px;}
 .bili_video_thumb {grid-column: 1;}
