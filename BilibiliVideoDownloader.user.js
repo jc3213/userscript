@@ -187,7 +187,6 @@ async function biliVideoExtractor(vid, playurl) {
         [...video, ...audio].forEach((a) => {
             let {id, codecs, baseUrl} = a;
             let codec = codecs.slice(0, codecs.indexOf('.'));
-            console.log(codec, id, a);
             let {text, ext} = format[id];
             let {title, alt, type} = format[codec];
             let menu = menuItem.cloneNode(true);
