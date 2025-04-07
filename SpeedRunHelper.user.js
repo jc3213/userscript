@@ -1,27 +1,29 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.2
+// @version      1.5.0
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
-// @require      https://cdn.jsdelivr.net/gh/jc3213/jslib@6a62f0fd4a32b30ad4e0dcd34a5856048401e638/ui/dragdrop.js#sha256-cC3r27zz33gEpm1Esdzlxiw3pshWSINZbJ6TohfyFpo=
 // ==/UserScript==
 
 'use strict';
-var speedrun = {};
-var opened = 0;
-var worker = {};
-var style = {};
-var player = fixedPlayerSize();
+let speedrun = {};
+let worker = {};
+let style = {};
+let srFixed = fixedPanePlayer();
+let srDrag;
+let srY;
+let srX;
+let srPane = 0;
+let srWatch = location.pathname.split('/')?.[1];
 var {clientWidth, clientHeight} = document.documentElement;
-var {pathname} = location;
 
-var css = document.createElement('style');
+let css = document.createElement('style');
 css.innerHTML = `
 #app-main [class$="lg:w-[400px]"] {display: none !important;}
-.speedrun-window {position: fixed; z-index: 999999; display: grid; grid-template-columns: calc(100% - 66px) 66px;}
-.speedrun-window iframe {${player} grid-column: span 2;}
+.speedrun-window {position: absolute; z-index: 999999; display: grid; grid-template-columns: calc(100% - 66px) 66px;}
+.speedrun-window iframe {width: ${srFixed.x}px; height: ${srFixed.y}px; grid-column: span 2;}
 .speedrun-record, .speedrun-menu {background-color: #181B1C; display: flex; height: 22px;}
 .speedrun-record > * {flex: 1; margin: auto; padding: 0px 5px 0px 3px;}
 .speedrun-record * {display: inline-block !important;}
@@ -39,130 +41,159 @@ css.innerHTML = `
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: block;}`;
 document.body.append(css);
 
-document.querySelector('main').addEventListener('contextmenu', pathname === '/' ? mainboard : pathname.startsWith('/series/') ? seriesboard : pathname.startsWith('/users/') ? userboard : gameboard);
+const videoHandlers = {
+    '': mainboard,
+    'series': seriesboard,
+    'users': usersboard,
+    game: gameboard
+};
+
+document.querySelector('main').addEventListener('contextmenu', (event) => {
+    let handler = videoHandlers[srWatch] ?? videoHandlers.game;
+    handler(event);
+});
 
 function mainboard(event) {
     speedrunRecord(event, 'div.flex.flex-row.flex-wrap.items-start.justify-start.p-2', (record) => {
-        var [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
+        let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
         return {url: rank.parentNode.href, rank, player, time};
     });
 }
 
 function seriesboard(event) {
     speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
-        var [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
+        let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
         return {url: rank.parentNode.href, rank, player, time};
     });
 }
 
-function userboard(event) {
+function usersboard(event) {
     speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
-        var player = document.querySelector('.x-username > span');
-        var [rank, time] = record.querySelectorAll('a > .truncate');
+        let player = document.querySelector('.x-username > span');
+        let [rank, time] = record.querySelectorAll('a > .truncate');
         return {url: rank.parentNode.href, rank, player, time};
     });
 }
 
 function gameboard(event) {
     speedrunRecord(event, 'tr', (record) => {
-        var [rank, player, time] = record.querySelectorAll('a');
+        let [rank, player, time] = record.querySelectorAll('a');
         return {url: rank.href, rank, player, time};
     });
 }
 
-function cssTextGetter(offset) {
-    var top = 130 + offset;
-    var left = (document.documentElement.clientWidth - 1280) / 2 + offset;
+async function speedrunRecord(event, selector, callback) {
+    let record = event.target.closest(selector);
+    if (!record || event.ctrlKey) {
+        return;
+    }
+    event.preventDefault();
+    let {url, rank, player, time} = callback(record);
+    let id = url.slice(url.lastIndexOf('/') + 1);
+    if (worker[id]) {
+        return;
+    }
+    worker[id] = true;
+    let title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
+    if (speedrun[id]) {
+        worker[id] = false;
+        speedrun[id].style.cssText = style[id] = fixedPanePosition(speedrun[id].offset);
+        return document.body.appendChild(speedrun[id]);
+    }
+    let response = await fetch(url);
+    let html = await response.text();
+    let xml = document.createElement('div');
+    xml.innerHTML = html;
+    let iframe = xml.querySelector('iframe[class]');
+    createRecordWindow(id, title, top, iframe);
+    xml.remove();
+}
+
+const recordHandlers = {
+    'speedrun-minimum': (pane) => {
+        pane.classList.add('speedrun-minimum');
+        pane.classList.remove('speedrun-maximum');
+        pane.style.cssText = '';
+    },
+    'speedrun-maximum': (pane) => {
+        pane.classList.add('speedrun-maximum');
+        pane.classList.remove('speedrun-minimum');
+        pane.style.cssText = '';
+    },
+    'speedrun-restore': (pane, id) => {
+        pane.classList.remove('speedrun-maximum', 'speedrun-minimum');
+        pane.style.cssText = style[id];
+    },
+    'speedrun-remove': (pane) => {
+        pane.remove();
+        -- srPane;
+    }
+}
+
+document.addEventListener('dragstart', (event) => {
+    let pane = event.target.closest('div[id^=speedrun-');
+    if (pane.draggable) {
+        srDrag = pane;
+        srX = event.clientX - srDrag.offsetLeft;
+        srY = event.clientY - srDrag.offsetTop;
+    }
+});
+
+document.addEventListener('dragover', (event) => {
+    event.preventDefault();
+});
+
+document.addEventListener('drop', (event) => {
+    event.preventDefault();
+    srDrag.style.left = event.clientX - srX + 'px';
+    srDrag.style.top = event.clientY - srY + 'px';
+    srDrag = null;
+});
+
+function createRecordWindow(id, title, top, player) {
+    let pane = document.createElement('div');
+    pane.id = 'speedrun-' + id;
+    pane.offset = srPane * 30;
+    pane.className = 'speedrun-window';
+    pane.draggable = true;
+    pane.innerHTML = `<div class="speedrun-record">${title}</div>
+<div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-restore">🔳</div><div id="speedrun-maximum">🔲</div><div id="speedrun-remove">❌</div></div>`;
+    pane.style.cssText = style[id] = fixedPanePosition(pane.offset);
+    pane.appendChild(player);
+    pane.addEventListener('click', (event) => {
+        let handler = recordHandlers[event.target.id];
+        if (handler) {
+            handler(pane, id);
+        }
+    });
+    document.body.appendChild(pane);
+    speedrun[id] = pane;
+    ++ srPane;
+    worker[id] = false;
+}
+
+function fixedPanePosition(offset) {
+    let top = 130 + offset;
+    let left = (document.documentElement.clientWidth - srFixed.x) / 2 + offset;
     if (left < 0) {
         left = 0;
     }
     return `top: ${top}px; left: ${left}px;`;
 }
 
-async function speedrunRecord(event, selector, callback) {
-    var record = event.target.closest(selector);
-    if (!record || event.ctrlKey) {
-        return;
+function fixedPanePlayer() {
+    let {innerHeight} = window;
+    if (innerHeight < 720) {
+        return {x: 854, y: 480};
     }
-    event.preventDefault();
-    var {url, rank, player, time} = callback(record);
-    var id = url.slice(url.lastIndexOf('/') + 1);
-    if (worker[id]) {
-        return;
+    if (innerHeight < 1080) {
+        return {x: 1280, y: 720};
     }
-    worker[id] = true;
-    var title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
-    if (speedrun[id]) {
-        worker[id] = false;
-        speedrun[id].style.cssText = style[id] = cssTextGetter(speedrun[id].offset);
-        return document.body.appendChild(speedrun[id]);
+    if (innerHeight < 1440) {
+        return {x: 1920, y: 1080};
     }
-    var response = await fetch(url);
-    var html = await response.text();
-    var xml = document.createElement('div');
-    xml.innerHTML = html;
-    var iframe = xml.querySelector('iframe[class]');
-    createRecordWindow(id, title, top, iframe);
-    xml.remove();
-}
-
-function createRecordWindow(id, title, top, player) {
-    var container = document.createElement('div');
-    container.id = 'speedrun-' + id;
-    container.offset = opened * 30;
-    container.className = 'speedrun-window';
-    container.innerHTML = `<div class="speedrun-record">${title}</div>
-<div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-restore">🔳</div><div id="speedrun-maximum">🔲</div><div id="speedrun-remove">❌</div></div>`;
-    container.style.cssText = style[id] = cssTextGetter(container.offset);
-    container.appendChild(player);
-    container.addEventListener('click', (event) => {
-        switch (event.target.id) {
-            case 'speedrun-minimum':
-                container.classList.add('speedrun-minimum');
-                container.classList.remove('speedrun-maximum');
-                container.style.cssText = '';
-                break;
-            case 'speedrun-maximum':
-                container.classList.add('speedrun-maximum');
-                container.classList.remove('speedrun-minimum');
-                container.style.cssText = '';
-                break;
-            case 'speedrun-restore':
-                container.classList.remove('speedrun-maximum', 'speedrun-minimum');
-                container.style.cssText = style[id];
-                break;
-            case 'speedrun-remove':
-                container.remove();
-                break;
-        }
-    });
-    document.body.appendChild(container);
-    speedrun[id] = container;
-    opened ++;
-    var dragdrop = new DragDrop(container);
-    dragdrop.ondragend = position => {
-        if (container.className === 'speedrun-window') {
-            style[id] = container.style.cssText;
-            return;
-        }
-        container.style.cssText = '';
+    if (innerHeight < 2160) {
+        return {x: 2560, y: 1440};
     }
-    worker[id] = false;
-}
-
-function fixedPlayerSize() {
-    const viewportHeight = window.innerHeight;
-    if (viewportHeight < 720) {
-        return 'width: 854px; height: 480px;';
-    }
-    if (viewportHeight < 1080) {
-        return 'width: 1280px; height: 720px;';
-    }
-    if (viewportHeight < 1440) {
-        return 'width: 1920px; height: 1080px;';
-    }
-    if (viewportHeight < 2160) {
-        return 'width: 2560px; height: 1440px;';
-    }
-    return 'width: 3840px; height: 2160px;';
+    return {x: 3840, y: 2160};
 }
