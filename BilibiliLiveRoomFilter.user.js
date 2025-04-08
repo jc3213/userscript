@@ -175,12 +175,6 @@ function unblockLiveRoom(id) {
     }
 }
 
-const managerHandlers = {
-    'bililive-block': () => {},
-    'bililive-export': () => {},
-    'bililive-clear': () => {}
-};
-
 function biliLiveManagerDeployed(area) {
     let pane = document.createElement('div');
     pane.className = 'bililive-container';
