@@ -13,7 +13,7 @@
 // @grant           GM_getValue
 // ==/UserScript==
 
-let storage = GM_getValue('block', ['63667651']);
+let storage = GM_getValue('block', []);
 let blocker = new Set(storage);
 
 function blockPosts(posts) {
