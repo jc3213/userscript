@@ -6,12 +6,9 @@
 // @description     Block user posts and quotes on NGA
 // @description:zh  屏蔽用户的发言跟与之相关的引用
 // @author          jc3213
-// @match           *://bbs.nga.cn/thread.php?*
-// @match           *://bbs.nga.cn/read.php?*
-// @match           *://ngabbs.com/thread.php?*
-// @match           *://ngabbs.com/read.php?*
-// @match           *://nga.178.com/thread.php?*
-// @match           *://nga.178.com/read.php?*
+// @match           *://bbs.nga.cn/*
+// @match           *://ngabbs.com/*
+// @match           *://nga.178.com/*
 // @grant           GM_setValue
 // @grant           GM_getValue
 // ==/UserScript==
