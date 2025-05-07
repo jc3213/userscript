@@ -2,12 +2,15 @@
 // @name            NGA User Blocker
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.1
+// @version         0.2
 // @description     Block user posts and quotes on NGA
 // @description:zh  屏蔽用户的发言跟与之相关的引用
 // @author          jc3213
+// @match           *://bbs.nga.cn/thread.php?*
 // @match           *://bbs.nga.cn/read.php?*
+// @match           *://ngabbs.com/thread.php?*
 // @match           *://ngabbs.com/read.php?*
+// @match           *://nga.178.com/thread.php?*
 // @match           *://nga.178.com/read.php?*
 // @grant           GM_setValue
 // @grant           GM_getValue
@@ -23,8 +26,9 @@ function blockPosts(posts) {
         }
 
         let title = post.children[0].children[0].children[0].children[0].children[0];
-        let user = title.children[1].textContent;
-        let id = title.children[2].textContent;
+        let body = title.children;
+        let user = body[1].textContent;
+        let id = body[body.length - 1].textContent;
 
         if (blocker.has(id)) {
             post.style.display = 'none';
@@ -64,7 +68,7 @@ new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         let post = mutation.addedNodes[0];
         if (post && post.id === 'm_posts') {
-            blockPosts(post.children[0].children);
+            setTimeout(() => blockPosts(post.children[0].children), 100);
         }
     });
 
