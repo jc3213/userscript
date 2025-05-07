@@ -2,7 +2,7 @@
 // @name            NGA User Blocker
 // @name:zh         NGA表情管理器
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.2
+// @version         0.3
 // @description     Block user posts and quotes on NGA
 // @description:zh  屏蔽用户的发言跟与之相关的引用
 // @author          jc3213
@@ -17,7 +17,7 @@
 // ==/UserScript==
 
 let storage = GM_getValue('block', []);
-let blocker = new Set(storage);
+let blocker = new Map(storage);
 
 function blockPosts(posts) {
     [...posts].forEach((post) => {
@@ -46,6 +46,7 @@ function blockPosts(posts) {
 
         let button = document.createElement('button');
         button.id = id;
+        button.user = user;
         button.title = `屏蔽用户[${user}]`;
         button.textContent = '屏蔽此人';
         button.style.cssText = 'margin-left: 5px;';
@@ -56,9 +57,9 @@ function blockPosts(posts) {
 }
 
 function blockThisUser(event) {
-    let {id, title, post} = event.target;
+    let {id, title, user, post} = event.target;
     if (confirm(`确定要${title}吗？`)) {
-        blocker.add(id);
+        blocker.set(id, user);
         post.style.display = 'none';
         GM_setValue('block', [...blocker]);
     }
