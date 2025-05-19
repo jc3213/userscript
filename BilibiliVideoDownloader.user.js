@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.1
+// @version         1.8.2
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -13,9 +13,17 @@
 // ==/UserScript==
 
 let {autowide = '0', videocodec = '0'} = localStorage;
-let bvTitle;
 let bvWatch = location.pathname;
-let worker = true;
+let bvTitle;
+let bvPlayer;
+let bvArchive;
+let bvKey;
+let bvOffset;
+let bvMenu;
+let bvNow;
+let wideBtn;
+let wideStat;
+let bvOpen = true;
 let history = {};
 let archive;
 let format = {
@@ -40,58 +48,44 @@ let format = {
     'mp4a': {title: '音频编码: AAC', alt: 'aac', type: 'audio'}
 };
 
-const videoTypeHandlers = {
-    'video': {
-        bvPlayer: true,
-        bvKey: 'data',
-        bvOffset: 'left: -300px;',
-        menuBox: 'div.video-toolbar-left',
-        wideBtn: 'div.bpx-player-ctrl-wide',
-        wideStat: 'bpx-state-entered',
-        current: 'li.bpx-state-multi-active-item',
-    },
-    'v': {
-        bvArchive: true,
-        bvKey: 'data',
-        bvOffset: 'left: -300px;',
-        menuBox: 'div.select-type > ul.type',
-        wideBtn: 'div.bilibili-player-video-btn-widescreen',
-        wideStat: 'closed',
-        current: 'div.select-type > ul.type > li.active',
-    },
-    '!': {
-        bvKey: 'result',
-        bvOffset: 'left: -400px; top: -6px;',
-        menuBox: 'div.toolbar > div.toolbar-left',
-        wideBtn: 'div.bpx-player-ctrl-wide',
-        wideStat: 'bpx-state-entered',
-        current: '[class*="numberListItem_select"]',
-    }
-};
-let bvType = videoTypeHandlers[bvWatch.match(/^\/(v(?:ideo)?)\//)?.[1]] ?? videoTypeHandlers['!'];
-
-const shortcutHandlers = {
-    'ArrowLeft': () => document.querySelector(bvType.current).previousElementSibling.click(),
-    'ArrowRight': () => document.querySelector(bvType.current).nextElementSibling.click()
+let bvHandler = bvWatch.match(/^\/(v(?:ideo)?)\//)?.[1];
+switch (bvHandler) {
+    case 'video':
+        bvPlayer = true;
+        bvKey = 'data';
+        bvOffset = 'left: -300px;';
+        bvMenu = 'div.video-toolbar-left';
+        wideBtn = 'div.bpx-player-ctrl-wide';
+        wideStat = 'bpx-state-entered';
+        bvNow = 'li.bpx-state-multi-active-item';
+        break;
+    case 'v':
+        bvArchive = true;
+        bvKey = 'data';
+        bvOffset = 'left: -300px;';
+        bvMenu = 'div.select-type > ul.type';
+        wideBtn = 'div.bilibili-player-video-btn-widescreen';
+        wideStat = 'closed';
+        bvNow = 'div.select-type > ul.type > li.active';
+        break;
+    default:
+        bvKey = 'result';
+        bvOffset = 'left: -400px; top: -6px;';
+        bvMenu = 'div.toolbar > div.toolbar-left';
+        wideBtn = 'div.bpx-player-ctrl-wide';
+        wideStat = 'bpx-state-entered';
+        bvNow = '[class*="numberListItem_select"]';
 };
 
 window.addEventListener('play', async function biliVideoToolbar() {
-    let wide = await promiseSelector(bvType.wideBtn);
-    let menu = await promiseSelector(bvType.menuBox);
-    if (!wide.classList.contains(bvType.wideStat) && localStorage.autowide === '1' ) {
+    let wide = await PromiseSelector(wideBtn);
+    let menu = await PromiseSelector(bvMenu);
+    if (!wide.classList.contains(wideStat) && localStorage.autowide === '1' ) {
         wide.click();
     }
     menu.after(mainPane, cssPane);
     window.removeEventListener('play', biliVideoToolbar);
 }, true);
-
-document.addEventListener('keydown', (event) => {
-    let handler = shortcutHandlers[event.key];
-    if (event.ctrlKey && handler) {
-        event.preventDefault();
-        handler();
-    }
-});
 
 let menuItem = document.createElement('div');
 menuItem.className = 'bili_video_button';
@@ -120,49 +114,14 @@ mainPane.innerHTML = `
 `;
 
 let [menuPane, optionsPane, analysePane] = mainPane.children;
-
-const menuEventHandlers = {
-     'bili_video_optbtn': () => {
-         optionsPane.classList.toggle('bili_video_hidden');
-         analysePane.classList.add('bili_video_hidden');
-     },
-    'bili_video_anabtn': async () => {
-        optionsPane.classList.add('bili_video_hidden');
-        analysePane.classList.toggle('bili_video_hidden');
-        if (worker || videocodec !== localStorage.videocodec) {
-            worker = false;
-            videocodec = localStorage.videocodec;
-            analysePane.innerHTML = '';
-            if (bvType.bvPlayer) {
-                let {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
-                biliVideoTitle(title);
-                biliVideoThumb(pic);
-                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
-            }
-            else if (bvType.bvArchive) {
-                let {aid, cid} = document.defaultView;
-                biliVideoTitle(document.querySelector('div.match-info-title').textContent);
-                await biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
-            }
-            else {
-                let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
-                let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
-                biliVideoTitle(name);
-                biliVideoThumb(thumbnailUrl[0]);
-                await biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`);
-            }
-        }
-    }
-};
-
-const codecHandlers = {
+let codecHandlers = {
     '0': 'bili_video_l264',
     '1': 'bili_video_l265',
     '2': 'bili_video_lav1'
 }
 
 function biliVideoTitle(name) {
-    let multi = document.querySelector(bvType.current)?.textContent?.trim();
+    let multi = document.querySelector(bvNow)?.textContent?.trim();
     name = multi ? `${name}-${multi}` : name;
     bvTitle = name.trim().replace(/[\/\\:*?"<>|\s\r\n]/g, '_');
 }
@@ -183,10 +142,12 @@ async function biliVideoExtractor(vid, playurl) {
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        let {video, audio} = json[bvType.bvKey].dash;
+        let items = [];
+        let {video, audio} = json[bvKey]?.dash ?? {video: [], audio: []};
         [...video, ...audio].forEach((a) => {
             let {id, codecs, baseUrl} = a;
             let codec = codecs.slice(0, codecs.indexOf('.'));
+            console.log(codec, id, a);
             let {text, ext} = format[id];
             let {title, alt, type} = format[codec];
             let menu = menuItem.cloneNode(true);
@@ -195,17 +156,59 @@ async function biliVideoExtractor(vid, playurl) {
             menu.title = title;
             menu.url = baseUrl;
             menu.file = bvTitle + ext;
+            items.push(menu);
             analysePane.appendChild(menu);
         });
-        history[vid] = [...analysePane.children];
+        history[vid] = items;
     }
     analysePane.className = analysePane.className.replace(/\s?bili_video_l\w+/, '') + ' ' + codecHandlers[videocodec];
 }
 
+function biliVideoOptions() {
+    optionsPane.classList.toggle('bili_video_hidden');
+    analysePane.classList.add('bili_video_hidden');
+}
+
+function biliVideoAnalyze() {
+    optionsPane.classList.add('bili_video_hidden');
+    analysePane.classList.toggle('bili_video_hidden');
+    if (bvOpen || videocodec !== localStorage.videocodec) {
+        bvOpen = false;
+        videocodec = localStorage.videocodec;
+        analysePane.innerHTML = '';
+        if (bvPlayer) {
+            let {title, pic, aid, cid} = document.defaultView.__INITIAL_STATE__.videoData;
+            biliVideoTitle(title);
+            biliVideoThumb(pic);
+            biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        }
+        else if (bvArchive) {
+            let {aid, cid} = document.defaultView;
+            biliVideoTitle(document.querySelector('div.match-info-title').textContent);
+            biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        }
+        else {
+            let {name, thumbnailUrl} = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
+            let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
+            biliVideoTitle(name);
+            biliVideoThumb(thumbnailUrl[0]);
+            biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`);
+        }
+    }
+}
+
 menuPane.addEventListener('click', (event) => {
-    let handler = menuEventHandlers[event.target.id];
-    if (handler) {
-        handler();
+    let {id} = event.target;
+    if (!id) {
+        return;
+    }
+    switch (id) {
+        case 'bili_video_optbtn':
+            biliVideoOptions();
+            break;
+        case 'bili_video_anabtn':
+            biliVideoAnalyze();
+            break;
     }
 });
 
@@ -232,7 +235,7 @@ optionCodec.value = videocodec;
 
 let cssPane = document.createElement('style');
 cssPane.textContent = `
-#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvType.bvOffset}}
+#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvOffset}}
 #bili_video_menu {display: flex; gap: 5px;}
 .bili_video_button {border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px;}
 .bili_video_button:hover {filter: contrast(80%);}
@@ -251,22 +254,21 @@ cssPane.textContent = `
 new MutationObserver(mutations => {
     if (bvWatch !== location.pathname) {
         bvWatch = location.pathname;
-        worker = true;
+        bvOpen = true;
         optionsPane.classList.add('bili_video_hidden');
         analysePane.classList.add('bili_video_hidden');
     }
 }).observe(document.head, {childList: true});
 
-function promiseSelector(text, time = 1) {
+function PromiseSelector(text) {
     return new Promise((resolve, reject) => {
-        time *= 5;
+        let time = 15;
         let t = setInterval(() => {
             let node = document.querySelector(text);
             if (node) {
+                clearInterval(t);
                 resolve(node);
-            }
-            time --;
-            if (time === 0) {
+            } else if (--time === 0) {
                 clearInterval(t);
                 reject();
             }
