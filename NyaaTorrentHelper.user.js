@@ -19,68 +19,76 @@ let previews = {};
 let nyaa_si = [...document.body.children[1].children[5].children[0].children[1].children];
 let indexes = [...document.body.children[1].children[6].children[0].children[0].children];
 let keyword;
+let regexp;
 
-// UI
-let messages = {
-    'en-US': {
-        keyword: 'Keyword...',
-        name: 'Name:',
-        preview: 'Preview:',
-        torrent: 'Torrent:',
-        magnet: 'Magnet:',
-        oncopy: 'Are you sure to copy selected torrents to clipboard?',
-        aria2c: 'Are you sure to send JSON-RPC request to aria2c?',
-        onsend: 'JSON-RPC request has already been sent',
-        clear: 'Are you sure to clear all torrents\' data caches?',
-        onclear: 'All caches has been cleared!'
-    },
-    'zh-CN': {
-        keyword: '关键词……',
-        name: '名字：',
-        preview: '预览：',
-        torrent: '种子：',
-        magnet: '磁链：',
-        oncopy: '确定复制所选种子信息到粘贴板吗？',
-        aria2c: '确定向aria2c发送JSON-RPC请求吗？',
-        onsend: '已经发送JSON-RPC请求',
-        clear: '确定清除所有已缓存的种子信息吗？',
-        onclear: '已清除所有缓存信息！'
-    }
+// i18n
+let messages = {};
+messages['en-US'] = {
+    name: 'Name:',
+    preview: 'Preview:',
+    torrent: 'Torrent:',
+    magnet: 'Magnet:',
+    prompt: 'Enter a filter keyword:',
+    oncopy: 'Confirm copying selected torrent data to clipboard?',
+    aria2c: 'Confirm sending JSON-RPC request to aria2c?',
+    onsend: 'JSON-RPC request has been sent.',
+    clear: 'Confirm clearing all cached torrent data?',
+    onclear: 'All cached data has been cleared.'
+};
+messages['zh-CN'] = {
+    name: '名字：',
+    preview: '预览：',
+    torrent: '种子：',
+    magnet: '磁链：',
+    prompt: '输入过滤关键词：',
+    oncopy: '确认复制所选种子数据到剪贴板？',
+    aria2c: '确认向 aria2c 发送 JSON-RPC 请求？',
+    onsend: 'JSON-RPC 请求已发送。',
+    clear: '确认清除所有已缓存的种子数据？',
+    onclear: '所有缓存数据已清除。'
 };
 let i18n = messages[navigator.language] ?? messages['en-US'];
 
+// css
 let css = document.createElement('style');
 css.textContent = `
 .nyaa-hidden { display: none; }
-.nyaa-cached > * { background-color: #cde7f0 !important; }
-.nyaa-fetch > button, .nyaa-checked > * { background-color: #f0d8d8 !important; }
-.nyaa-preview { position: absolute; z-index: 3213; max-height: 800px; width: auto; }
-.navbar-form > div > input { width: 190px !important; }
-.navbar-form { min-width: 560px;}
+.nyaa-cached > td { background-color: #cde7f0 !important; }
+.nyaa-checked > td { background-color: #f0d8d8 !important; }
 `;
 document.body.appendChild(css);
 
-let search = document.createElement('input');
-search.className = 'form-control search-bar nyaa-keyword';
-search.placeholder = i18n.keyword;
-search.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        filterNyaaTorrents();
-    }
+document.addEventListener('keydown', (event) => {
+    let {key, ctrlKey, altKey, shiftKey} = event;
+    switch (key) {
+        case 'ArrowLeft':
+            ctrlKey && indexes[0].children[0].click();
+            break;
+        case 'ArrowRight':
+            ctrlKey && indexes[indexes.length - 1].children[0].click();
+            break;
+        case 'c':
+            altKey && copyInfoToClipboard(event);
+            break;
+        case 's':
+            altKey && downloadWithAria2(event);
+            break;
+        case 'f':
+            altKey && filterNyaaTorrents(event);
+            break;
+        case 'D':
+            altKey && shiftKey && clearNyaaCaches(event);
+            break;
+    };
 });
 
-let button = document.createElement('div');
-button.className = 'input-group-btn search-btn';
-button.innerHTML = '<button class="btn btn-primary">🔎</button>';
-button.addEventListener('click', (event) => {
+function filterNyaaTorrents(event) {
     event.preventDefault();
-    filterNyaaTorrents();
-});
-
-function filterNyaaTorrents() {
-    let regexp;
-    switch (search.value) {
+    let result = prompt(i18n.prompt, keyword);
+    if (result === null) {
+        return;
+    }
+    switch (result) {
         case '':
             nyaa_si.forEach((tr) => tr.classList.remove('nyaa-hidden'));
             break;
@@ -88,7 +96,7 @@ function filterNyaaTorrents() {
             nyaa_si.forEach((tr) => tr.classList.toggle('nyaa-hidden'));
             break;
         default:
-            keyword = search.value;
+            keyword = result;
             regexp = new RegExp(keyword.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
             nyaa_si.forEach((tr) => {
                 if (!regexp.test(tr.info.name)) {
@@ -101,30 +109,8 @@ function filterNyaaTorrents() {
     }
 }
 
-document.body.children[0].children[0].children[1].children[3].children[0].append(search, button);
-
-document.addEventListener('keydown', (event) => {
-    let {key, ctrlKey, altKey, shiftKey} = event;
-    switch (key) {
-        case 'ArrowLeft':
-            ctrlKey && indexes[0].children[0].click();
-            break;
-        case 'ArrowRight':
-            ctrlKey && indexes[indexes.length - 1].children[0].click();
-            break;
-        case 'c':
-            altKey && copyTorrentsToClipboard();
-            break;
-        case 's':
-            altKey && downloadWithAria2();
-            break;
-        case 'D':
-            altKey && shiftKey && clearNyaaCaches();
-            break;
-    };
-});
-
-async function copyTorrentsToClipboard() {
+async function copyInfoToClipboard(event) {
+    event.preventDefault();
     if (confirm(i18n.oncopy)) {
         let info = await Promise.all([...selected].map(async (tr) => await getNyaaClipboardInfo(tr)));
         let copy = info.join('\n\n');
@@ -133,7 +119,8 @@ async function copyTorrentsToClipboard() {
     }
 }
 
-function downloadWithAria2() {
+function downloadWithAria2(event) {
+    event.preventDefault();
     if (confirm(i18n.aria2c)) {
         let params = [...selected].map((tr) => ({ url: tr.info.magnet }));
         postMessage({ aria2c: 'aria2c_jsonrpc_call', params });
@@ -141,7 +128,8 @@ function downloadWithAria2() {
     }
 }
 
-async function clearNyaaCaches() {
+async function clearNyaaCaches(event) {
+    event.preventDefault();
     if (confirm(i18n.clear)) {
         await caches.clear();
         torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
