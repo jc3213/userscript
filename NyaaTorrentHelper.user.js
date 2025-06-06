@@ -61,7 +61,9 @@ css.textContent = `
 document.body.appendChild(css);
 
 // indexedDB to Memory
-storage.forEach(({key, value}) => caches.set(key, value));
+storage.forEach(({key, value}) => caches.set(key, value)).then(() => {
+    nyaa_si.forEach(getTorrentInfo);
+});
 
 // shortcut
 document.addEventListener('keydown', (event) => {
@@ -145,7 +147,7 @@ async function clearNyaastorage(event) {
 }
 
 // extract torrents' infos
-nyaa_si.forEach((tr) => {
+function getTorrentInfo(tr) {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
@@ -184,7 +186,7 @@ nyaa_si.forEach((tr) => {
             tr.classList.toggle('nyaa-checked');
         }
     });
-});
+}
 
 async function getNyaaTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
@@ -211,6 +213,7 @@ async function getNyaaTorrentDetail(tr) {
     return info;
 }
 
+// copy info to clipboard
 async function getNyaaClipboardInfo(tr) {
     let {url, name, torrent, magnet, size, image, site} = await getNyaaTorrentDetail(tr);
     return `${i18n.name}
@@ -220,6 +223,7 @@ ${i18n.preview}
 ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magnet}`;
 }
 
+// show/open preview
 async function getNyaaTorrentPreview(tr, top, left) {
     let {image = [], site = []} = await getNyaaTorrentDetail(tr);
     if (image.length !== 0) {
