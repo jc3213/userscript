@@ -17,7 +17,7 @@ let torrents = new Set();
 let selected = new Set();
 let filtered = new Set();
 let working = new Set();
-let previews = {};
+let preview = new Map();
 let nyaa_si = [...document.body.children[1].children[5].children[0].children[1].children];
 let indexes = [...document.body.children[1].children[6].children[0].children[0].children];
 let keyword;
@@ -228,13 +228,13 @@ async function ggetTorrentPreview(tr, top, left) {
     let {image = [], site = []} = await getTorrentDetail(tr);
     if (image.length !== 0) {
         let src = image[0];
-        let img = previews[src];
+        let img = preview.get(src);
         if (!img) {
             img = document.createElement('img');
             img.src = src;
             img.className = 'nyaa-preview';
             img.addEventListener('click', event => img.remove());
-            previews[src] = img;
+            preview.set(src, img);
         }
         img.style.cssText = 'top: ' + top + 'px; left: ' + left + 'px;';
         document.body.append(img);
