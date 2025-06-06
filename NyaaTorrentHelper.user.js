@@ -76,21 +76,21 @@ document.addEventListener('keydown', (event) => {
             ctrlKey && indexes[indexes.length - 1].children[0].click();
             break;
         case 'c':
-            altKey && copyInfoToClipboard(event);
+            altKey && copyToClipboard(event);
             break;
         case 's':
             altKey && downloadWithAria2(event);
             break;
         case 'f':
-            altKey && filterNyaaTorrents(event);
+            altKey && filterTorrents(event);
             break;
         case 'D':
-            altKey && shiftKey && clearNyaastorage(event);
+            altKey && shiftKey && clearStorage(event);
             break;
     };
 });
 
-function filterNyaaTorrents(event) {
+function filterTorrents(event) {
     event.preventDefault();
     let result = prompt(i18n.prompt, keyword);
     if (result === null) {
@@ -117,10 +117,10 @@ function filterNyaaTorrents(event) {
     keyword = result;
 }
 
-async function copyInfoToClipboard(event) {
+async function copyToClipboard(event) {
     event.preventDefault();
     if (confirm(i18n.oncopy)) {
-        let info = await Promise.all([...selected].map(async (tr) => await getNyaaClipboardInfo(tr)));
+        let info = await Promise.all([...selected].map(async (tr) => await getClipboardInfo(tr)));
         let copy = info.join('\n\n');
         navigator.clipboard.writeText(copy);
         alert(copy);
@@ -136,7 +136,7 @@ function downloadWithAria2(event) {
     }
 }
 
-async function clearNyaastorage(event) {
+async function clearStorage(event) {
     event.preventDefault();
     if (confirm(i18n.clear)) {
         await storage.clear();
@@ -162,7 +162,7 @@ function getTorrentInfo(tr) {
         if (event.altKey) {
             postMessage({ aria2c: 'aria2c_jsonrpc_call', params: [ {url: magnet } ] });
         } else {
-            getNyaaTorrentPreview(tr, event.layerY, event.layerX);
+            ggetTorrentPreview(tr, event.layerY, event.layerX);
         }
     });
     tr.addEventListener('mousedown', (event) => {
@@ -173,7 +173,7 @@ function getTorrentInfo(tr) {
     tr.addEventListener('click', async (event) => {
         if (event.ctrlKey) {
             event.preventDefault();
-            let copy = await getNyaaClipboardInfo(tr);
+            let copy = await getClipboardInfo(tr);
             navigator.clipboard.writeText(copy)
         } else if (event.altKey) {
             event.preventDefault();
@@ -188,7 +188,7 @@ function getTorrentInfo(tr) {
     });
 }
 
-async function getNyaaTorrentDetail(tr) {
+async function getTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
     let info = caches.get(url);
     if (!info) {
@@ -214,8 +214,8 @@ async function getNyaaTorrentDetail(tr) {
 }
 
 // copy info to clipboard
-async function getNyaaClipboardInfo(tr) {
-    let {url, name, torrent, magnet, size, image, site} = await getNyaaTorrentDetail(tr);
+async function getClipboardInfo(tr) {
+    let {url, name, torrent, magnet, size, image, site} = await getTorrentDetail(tr);
     return `${i18n.name}
     ${name} (${size})
 ${i18n.preview}
@@ -224,8 +224,8 @@ ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magne
 }
 
 // show/open preview
-async function getNyaaTorrentPreview(tr, top, left) {
-    let {image = [], site = []} = await getNyaaTorrentDetail(tr);
+async function ggetTorrentPreview(tr, top, left) {
+    let {image = [], site = []} = await getTorrentDetail(tr);
     if (image.length !== 0) {
         let src = image[0];
         let img = previews[src];
