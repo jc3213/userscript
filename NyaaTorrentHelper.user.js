@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.0
+// @version      1.0.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -10,7 +10,8 @@
 // @grant        GM_openInTab
 // ==/UserScript==
 
-let caches = new Storage('nyaa.si', 'info');
+let storage = new Storage('nyaa.si', 'info');
+let caches = new Map();
 let torrents = new Set();
 let selected = new Set();
 let filtered = new Set();
@@ -58,6 +59,10 @@ css.textContent = `
 `;
 document.body.appendChild(css);
 
+// indexedDB to Memory
+storage.forEach(({key, value}) => caches.set(key, value));
+
+// shortcut
 document.addEventListener('keydown', (event) => {
     let {key, ctrlKey, altKey, shiftKey} = event;
     switch (key) {
@@ -77,7 +82,7 @@ document.addEventListener('keydown', (event) => {
             altKey && filterNyaaTorrents(event);
             break;
         case 'D':
-            altKey && shiftKey && clearNyaaCaches(event);
+            altKey && shiftKey && clearNyaastorage(event);
             break;
     };
 });
@@ -96,7 +101,6 @@ function filterNyaaTorrents(event) {
             nyaa_si.forEach((tr) => tr.classList.toggle('nyaa-hidden'));
             break;
         default:
-            keyword = result;
             regexp = new RegExp(keyword.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
             nyaa_si.forEach((tr) => {
                 if (!regexp.test(tr.info.name)) {
@@ -106,7 +110,8 @@ function filterNyaaTorrents(event) {
                 }
             });
             break;
-    }
+    };
+    keyword = result;
 }
 
 async function copyInfoToClipboard(event) {
@@ -128,22 +133,23 @@ function downloadWithAria2(event) {
     }
 }
 
-async function clearNyaaCaches(event) {
+async function clearNyaastorage(event) {
     event.preventDefault();
     if (confirm(i18n.clear)) {
-        await caches.clear();
+        await storage.clear();
+        caches.clear();
         torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
         alert(i18n.onclear);
     }
 }
 
-nyaa_si.forEach(async (tr) => {
+nyaa_si.forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
     let [magnet, torrent] = [...link.children].reverse().map((a) => a?.href);
     tr.info = {url, magnet, torrent, size: size.textContent, name: a.textContent};
-    if (await caches.has(url)) {
+    if (caches.has(url)) {
         tr.classList.add('nyaa-cached');
         torrents.add(tr);
     }
@@ -167,7 +173,8 @@ nyaa_si.forEach(async (tr) => {
             navigator.clipboard.writeText(copy)
         } else if (event.altKey) {
             event.preventDefault();
-            await caches.delete(url);
+            await storage.delete(url);
+            caches.delete(url);
             tr.classList.remove('nyaa-cached');
         } else if (event.shiftKey) {
             event.preventDefault();
@@ -179,7 +186,7 @@ nyaa_si.forEach(async (tr) => {
 
 async function getNyaaTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
-    let info = await caches.get(url);
+    let info = caches.get(url);
     if (!info) {
         if (working.has(url)) {
             return {};
@@ -192,7 +199,8 @@ async function getNyaaTorrentDetail(tr) {
         let result = container.children[26].children[6].textContent;
         result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
-        await caches.set(url, info);
+        await storage.set(url, info);
+        caches.set(url, info);
         tr.classList.add('nyaa-cached');
         torrents.add(tr);
         working.delete(url);
