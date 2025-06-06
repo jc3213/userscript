@@ -10,6 +10,7 @@
 // @grant        GM_openInTab
 // ==/UserScript==
 
+// variables
 let storage = new Storage('nyaa.si', 'info');
 let caches = new Map();
 let torrents = new Set();
@@ -143,6 +144,7 @@ async function clearNyaastorage(event) {
     }
 }
 
+// extract torrents' infos
 nyaa_si.forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
