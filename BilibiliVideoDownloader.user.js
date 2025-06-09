@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.8.2
+// @version         1.8.3
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -142,7 +142,6 @@ async function biliVideoExtractor(vid, playurl) {
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        let items = [];
         let {video, audio} = json[bvKey]?.dash ?? {video: [], audio: []};
         [...video, ...audio].forEach((a) => {
             let {id, codecs, baseUrl} = a;
@@ -156,10 +155,9 @@ async function biliVideoExtractor(vid, playurl) {
             menu.title = title;
             menu.url = baseUrl;
             menu.file = bvTitle + ext;
-            items.push(menu);
             analysePane.appendChild(menu);
         });
-        history[vid] = items;
+        history[vid] = [...analysePane.children];
     }
     analysePane.className = analysePane.className.replace(/\s?bili_video_l\w+/, '') + ' ' + codecHandlers[videocodec];
 }
