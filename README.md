@@ -6,7 +6,6 @@
 
 ## Recommended
 - [BilibiliLiveRoomFilter.user.js](https://jc3213.github.io/userscript/BilibiliLiveRoomFilter.user.js)
-- [BilibiliUserTagging.user.js](https://jc3213.github.io/userscript/BilibiliUserTagging.user.js)
 - [BilibiliVideoDownloader.user.js](https://jc3213.github.io/userscript/BilibiliVideoDownloader.user.js)
 - [NGAEmojiManager.user.js](https://jc3213.github.io/userscript/NGAEmojiManager.user.js)
 - [NGAUserBlocker.user.js](https://jc3213.github.io/userscript/NGAUserBlocker.user.js)
