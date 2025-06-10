@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.1
+// @version      1.0.2
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -57,6 +57,7 @@ css.textContent = `
 .nyaa-hidden { display: none; }
 .nyaa-cached > td { background-color: #cde7f0 !important; }
 .nyaa-checked > td { background-color: #f0d8d8 !important; }
+.nyaa-preview { position: absolute; }
 `;
 document.body.appendChild(css);
 
@@ -159,10 +160,11 @@ function getTorrentInfo(tr) {
     }
     a.addEventListener('contextmenu', async (event) => {
         event.preventDefault();
-        if (event.altKey) {
+        let {altKey, layerX, layerY} = event;
+        if (altKey) {
             postMessage({ aria2c: 'aria2c_jsonrpc_call', params: [ {url: magnet } ] });
         } else {
-            ggetTorrentPreview(tr, event.layerY, event.layerX);
+            getTorrentPreview(tr, layerY, layerX);
         }
     });
     tr.addEventListener('mousedown', (event) => {
@@ -224,7 +226,7 @@ ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magne
 }
 
 // show/open preview
-async function ggetTorrentPreview(tr, top, left) {
+async function getTorrentPreview(tr, top, left) {
     let {image = [], site = []} = await getTorrentDetail(tr);
     if (image.length !== 0) {
         let src = image[0];
@@ -236,7 +238,7 @@ async function ggetTorrentPreview(tr, top, left) {
             img.addEventListener('click', event => img.remove());
             preview.set(src, img);
         }
-        img.style.cssText = 'top: ' + top + 'px; left: ' + left + 'px;';
+        img.style.cssText = `top: ${top}px; left: ${left}px;`;
         document.body.append(img);
     } else if (site.length !== 0) {
         GM_openInTab(site[0]);
