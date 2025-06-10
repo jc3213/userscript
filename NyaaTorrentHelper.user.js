@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.2
+// @version      1.0.3
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -105,7 +105,7 @@ function filterTorrents(event) {
             nyaa_si.forEach((tr) => tr.classList.toggle('nyaa-hidden'));
             break;
         default:
-            regexp = new RegExp(keyword.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
+            regexp = new RegExp(result.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
             nyaa_si.forEach((tr) => {
                 if (!regexp.test(tr.info.name)) {
                     tr.classList.add('nyaa-hidden');
