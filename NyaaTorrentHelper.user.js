@@ -1,18 +1,21 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.3
+// @version      1.0.4
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
 // @require      https://jc3213.github.io/storage.js/storage.js#sha512-Ks2sRkoDPhK0oauvfj+5qyJ5rFqdW5/OUK5jMiRfGEkGCuOvBV+JIJoy0zrhz2FYq9AsG/6JN/a/jfnAQnBGMg==
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @grant        GM_openInTab
 // ==/UserScript==
 
 // variables
 let storage = new Storage('nyaa.si', 'info');
-let caches = new Map();
+let storageGM = GM_getValue('nyaa.si', []);
+let caches = new Map(storageGM);
 let torrents = new Set();
 let selected = new Set();
 let filtered = new Set();
@@ -62,8 +65,14 @@ css.textContent = `
 document.body.appendChild(css);
 
 // indexedDB to Memory
-storage.forEach(({key, value}) => caches.set(key, value)).then(() => {
+storage.forEach(({key, value}) => {
+    caches.set(key, value);
+}).then(() => {
+    if (caches.size !== storageGM.length) {
+        GM_setValue('nyaa.si', [...caches]);
+    }
     nyaa_si.forEach(getTorrentInfo);
+    storage.flush();
 });
 
 // shortcut
@@ -140,8 +149,8 @@ function downloadWithAria2(event) {
 async function clearStorage(event) {
     event.preventDefault();
     if (confirm(i18n.clear)) {
-        await storage.clear();
         caches.clear();
+        GM_setValue('nyaa.si', [...caches]);
         torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
         alert(i18n.onclear);
     }
@@ -179,8 +188,8 @@ function getTorrentInfo(tr) {
             navigator.clipboard.writeText(copy)
         } else if (event.altKey) {
             event.preventDefault();
-            await storage.delete(url);
             caches.delete(url);
+            GM_setValue('nyaa.si', [...caches]);
             tr.classList.remove('nyaa-cached');
         } else if (event.shiftKey) {
             event.preventDefault();
@@ -205,8 +214,8 @@ async function getTorrentDetail(tr) {
         let result = container.children[26].children[6].textContent;
         result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
-        await storage.set(url, info);
         caches.set(url, info);
+        GM_setValue('nyaa.si', [...caches]);
         tr.classList.add('nyaa-cached');
         torrents.add(tr);
         working.delete(url);
