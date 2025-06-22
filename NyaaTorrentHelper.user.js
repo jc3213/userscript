@@ -1,28 +1,26 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.4
+// @version      1.0.5
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
-// @require      https://jc3213.github.io/storage.js/storage.js#sha512-Ks2sRkoDPhK0oauvfj+5qyJ5rFqdW5/OUK5jMiRfGEkGCuOvBV+JIJoy0zrhz2FYq9AsG/6JN/a/jfnAQnBGMg==
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_openInTab
 // ==/UserScript==
 
 // variables
-let storage = new Storage('nyaa.si', 'info');
-let storageGM = GM_getValue('nyaa.si', []);
-let caches = new Map(storageGM);
+let storage = GM_getValue('nyaa.si', []);
+let caches = new Map(storage);
 let torrents = new Set();
 let selected = new Set();
 let filtered = new Set();
 let working = new Set();
 let preview = new Map();
-let nyaa_si = [...document.body.children[1].children[5].children[0].children[1].children];
-let indexes = [...document.body.children[1].children[6].children[0].children[0].children];
+let nyaa_si = [...document.querySelector('table > tbody').children];
+let indexes = [...document.querySelector('nav > ul').children];
 let keyword;
 let regexp;
 
@@ -64,17 +62,6 @@ css.textContent = `
 `;
 document.body.appendChild(css);
 
-// indexedDB to Memory
-storage.forEach(({key, value}) => {
-    caches.set(key, value);
-}).then(() => {
-    if (caches.size !== storageGM.length) {
-        GM_setValue('nyaa.si', [...caches]);
-    }
-    nyaa_si.forEach(getTorrentInfo);
-    storage.flush();
-});
-
 // shortcut
 document.addEventListener('keydown', (event) => {
     let {key, ctrlKey, altKey, shiftKey} = event;
@@ -88,13 +75,13 @@ document.addEventListener('keydown', (event) => {
         case 'c':
             altKey && copyToClipboard(event);
             break;
-        case 's':
+        case 'j':
             altKey && downloadWithAria2(event);
             break;
         case 'f':
             altKey && filterTorrents(event);
             break;
-        case 'D':
+        case 'E':
             altKey && shiftKey && clearStorage(event);
             break;
     };
@@ -156,8 +143,8 @@ async function clearStorage(event) {
     }
 }
 
-// extract torrents' infos
-function getTorrentInfo(tr) {
+// get torrent info
+nyaa_si.forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
@@ -197,21 +184,21 @@ function getTorrentInfo(tr) {
             tr.classList.toggle('nyaa-checked');
         }
     });
-}
+});
 
 async function getTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
     let info = caches.get(url);
     if (!info) {
         if (working.has(url)) {
-            return {};
+            throw new SyntaxError(`${GM_info.script.name} is processing "url"`);
         }
         working.add(url);
         let site = new Set();
         let image = new Set();
         let container = document.createElement('div');
         container.innerHTML = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
-        let result = container.children[26].children[6].textContent;
+        let result = container.querySelector('#torrent-description').textContent;
         result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
         caches.set(url, info);
