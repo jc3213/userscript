@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.5
+// @version      1.0.6
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -19,10 +19,10 @@ let selected = new Set();
 let filtered = new Set();
 let working = new Set();
 let preview = new Map();
-let nyaa_si = [...document.querySelector('table > tbody').children];
-let indexes = [...document.querySelector('nav > ul').children];
 let keyword;
 let regexp;
+let nyaa_si = document.querySelectorAll('table > tbody > tr');
+let indexes = document.querySelectorAll('div.center > ul > li > a');
 
 // i18n
 let messages = {};
@@ -67,10 +67,10 @@ document.addEventListener('keydown', (event) => {
     let {key, ctrlKey, altKey, shiftKey} = event;
     switch (key) {
         case 'ArrowLeft':
-            ctrlKey && indexes[0].children[0].click();
+            ctrlKey && indexes[0].click();
             break;
         case 'ArrowRight':
-            ctrlKey && indexes[indexes.length - 1].children[0].click();
+            ctrlKey && indexes[indexes.length - 1].click();
             break;
         case 'c':
             altKey && copyToClipboard(event);
