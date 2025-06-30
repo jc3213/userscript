@@ -1,28 +1,33 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.0.6
+// @version      1.1.0
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
 // @exclude      *://*.nyaa.si/view/*
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_deleteValue
+// @grant        GM_deleteValues
+// @grant        GM_listValues
+// @grant        GM_addValueChangeListener
 // @grant        GM_openInTab
 // ==/UserScript==
 
 // variables
-let storage = GM_getValue('nyaa.si', []);
-let caches = new Map(storage);
-let torrents = new Set();
+let torrents = new Map();
 let selected = new Set();
 let filtered = new Set();
 let working = new Set();
 let preview = new Map();
 let keyword;
 let regexp;
-let nyaa_si = document.querySelectorAll('table > tbody > tr');
 let indexes = document.querySelectorAll('div.center > ul > li > a');
+
+// hotfix for 1.1.0
+let oldValue = GM_getValue('nyaa.si', []);
+oldValue.forEach(([key, value]) => GM_setValue(key, value));
 
 // i18n
 let messages = {};
@@ -95,23 +100,22 @@ function filterTorrents(event) {
     }
     switch (result) {
         case '':
-            nyaa_si.forEach((tr) => tr.classList.remove('nyaa-hidden'));
-            break;
         case keyword:
-            nyaa_si.forEach((tr) => tr.classList.toggle('nyaa-hidden'));
+            torrents.forEach((tr) => tr.classList.remove('nyaa-hidden'));
+            keyword = '';
             break;
         default:
             regexp = new RegExp(result.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
-            nyaa_si.forEach((tr) => {
+            torrents.forEach((tr) => {
                 if (!regexp.test(tr.info.name)) {
                     tr.classList.add('nyaa-hidden');
                 } else {
                     tr.classList.remove('nyaa-hidden');
                 }
             });
+            keyword = result;
             break;
     };
-    keyword = result;
 }
 
 async function copyToClipboard(event) {
@@ -136,23 +140,22 @@ function downloadWithAria2(event) {
 async function clearStorage(event) {
     event.preventDefault();
     if (confirm(i18n.clear)) {
-        caches.clear();
-        GM_setValue('nyaa.si', [...caches]);
+        GM_deleteValues(GM_listValues());
         torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
         alert(i18n.onclear);
     }
 }
 
 // get torrent info
-nyaa_si.forEach((tr) => {
+document.querySelectorAll('table > tbody > tr').forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
     let [magnet, torrent] = [...link.children].reverse().map((a) => a?.href);
     tr.info = {url, magnet, torrent, size: size.textContent, name: a.textContent};
-    if (caches.has(url)) {
+    torrents.set(url, tr);
+    if (GM_getValue(url)) {
         tr.classList.add('nyaa-cached');
-        torrents.add(tr);
     }
     a.addEventListener('contextmenu', async (event) => {
         event.preventDefault();
@@ -175,8 +178,7 @@ nyaa_si.forEach((tr) => {
             navigator.clipboard.writeText(copy)
         } else if (event.altKey) {
             event.preventDefault();
-            caches.delete(url);
-            GM_setValue('nyaa.si', [...caches]);
+            GM_deleteValue(url);
             tr.classList.remove('nyaa-cached');
         } else if (event.shiftKey) {
             event.preventDefault();
@@ -188,7 +190,7 @@ nyaa_si.forEach((tr) => {
 
 async function getTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
-    let info = caches.get(url);
+    let info = GM_getValue(url);
     if (!info) {
         if (working.has(url)) {
             throw new SyntaxError(`${GM_info.script.name} is processing "url"`);
@@ -201,10 +203,8 @@ async function getTorrentDetail(tr) {
         let result = container.querySelector('#torrent-description').textContent;
         result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
-        caches.set(url, info);
-        GM_setValue('nyaa.si', [...caches]);
+        GM_setValue(url, info);
         tr.classList.add('nyaa-cached');
-        torrents.add(tr);
         working.delete(url);
     }
     Object.assign(info, tr.info);
