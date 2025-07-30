@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.1.0
+// @version      1.1.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -23,11 +23,7 @@ let working = new Set();
 let preview = new Map();
 let keyword;
 let regexp;
-let indexes = document.querySelectorAll('div.center > ul > li > a');
-
-// hotfix for 1.1.0
-let oldValue = GM_getValue('nyaa.si', []);
-oldValue.forEach(([key, value]) => GM_setValue(key, value));
+let active = document.querySelector('.pagination > .active');
 
 // i18n
 let messages = {};
@@ -72,10 +68,10 @@ document.addEventListener('keydown', (event) => {
     let {key, ctrlKey, altKey, shiftKey} = event;
     switch (key) {
         case 'ArrowLeft':
-            ctrlKey && indexes[0].click();
+            ctrlKey && shortcutToGo(active.previousElementSibling);
             break;
         case 'ArrowRight':
-            ctrlKey && indexes[indexes.length - 1].click();
+            ctrlKey && shortcutToGo(active.nextElementSibling);
             break;
         case 'c':
             altKey && copyToClipboard(event);
@@ -91,6 +87,12 @@ document.addEventListener('keydown', (event) => {
             break;
     };
 });
+
+function shortcutToGo(el) {
+    if (el.classList !== 'disabled') {
+        el.children[0].click();
+    }
+}
 
 function filterTorrents(event) {
     event.preventDefault();
