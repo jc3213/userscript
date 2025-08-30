@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.1.1
+// @version      1.2.0
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -22,34 +22,34 @@ let filtered = new Set();
 let working = new Set();
 let preview = new Map();
 let keyword;
-let regexp;
 let active = document.querySelector('.pagination > .active');
 
 // i18n
-let messages = {};
-messages['en-US'] = {
-    name: 'Name:',
-    preview: 'Preview:',
-    torrent: 'Torrent:',
-    magnet: 'Magnet:',
-    prompt: 'Enter a filter keyword:',
-    oncopy: 'Confirm copying selected torrent data to clipboard?',
-    aria2c: 'Confirm sending JSON-RPC request to aria2c?',
-    onsend: 'JSON-RPC request has been sent.',
-    clear: 'Confirm clearing all cached torrent data?',
-    onclear: 'All cached data has been cleared.'
-};
-messages['zh-CN'] = {
-    name: '名字：',
-    preview: '预览：',
-    torrent: '种子：',
-    magnet: '磁链：',
-    prompt: '输入过滤关键词：',
-    oncopy: '确认复制所选种子数据到剪贴板？',
-    aria2c: '确认向 aria2c 发送 JSON-RPC 请求？',
-    onsend: 'JSON-RPC 请求已发送。',
-    clear: '确认清除所有已缓存的种子数据？',
-    onclear: '所有缓存数据已清除。'
+let messages = {
+    'en-US': {
+        name: 'Name:',
+        preview: 'Preview:',
+        torrent: 'Torrent:',
+        magnet: 'Magnet:',
+        prompt: 'Enter a filter keyword:',
+        oncopy: 'Confirm copying selected torrent data to clipboard?',
+        aria2c: 'Confirm sending JSON-RPC request to aria2c?',
+        onsend: 'JSON-RPC request has been sent.',
+        clear: 'Confirm clearing all cached torrent data?',
+        onclear: 'All cached data has been cleared.'
+    },
+    'zh-CN': {
+        name: '名字：',
+        preview: '预览：',
+        torrent: '种子：',
+        magnet: '磁链：',
+        prompt: '输入过滤关键词：',
+        oncopy: '确认复制所选种子数据到剪贴板？',
+        aria2c: '确认向 aria2c 发送 JSON-RPC 请求？',
+        onsend: 'JSON-RPC 请求已发送。',
+        clear: '确认清除所有已缓存的种子数据？',
+        onclear: '所有缓存数据已清除。'
+    }
 };
 let i18n = messages[navigator.language] ?? messages['en-US'];
 
@@ -64,64 +64,59 @@ css.textContent = `
 document.body.appendChild(css);
 
 // shortcut
-document.addEventListener('keydown', (event) => {
-    let {key, ctrlKey, altKey, shiftKey} = event;
-    switch (key) {
-        case 'ArrowLeft':
-            ctrlKey && shortcutToGo(active.previousElementSibling);
-            break;
-        case 'ArrowRight':
-            ctrlKey && shortcutToGo(active.nextElementSibling);
-            break;
-        case 'c':
-            altKey && copyToClipboard(event);
-            break;
-        case 'j':
-            altKey && downloadWithAria2(event);
-            break;
-        case 'f':
-            altKey && filterTorrents(event);
-            break;
-        case 'E':
-            altKey && shiftKey && clearStorage(event);
-            break;
-    };
-});
-
-function shortcutToGo(el) {
-    if (el.classList !== 'disabled') {
-        el.children[0].click();
+function ctrlHandler(event, button) {
+    if (event.ctrlKey && button.className !== 'disabled') {
+        event.preventDefault();
+        button.children[0].click();
     }
 }
 
-function filterTorrents(event) {
-    event.preventDefault();
+function altHandler(event, callback) {
+    if (event.altKey) {
+        event.preventDefault();
+        callback();
+    }
+}
+
+let hotkeyMap = {
+    'ArrowLeft': (event) => ctrlHandler(event, active.previousElementSibling),
+    'ArrowRight': (event) => ctrlHandler(event, active.previousElementSibling),
+    'c': (event) => altHandler(event, copyToClipboard),
+    'j': (event) => altHandler(event, downloadWithAria2),
+    'f': (event) => altHandler(event, filterTorrents),
+    'E': (event) => altHandler(event, clearStorage),
+};
+
+let filterMap = {
+    '': (result) => {
+        torrents.forEach((tr) => tr.classList.remove('nyaa-hidden'));
+        keyword = '';
+        delete filterMap[result];
+    },
+    _default_: (result) => {
+        let regexp = new RegExp(result.replace(/[?.\(\)\[\]]/g, '\\$&'), 'i');
+        torrents.forEach((tr) => {
+            if (regexp.test(tr.info.name)) {
+                tr.classList.remove('nyaa-hidden');
+            } else {
+                tr.classList.add('nyaa-hidden');
+            }
+        });
+        filterMap[result] = filterMap[''];
+        keyword = result;
+    }
+}
+
+function filterTorrents() {
     let result = prompt(i18n.prompt, keyword);
     if (result === null) {
         return;
     }
-    switch (result) {
-        case '':
-        case keyword:
-            torrents.forEach((tr) => tr.classList.remove('nyaa-hidden'));
-            keyword = '';
-            break;
-        default:
-            regexp = new RegExp(result.replace(/[\|\/\\\+,:;\s]+/g, '|'), 'i');
-            torrents.forEach((tr) => {
-                if (!regexp.test(tr.info.name)) {
-                    tr.classList.add('nyaa-hidden');
-                } else {
-                    tr.classList.remove('nyaa-hidden');
-                }
-            });
-            keyword = result;
-            break;
-    };
+    let filter = filterMap[result] ?? filterMap._default_;
+    filter(result);
 }
 
-async function copyToClipboard(event) {
-    event.preventDefault();
+async function copyToClipboard() {
     if (confirm(i18n.oncopy)) {
         let info = await Promise.all([...selected].map(async (tr) => await getClipboardInfo(tr)));
         let copy = info.join('\n\n');
@@ -130,17 +125,15 @@ async function copyToClipboard(event) {
     }
 }
 
-function downloadWithAria2(event) {
-    event.preventDefault();
+function downloadWithAria2() {
     if (confirm(i18n.aria2c)) {
         let params = [...selected].map((tr) => ({ url: tr.info.magnet }));
-        postMessage({ aria2c: 'aria2c_jsonrpc_call', params });
+        postMessage({ aria2c: 'aria2c_download', params });
         alert(i18n.onsend);
     }
 }
 
-async function clearStorage(event) {
-    event.preventDefault();
+async function clearStorage() {
     if (confirm(i18n.clear)) {
         GM_deleteValues(GM_listValues());
         torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
@@ -148,12 +141,18 @@ async function clearStorage(event) {
     }
 }
 
+document.addEventListener('keydown', (event) => {
+    let hotkey = hotkeyMap[event.key];
+    hotkey?.(event);
+});
+
 // get torrent info
 document.querySelectorAll('table > tbody > tr').forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
     let [magnet, torrent] = [...link.children].reverse().map((a) => a?.href);
+    magnet = magnet.slice(0, magnet.indexOf('&'));
     tr.info = {url, magnet, torrent, size: size.textContent, name: a.textContent};
     torrents.set(url, tr);
     if (GM_getValue(url)) {
@@ -161,9 +160,12 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
     }
     a.addEventListener('contextmenu', async (event) => {
         event.preventDefault();
-        let {altKey, layerX, layerY} = event;
-        if (altKey) {
-            postMessage({ aria2c: 'aria2c_jsonrpc_call', params: [ {url: magnet } ] });
+        let { ctrlKey, altKey, layerX, layerY } = event;
+        if (ctrlKey) {
+            let copy = await getClipboardInfo(tr);
+            navigator.clipboard.writeText(copy)
+        } else if (altKey) {
+            postMessage({ aria2c: 'aria2c_download', params: [ {url: magnet } ] });
         } else {
             getTorrentPreview(tr, layerY, layerX);
         }
@@ -174,15 +176,12 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
         }
     });
     tr.addEventListener('click', async (event) => {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            let copy = await getClipboardInfo(tr);
-            navigator.clipboard.writeText(copy)
-        } else if (event.altKey) {
+        let { shiftKey, ctrlKey } = event;
+        if (ctrlKey) {
             event.preventDefault();
             GM_deleteValue(url);
             tr.classList.remove('nyaa-cached');
-        } else if (event.shiftKey) {
+        } else if (shiftKey) {
             event.preventDefault();
             selected.has(tr) ? selected.delete(tr) : selected.add(tr);
             tr.classList.toggle('nyaa-checked');
@@ -225,8 +224,8 @@ ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magne
 
 // show/open preview
 async function getTorrentPreview(tr, top, left) {
-    let {image = [], site = []} = await getTorrentDetail(tr);
-    if (image.length !== 0) {
+    let { image, site } = await getTorrentDetail(tr);
+    if (image?.length > 0) {
         let src = image[0];
         let img = preview.get(src);
         if (!img) {
@@ -238,7 +237,7 @@ async function getTorrentPreview(tr, top, left) {
         }
         img.style.cssText = `top: ${top}px; left: ${left}px;`;
         document.body.append(img);
-    } else if (site.length !== 0) {
+    } else if (site?.length > 0) {
         GM_openInTab(site[0]);
     }
 }
