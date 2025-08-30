@@ -14,9 +14,12 @@
 
 'use strict';
 let storage = new Map(GM_getValue('storage', []));
+let caches = new Map();
 let showTable;
 let showRooms = new Map();
 let firstRun = true;
+let listItem = document.createElement('div');
+listItem.innerHTML = '<div></div><div></div>';
 let bilicss = document.createElement('style');
 bilicss.textContent = `
 .bililive-button {background-color: #00ADEB; border-radius: 5px; color: #ffffff; cursor: pointer; font-size: 16px; padding: 3px 10px; user-select: none; text-align: center;}
@@ -78,7 +81,7 @@ async function biliLiveShowCover(node) {
     let liver = user.children[0].textContent.trim();
 
     let menu = document.createElement('div');
-    menu.className = 'bililive-balloon';
+    menu.className = 'bililive-balloon bililive-hidden';
     menu.innerHTML = '<div id="bililive-block" class="bililive-button">屏蔽直播间</div><div id="bililive-image" class="bililive-button">查看封面图</div></div';
     menu.addEventListener('click', (event) => {
         let menu = menuEvent[event.target.id];
@@ -92,9 +95,9 @@ async function biliLiveShowCover(node) {
 
     center.after(menu);
     node.cover = true;
-    node.style.display = storage.has(id) ? 'none' : '';
-    node.addEventListener('mouseover', (event) => { menu.style.display = 'flex'; });
-    node.addEventListener('mouseout', (event) => { menu.style.display = ''; });
+    storage.has(id) ? node.classList.add('bililive-hidden') : node.classList.remove('bililive-hidden');
+    node.addEventListener('mouseover', () => menu.classList.remove('bililive-hidden'));
+    node.addEventListener('mouseout', () => menu.classList.add('bililive-hidden'));
 }
 
 async function biliLiveShowRoom(menu, id, xid) {
@@ -136,21 +139,16 @@ async function biliLiveShowFrame(id) {
     biliLiveShowRoom(menu, id, xid);
 }
 
-function addToFilterList(id, liver) {
-    let cell = document.createElement('div');
-    cell.innerHTML = '<div></div><div></div>'
-
+function makeFilterItem(id, liver) {
+    let cell = listItem.cloneNode(true);
     let [room, user] = cell.children;
-    user.textContent = liver
-    room.textContent = id;
-    room.addEventListener('click', (event) => {
-        if (confirm('确定要解除对【 ' + liver + ' 】的屏蔽吗？')) {
-            cell.remove();
-            storage.delete(id);
-            SaveMapAsArray();
-            unblockLiveRoom(id);
-        }
-    });
+    user.textContent = room.className = liver;
+    room.textContent = room.id = id;
+    return cell;
+}
+
+function addToFilterList(id, liver) {
+    let cell = caches.get(id) ?? makeFilterItem(id, liver);
     showTable.appendChild(cell);
 }
 
@@ -161,7 +159,7 @@ function blockLiveRoom(id, liver) {
     storage.set(id, liver);
     let room = showRooms.get(id);
     if (room) {
-        room.style.display = 'none';
+        room.classList.add('bililive-hidden');
     }
     if (!firstRun) {
         addToFilterList(id, liver);
@@ -171,7 +169,7 @@ function blockLiveRoom(id, liver) {
 function unblockLiveRoom(id) {
     let room = showRooms.get(id);
     if (room) {
-        room.style.display = '';
+        room.classList.remove('bililive-hidden');
     }
 }
 
@@ -181,7 +179,7 @@ let manageEvent = {
             storage.forEach((liver, id) => addToFilterList(id, liver));
             firstRun = false;
         }
-        popup.classList.toggle('bililive-popup');
+        popup.classList.toggle('bililive-hidden');
     },
     'bililive-block': ({ entry }) => {
         if (confirm('确定要屏蔽列表中的直播间吗？')) {
@@ -218,7 +216,7 @@ function biliLiveManagerDeployed(area) {
     pane.className = 'bililive-container';
     pane.innerHTML = `
 <div id="bililive-manage" class="bililive-button">管理列表</div>
-<div class="bililive-manager">
+<div class="bililive-manager bililive-hidden">
     <div id="bililive-block" class="bililive-button">批量屏蔽</div>
     <div class="bililive-button"><label for="bililive-import">导入列表</label></div>
     <div id="bililive-export" class="bililive-button">导出列表</div>
@@ -249,26 +247,36 @@ function biliLiveManagerDeployed(area) {
         manage?.({ popup, entry, save, tbody });
     });
 
+    tbody.addEventListener('click', (event) => {
+        let { id, className, parentNode } = event.target;
+        if (id && confirm('确定要解除对【 ' + className + ' 】的屏蔽吗？') ) {
+            parentNode.remove();
+            storage.delete(id);
+            SaveMapAsArray();
+            unblockLiveRoom(id);
+        }
+    });
+
     showTable = tbody;
 
     document.getElementsByClassName('tabs')[0].appendChild(pane);
 
-    bilicss.textContent += `.bililive-button {flex: 1;}
-.bililive-balloon {display: none; gap: 5px; margin: 8px 12px 0px 6px;}
+    bilicss.textContent += `#main { min-height: 1200px; }
+.bililive-button { flex: 1; }
+.bililive-balloon { display: flex; gap: 5px; margin: 8px 12px 0px 6px; }
 .bililive-container {position: relative;}
-.bililive-container > input, .bililive-container > a {display: none;}
-.bililive-manager {background-color: #ffffff; border: 1px solid #000000; display: none; font-size: 16px; padding: 5px; margin-top: 3px; position: absolute; width: 520px; z-index: 3213;}
-.bililive-manager > textarea {font-size: 16px; margin: 3px 0px; padding: 5px; resize: none;}
-.bililive-manager > textarea, .bililive-manager > .bililive-table {flex-basis: 100%;}
-.bililive-popup {display: flex; gap: 3px; flex-wrap: wrap;}
-.bililive-thead, .bililive-tbody > div {display: flex;}
-.bililive-thead > *, .bililive-tbody > div > * {border: 1px solid #ffffff; flex: 1; padding: 5px; text-align: center; user-select: text !important;}
-.bililive-thead > * {background-color: #000000; color: #ffffff;}
-.bililive-tbody {height: 480px; scroll-y: auto; border: 1px solid #000000;}
-.bililive-tbody > * > :first-child {background-color: #FF6699; color: #ffffff; cursor: pointer;}
-.bililive-tbody > * > :first-child:active {contrast(45%);}
-.bililive-tbody > :nth-child(2n) > :last-child {background-color: #E2E3E4;}
-.bililive-tbody > :nth-child(2n + 1) > :last-child {background-color: #F1F2F3;}
+.bililive-hidden, .bililive-container > input, .bililive-container > a { display: none !important; }
+.bililive-manager { display: flex; gap: 3px; flex-wrap: wrap; background-color: #ffffff; border: 1px solid #000000; font-size: 16px; padding: 5px; margin-top: 3px; position: absolute; width: 520px; z-index: 9999; }
+.bililive-manager > textarea, .bililive-manager > .bililive-table { flex-basis: 100%; }
+.bililive-manager > textarea { font-size: 16px; margin: 3px 0px; padding: 5px; resize: none; }
+.bililive-thead, .bililive-tbody > div { display: flex; }
+.bililive-thead > *, .bililive-tbody > div > * { border: 1px solid #ffffff; flex: 1; padding: 5px; text-align: center; user-select: text !important; }
+.bililive-thead > * { background-color: #000000; color: #ffffff; }
+.bililive-tbody { height: 480px; overflow-y: auto; border: 1px solid #000000; }
+.bililive-tbody > * > :first-child { background-color: #FF6699; color: #ffffff; cursor: pointer; }
+.bililive-tbody > * > :first-child:active  { contrast(45%); }
+.bililive-tbody > :nth-child(2n) > :last-child { background-color: #E2E3E4; }
+.bililive-tbody > :nth-child(2n + 1) > :last-child { background-color: #F1F2F3; }
 `;
     area.append(bilicss);
 }
