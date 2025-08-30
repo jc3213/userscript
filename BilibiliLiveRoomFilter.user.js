@@ -107,11 +107,10 @@ async function biliLiveShowRoom(menu, id, xid) {
     let area = lower.children[0].children[1].children[0].href;
 
     if (storage.has(id)) {
-        if (confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
-            return;
-        } else {
+        if (!confirm('【 ' + liver + ' 】的直播间已被屏蔽，是否继续观看？')) {
             open(area, '_self');
         }
+        return;
     }
 
     let block = document.createElement('div');
