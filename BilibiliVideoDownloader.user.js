@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9.0
+// @version         1.9.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -42,22 +42,23 @@ let format = {
 
 let bvHandler = {
     'video': { key: 'data', offset: 'left: -300px;', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: 'li.bpx-state-multi-active-item', fetch: () => {
-        let { title, pic, aid, cid } = document.defaultView.__INITIAL_STATE__.videoData;
+        let _cid_ = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid');
+        let { title, aid, cid, pic } = document.defaultView.__INITIAL_STATE__.videoData;
         biliVideoTitle(title);
         biliVideoThumb(pic);
-        biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + (_cid_ ?? cid));
     } },
     'v': { key: 'data', offset: 'left: -300px;', menu: 'div.select-type > ul.type', widebtn: 'div.bilibili-player-video-btn-widescreen', widestat: 'closed', active: 'div.select-type > ul.type > li.active', fetch: () => {
         let { aid, cid } = document.defaultView;
         biliVideoTitle(document.querySelector('div.match-info-title').textContent);
-        biliVideoExtractor(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
     } },
     'default': { key: 'result', offset: 'left: -400px; top: -6px;', menu: 'div.toolbar > div.toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: '[class*="numberListItem_select"]', fetch: () => {
         let { name, thumbnailUrl } = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
         let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
         biliVideoTitle(name);
         biliVideoThumb(thumbnailUrl[0]);
-        biliVideoExtractor(id, `pgc/player/web/playurl?ep_id=${id}`);
+        biliVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
     } }
 };
 let bvCode = bvWatch.match(/^\/(v(?:ideo)?)\//)?.[1];
@@ -116,32 +117,38 @@ function biliVideoThumb(url) {
     let thumb = menuItem.cloneNode(true);
     thumb.classList.add('bili_video_thumb');
     thumb.textContent = '视频封面';
-    thumb.url = url.replace(/^(https?:)?\/\//, 'https://');
+    thumb.url = url.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
     thumb.file = bvTitle + url.slice(url.lastIndexOf('.'));
     analysePane.appendChild(thumb);
 }
 
-async function biliVideoExtractor(vid, playurl) {
+function biliVideoItems(json) {
+    let { id, codecs, baseUrl } = json;
+    let codec = codecs.slice(0, codecs.indexOf('.'));
+    let { text, ext } = format[id];
+    let { title, alt, type } = format[codec];
+    let menu = menuItem.cloneNode(true);
+    menu.classList.add('bili_video_' + type, 'bili_video_' + alt);
+    menu.textContent = text;
+    menu.title = title;
+    menu.url = baseUrl;
+    menu.file = bvTitle + ext;
+    analysePane.appendChild(menu);
+}
+
+function biliVideoExtractor(json) {
+    json?.video?.forEach(biliVideoItems);
+    json?.audio?.forEach(biliVideoItems);
+}
+
+async function biliVideoGetter(vid, playurl) {
     if (history[vid]) {
         analysePane.innerHTML = '';
         analysePane.append(...history[vid]);
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        let {video, audio} = json[bvMenu.key]?.dash ?? {video: [], audio: []};
-        [...video, ...audio].forEach((media) => {
-            let { id, codecs, baseUrl } = media;
-            let codec = codecs.slice(0, codecs.indexOf('.'));
-            let { text, ext } = format[id];
-            let { title, alt, type } = format[codec];
-            let menu = menuItem.cloneNode(true);
-            menu.classList.add('bili_video_' + type, 'bili_video_' + alt);
-            menu.textContent = text;
-            menu.title = title;
-            menu.url = baseUrl;
-            menu.file = bvTitle + ext;
-            analysePane.appendChild(menu);
-        });
+        biliVideoExtractor(json[bvMenu.key]?.dash);
         history[vid] = analysePane.children;
     }
     analysePane.className = analysePane.className.replace(/\s?bili_video_l\w+/, '') + ' ' + codecHandlers[videocodec];
