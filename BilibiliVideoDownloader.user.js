@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9.1
+// @version         1.9.2
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 let { autowide = '0', videocodec = '0' } = localStorage;
-let bvWatch = location.pathname;
+let bvWatch;
 let bvTitle;
 let bvOpen = true;
 let history = {};
@@ -41,7 +41,7 @@ let format = {
 };
 
 let bvHandler = {
-    'video': { key: 'data', offset: 'left: -300px;', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: 'li.bpx-state-multi-active-item', fetch: () => {
+    'video': { key: 'data', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: 'li.bpx-state-multi-active-item', fetch: () => {
         let _cid_ = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid');
         let { title, aid, cid, pic } = document.defaultView.__INITIAL_STATE__.videoData;
         biliVideoTitle(title);
@@ -61,7 +61,7 @@ let bvHandler = {
         biliVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
     } }
 };
-let bvCode = bvWatch.match(/^\/(v(?:ideo)?)\//)?.[1];
+let bvCode = location.pathname.match(/^\/(v(?:ideo)?)\//)?.[1];
 let bvMenu = bvHandler[bvCode] ?? bvHandler.default;
 
 window.addEventListener('play', async function biliVideoToolbar() {
@@ -70,7 +70,7 @@ window.addEventListener('play', async function biliVideoToolbar() {
     if (!wide.classList.contains(bvMenu.widestat) && localStorage.autowide === '1' ) {
         wide.click();
     }
-    menu.after(mainPane, cssPane);
+    menu.append(mainPane, cssPane);
     window.removeEventListener('play', biliVideoToolbar);
 }, true);
 
@@ -203,7 +203,7 @@ optionCodec.value = videocodec;
 
 let cssPane = document.createElement('style');
 cssPane.textContent = `
-#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvMenu.offset}}
+#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvMenu.offset ?? ''}}
 #bili_video_menu {display: flex; gap: 5px;}
 .bili_video_button {border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px;}
 .bili_video_button:hover {filter: contrast(80%);}
@@ -220,8 +220,8 @@ cssPane.textContent = `
 `;
 
 new MutationObserver(mutations => {
-    if (bvWatch !== location.pathname) {
-        bvWatch = location.pathname;
+    if (bvWatch !== document.title) {
+        bvWatch = document.title;
         bvOpen = true;
         optionsPane.classList.add('bili_video_hidden');
         analysePane.classList.add('bili_video_hidden');
