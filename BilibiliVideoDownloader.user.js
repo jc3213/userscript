@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.9.2
+// @version         1.10.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -41,23 +41,26 @@ let format = {
 };
 
 let bvHandler = {
-    'video': { key: 'data', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: 'li.bpx-state-multi-active-item', fetch: () => {
-        let _cid_ = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid');
-        let { title, aid, cid, pic } = document.defaultView.__INITIAL_STATE__.videoData;
+    'video': { key: 'data', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', fetch: () => {
+        let { videoData } = document.defaultView.__INITIAL_STATE__;
+        let { title, aid, pic } = videoData;
+        let cid = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid') ?? videoData.cid;
         biliVideoTitle(title);
         biliVideoThumb(pic);
-        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + (_cid_ ?? cid));
+        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
     } },
-    'v': { key: 'data', offset: 'left: -300px;', menu: 'div.select-type > ul.type', widebtn: 'div.bilibili-player-video-btn-widescreen', widestat: 'closed', active: 'div.select-type > ul.type > li.active', fetch: () => {
+    'v': { key: 'data', offset: 'left: -300px;', menu: 'div.select-type > ul.type', widebtn: 'div.bilibili-player-video-btn-widescreen', widestat: 'closed', fetch: () => {
         let { aid, cid } = document.defaultView;
         biliVideoTitle(document.querySelector('div.match-info-title').textContent);
         biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
     } },
-    'default': { key: 'result', offset: 'left: -400px; top: -6px;', menu: 'div.toolbar > div.toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', active: '[class*="numberListItem_select"]', fetch: () => {
-        let { name, thumbnailUrl } = JSON.parse(document.head.querySelector('script[type]').textContent).itemListElement[0];
-        let id = document.defaultView.__playinfo__.result.play_view_business_info.episode_info.ep_id;
+    'default': { key: 'result', offset: 'display: inline-block; top: -12px;', menu: 'div.toolbar > div.toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', fetch: () => {
+        let active = document.querySelector('li.bpx-player-ctrl-eplist-menu-item.bpx-state-active');
+        let id = active.getAttribute('data-episodeid');
+        let name = active.textContent;
+        let thumb = document.querySelector('img.image_ogv_weslie_common_image__Rg7Xm').src;
         biliVideoTitle(name);
-        biliVideoThumb(thumbnailUrl[0]);
+        biliVideoThumb(thumb);
         biliVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
     } }
 };
@@ -108,8 +111,6 @@ let codecHandlers = {
 }
 
 function biliVideoTitle(name) {
-    let multi = document.querySelector(bvMenu.active)?.textContent?.trim();
-    name = multi ? `${name}-${multi}` : name;
     bvTitle = name.trim().replace(/[\/\\:*?"<>|\s\r\n]/g, '_');
 }
 
@@ -118,7 +119,7 @@ function biliVideoThumb(url) {
     thumb.classList.add('bili_video_thumb');
     thumb.textContent = '视频封面';
     thumb.url = url.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
-    thumb.file = bvTitle + url.slice(url.lastIndexOf('.'));
+    thumb.file = bvTitle + thumb.url.slice(url.lastIndexOf('.'));
     analysePane.appendChild(thumb);
 }
 
@@ -188,11 +189,11 @@ analysePane.addEventListener('click', (event) => {
     let {altKey, target: {url, file}} = event;
     if (url && file) {
         if (altKey) {
-            var urls = [{url, options: {out: file, referer: location.href} }];
-            window.postMessage({aria2c: 'aria2c_download', params: urls});
+            var urls = [{ url, options: { out: file, referer: location.href } }];
+            window.postMessage({ aria2c: 'aria2c_download', params: urls });
         }
         else {
-            GM_download({url, responseType: 'blob', headers: {referer: location.href}, name: file});
+            GM_download({ url, responseType: 'blob', headers: { referer: location.href }, name: file });
         }
     }
 });
@@ -219,9 +220,9 @@ cssPane.textContent = `
 .bili_video_l264 > .bili_video_video:not(.bili_video_h264), .bili_video_l265 > .bili_video_video:not(.bili_video_h265), .bili_video_lav1 > .bili_video_video:not(.bili_video_av1) {display: none;}
 `;
 
-new MutationObserver(mutations => {
-    if (bvWatch !== document.title) {
-        bvWatch = document.title;
+new MutationObserver(() => {
+    if (bvWatch !== location.href) {
+        bvWatch = location.href;
         bvOpen = true;
         optionsPane.classList.add('bili_video_hidden');
         analysePane.classList.add('bili_video_hidden');
