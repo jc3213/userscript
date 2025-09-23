@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.10.0
+// @version         1.11.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -15,6 +15,7 @@
 let { autowide = '0', videocodec = '0' } = localStorage;
 let bvWatch;
 let bvTitle;
+let bvCodec;
 let bvOpen = true;
 let history = {};
 let archive;
@@ -45,49 +46,49 @@ let bvHandler = {
         let { videoData } = document.defaultView.__INITIAL_STATE__;
         let { title, aid, pic } = videoData;
         let cid = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid') ?? videoData.cid;
-        biliVideoTitle(title);
-        biliVideoThumb(pic);
-        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        bVideoTitle(title);
+        bVideoThumb(pic);
+        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
     } },
     'v': { key: 'data', offset: 'left: -300px;', menu: 'div.select-type > ul.type', widebtn: 'div.bilibili-player-video-btn-widescreen', widestat: 'closed', fetch: () => {
         let { aid, cid } = document.defaultView;
-        biliVideoTitle(document.querySelector('div.match-info-title').textContent);
-        biliVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+        bVideoTitle(document.querySelector('div.match-info-title').textContent);
+        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
     } },
     'default': { key: 'result', offset: 'display: inline-block; top: -12px;', menu: 'div.toolbar > div.toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', fetch: () => {
         let active = document.querySelector('li.bpx-player-ctrl-eplist-menu-item.bpx-state-active');
         let id = active.getAttribute('data-episodeid');
         let name = active.textContent;
         let thumb = document.querySelector('img.image_ogv_weslie_common_image__Rg7Xm').src;
-        biliVideoTitle(name);
-        biliVideoThumb(thumb);
-        biliVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
+        bVideoTitle(name);
+        bVideoThumb(thumb);
+        bVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
     } }
 };
 let bvCode = location.pathname.match(/^\/(v(?:ideo)?)\//)?.[1];
 let bvMenu = bvHandler[bvCode] ?? bvHandler.default;
 
-window.addEventListener('play', async function biliVideoToolbar() {
+window.addEventListener('play', async function bVideoToolbar() {
     let wide = await PromiseSelector(bvMenu.widebtn);
     let menu = await PromiseSelector(bvMenu.menu);
     if (!wide.classList.contains(bvMenu.widestat) && localStorage.autowide === '1' ) {
         wide.click();
     }
     menu.append(mainPane, cssPane);
-    window.removeEventListener('play', biliVideoToolbar);
+    window.removeEventListener('play', bVideoToolbar);
 }, true);
 
 let menuItem = document.createElement('div');
-menuItem.className = 'bili_video_button';
+menuItem.className = 'bilivideo_button';
 
 let mainPane = document.createElement('div');
-mainPane.id = 'bili_video_main';
+mainPane.id = 'bilivideo_main';
 mainPane.innerHTML = `
-<div id="bili_video_menu">
-    <div id="bili_video_optbtn" class="bili_video_button">设置</div>
-    <div id="bili_video_anabtn" class="bili_video_button">解析</div>
+<div id="bilivideo_menu">
+    <div id="bilivideo_optbtn" class="bilivideo_button">设置</div>
+    <div id="bilivideo_anabtn" class="bilivideo_button">解析</div>
 </div>
-<div id="bili_video_options" class="bili_video_pane bili_video_hidden">
+<div id="bilivideo_options" class="bilivideo_pane bilivideo_hidden">
     <h4>自动宽屏</h4>
     <select name="autowide">
         <option value="0">关闭</option>
@@ -95,41 +96,36 @@ mainPane.innerHTML = `
     </select>
     <h4>编码格式</h4>
     <select name="videocodec">
-        <option value="0">H.264</option>
-        <option value="1">HEVC</option>
-        <option value="2">AV-1</option>
+        <option value="bilivideo_vc264">H.264</option>
+        <option value="bilivideo_vc265">HEVC</option>
+        <option value="bilivideo_vcav1">AV-1</option>
     </select>
 </div>
-<div id="bili_video_analyse" class="bili_video_pane bili_video_result bili_video_hidden"></div>
+<div id="bilivideo_analyse" class="bilivideo_pane bilivideo_result bilivideo_hidden"></div>
 `;
 
 let [menuPane, optionsPane, analysePane] = mainPane.children;
-let codecHandlers = {
-    '0': 'bili_video_l264',
-    '1': 'bili_video_l265',
-    '2': 'bili_video_lav1'
-}
 
-function biliVideoTitle(name) {
+function bVideoTitle(name) {
     bvTitle = name.trim().replace(/[\/\\:*?"<>|\s\r\n]/g, '_');
 }
 
-function biliVideoThumb(url) {
+function bVideoThumb(url) {
     let thumb = menuItem.cloneNode(true);
-    thumb.classList.add('bili_video_thumb');
+    thumb.classList.add('bilivideo_thumb');
     thumb.textContent = '视频封面';
     thumb.url = url.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
     thumb.file = bvTitle + thumb.url.slice(url.lastIndexOf('.'));
     analysePane.appendChild(thumb);
 }
 
-function biliVideoItems(json) {
+function bVideoItems(json) {
     let { id, codecs, baseUrl } = json;
     let codec = codecs.slice(0, codecs.indexOf('.'));
     let { text, ext } = format[id];
     let { title, alt, type } = format[codec];
     let menu = menuItem.cloneNode(true);
-    menu.classList.add('bili_video_' + type, 'bili_video_' + alt);
+    menu.classList.add('bilivideo_' + type, 'bilivideo_' + alt);
     menu.textContent = text;
     menu.title = title;
     menu.url = baseUrl;
@@ -137,32 +133,33 @@ function biliVideoItems(json) {
     analysePane.appendChild(menu);
 }
 
-function biliVideoExtractor(json) {
-    json?.video?.forEach(biliVideoItems);
-    json?.audio?.forEach(biliVideoItems);
+function bVideoExtractor(json) {
+    json?.video?.forEach(bVideoItems);
+    json?.audio?.forEach(bVideoItems);
 }
 
-async function biliVideoGetter(vid, playurl) {
-    if (history[vid]) {
+async function bVideoGetter(vid, playurl) {
+    if (bvOpen && history[vid]) {
         analysePane.innerHTML = '';
         analysePane.append(...history[vid]);
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        biliVideoExtractor(json[bvMenu.key]?.dash);
-        history[vid] = analysePane.children;
+        bVideoExtractor(json[bvMenu.key]?.dash);
+        history[vid] = [...analysePane.children];
     }
-    analysePane.className = analysePane.className.replace(/\s?bili_video_l\w+/, '') + ' ' + codecHandlers[videocodec];
 }
 
-function biliVideoOptions() {
-    optionsPane.classList.toggle('bili_video_hidden');
-    analysePane.classList.add('bili_video_hidden');
+function bVideoOptions() {
+    optionsPane.classList.toggle('bilivideo_hidden');
+    analysePane.classList.add('bilivideo_hidden');
 }
 
-function biliVideoAnalyze() {
-    optionsPane.classList.add('bili_video_hidden');
-    analysePane.classList.toggle('bili_video_hidden');
+function bVideoAnalyze() {
+    bvCodec = optionCodec.value;
+    optionsPane.classList.add('bilivideo_hidden');
+    analysePane.classList.add(bvCodec);
+    analysePane.classList.toggle('bilivideo_hidden');
     if (bvOpen || videocodec !== localStorage.videocodec) {
         bvOpen = false;
         videocodec = localStorage.videocodec;
@@ -171,9 +168,9 @@ function biliVideoAnalyze() {
     }
 }
 
-let menuEvent = {
-    'bili_video_optbtn': biliVideoOptions,
-    'bili_video_anabtn': biliVideoAnalyze
+const menuEvent = {
+    'bilivideo_optbtn': bVideoOptions,
+    'bilivideo_anabtn': bVideoAnalyze
 };
 
 menuPane.addEventListener('click', (event) => {
@@ -181,8 +178,18 @@ menuPane.addEventListener('click', (event) => {
     menu?.();
 });
 
+const optEvent = {
+    'autowide': () => document.querySelector(bvMenu.widebtn).click(),
+    'videocodec': (value) => {
+        analysePane.classList.replace(bvCodec, value);
+        bvCodec = value;
+    }
+};
+
 optionsPane.addEventListener('change', (event) => {
-    localStorage[event.target.name] = event.target.value;
+    let { name, value } = event.target;
+    localStorage[name] = value;
+    optEvent[name]?.(value);
 });
 
 analysePane.addEventListener('click', (event) => {
@@ -204,28 +211,28 @@ optionCodec.value = videocodec;
 
 let cssPane = document.createElement('style');
 cssPane.textContent = `
-#bili_video_main {font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvMenu.offset ?? ''}}
-#bili_video_menu {display: flex; gap: 5px;}
-.bili_video_button {border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px;}
-.bili_video_button:hover {filter: contrast(80%);}
-.bili_video_button:active {filter: contrast(60%); border-style: inset;}
-.bili_video_pane {position: absolute; top: 0px; left: 100%; background-color: #fff; border: solid 1px #000; padding: 5px;}
-.bili_video_pane > h4, .bili_video_pane > select {width: 110px !important; padding: 5px; text-align: center;}
-.bili_video_pane > h4 {color: #c26; font-weight: bold; margin: auto;}
-.bili_video_result {display: grid; grid-template-columns: 1fr 1fr 1fr; grid-auto-flow: dense; gap: 5px;}
-.bili_video_thumb {grid-column: 1;}
-.bili_video_video {grid-column: 2;}
-.bili_video_audio {grid-column: 3;}
-.bili_video_hidden {display: none;}
-.bili_video_l264 > .bili_video_video:not(.bili_video_h264), .bili_video_l265 > .bili_video_video:not(.bili_video_h265), .bili_video_lav1 > .bili_video_video:not(.bili_video_av1) {display: none;}
+#bilivideo_main { font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvMenu.offset ?? ''} }
+#bilivideo_menu { display: flex; gap: 5px;}
+.bilivideo_button { border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px; }
+.bilivideo_button:hover { filter: contrast(80%); }
+.bilivideo_button:active { filter: contrast(60%); border-style: inset; }
+.bilivideo_pane { position: absolute; top: 0px; left: 100%; background-color: #fff; border: solid 1px #000; padding: 5px; }
+.bilivideo_pane > h4, .bilivideo_pane > select { width: 110px !important; padding: 5px; text-align: center; }
+.bilivideo_pane > h4 { color: #c26; font-weight: bold; margin: auto; }
+.bilivideo_result { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-auto-flow: dense; gap: 5px; }
+.bilivideo_thumb { grid-column: 1 ;}
+.bilivideo_video { grid-column: 2; }
+.bilivideo_audio { grid-column: 3; }
+.bilivideo_hidden { display: none; }
+.bilivideo_vc264 > .bilivideo_video:not(.bilivideo_h264), .bilivideo_vc265 > .bilivideo_video:not(.bilivideo_h265), .bilivideo_vcav1 > .bilivideo_video:not(.bilivideo_av1) { display: none ;}
 `;
 
 new MutationObserver(() => {
     if (bvWatch !== location.href) {
         bvWatch = location.href;
         bvOpen = true;
-        optionsPane.classList.add('bili_video_hidden');
-        analysePane.classList.add('bili_video_hidden');
+        optionsPane.classList.add('bilivideo_hidden');
+        analysePane.classList.add('bilivideo_hidden');
     }
 }).observe(document.head, {childList: true});
 
