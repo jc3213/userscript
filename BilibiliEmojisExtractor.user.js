@@ -2,7 +2,7 @@
 // @name            Bilibili Emojis Extractor
 // @name:zh         哔哩哔哩表情提取
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.1
+// @version         0.2
 // @description     Extract Emojis in users' comments
 // @description:zh  提取评论区的表情包
 // @author          jc3213
@@ -20,7 +20,7 @@ let callback = (aria2c, params) => {
         let timer = setTimeout(() => {
             callMap.delete(id);
             reject( new Error('"Download With Aria2" is either not installed, disabled, or lower than v4.17.0.3548.') );
-        }, 3000);
+        }, 1000);
         callMap.set(id, (result) => {
             clearTimeout(timer);
             callMap.delete(id);
@@ -82,14 +82,14 @@ function extractEmoji() {
         alert(`找到${size}个表情……`);
     }
 
-        if (self.aria2Bridge !== undefined) {
-            let session = [...result].map(([url, out]) => ({ url, options: { out } }));
-            aria2Bridge.download(session);
-        } else {
-            [...result].forEach(([url, name], index) => {
-                setTimeout(() => GM_download(url, name), index * 200);
-            });
-        }
+    aria2Bridge.status().then(() => {
+        let session = [...result].map(([url, out]) => ({ url, options: { out } }));
+        aria2Bridge.download(session);
+    }).catch(() => {
+        [...result].forEach(([url, name], index) => {
+            setTimeout(() => GM_download(url, name), index * 200);
+        });
+    });
 }
 
 document.addEventListener('keydown', (event) => {
