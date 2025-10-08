@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.0
+// @version         1.11.1
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -12,10 +12,9 @@
 // @run-at          document-idle
 // ==/UserScript==
 
-let { autowide = '0', videocodec = '0' } = localStorage;
+let { autowide = '1', videocodec = 'bilivideo_vc265' } = localStorage;
 let bvWatch;
 let bvTitle;
-let bvCodec;
 let bvOpen = true;
 let history = {};
 let archive;
@@ -71,7 +70,7 @@ let bvMenu = bvHandler[bvCode] ?? bvHandler.default;
 window.addEventListener('play', async function bVideoToolbar() {
     let wide = await PromiseSelector(bvMenu.widebtn);
     let menu = await PromiseSelector(bvMenu.menu);
-    if (!wide.classList.contains(bvMenu.widestat) && localStorage.autowide === '1' ) {
+    if (!wide.classList.contains(bvMenu.widestat) && autowide === '1' ) {
         wide.click();
     }
     menu.append(mainPane, cssPane);
@@ -156,13 +155,11 @@ function bVideoOptions() {
 }
 
 function bVideoAnalyze() {
-    bvCodec = optionCodec.value;
     optionsPane.classList.add('bilivideo_hidden');
-    analysePane.classList.add(bvCodec);
     analysePane.classList.toggle('bilivideo_hidden');
-    if (bvOpen || videocodec !== localStorage.videocodec) {
+    if (bvOpen) {
+        analysePane.classList.add(videocodec);
         bvOpen = false;
-        videocodec = localStorage.videocodec;
         analysePane.innerHTML = '';
         bvMenu.fetch();
     }
@@ -180,15 +177,12 @@ menuPane.addEventListener('click', (event) => {
 
 const optEvent = {
     'autowide': () => document.querySelector(bvMenu.widebtn).click(),
-    'videocodec': (value) => {
-        analysePane.classList.replace(bvCodec, value);
-        bvCodec = value;
-    }
+    'videocodec': (value) => analysePane.classList.replace(videocodec, value)
 };
 
 optionsPane.addEventListener('change', (event) => {
     let { name, value } = event.target;
-    localStorage[name] = value;
+    self[name] = localStorage[name] = value;
     optEvent[name]?.(value);
 });
 
