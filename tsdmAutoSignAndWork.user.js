@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.1
+// @version      1.4.2
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://*.tsdm39.com/*
@@ -9,14 +9,15 @@
 // ==/UserScript==
 
 'use strict';
-let {signed = '0', worked = '0'} = localStorage;
+const sleep = (e) => new Promise((r) => setTimeout(r, e));
+let { signed = '0', worked = '0' } = localStorage;
+let { pathname } = location;
 let action = {};
 let today = new Date();
 let date = today.getFullYear() + today.getMonth() + today.getDate();
 let now = today.getTime();
-let login = document.getElementById('lsform');
 
-if (!login) {
+if (pathname === '/forum.php' || pathname === '/' && !document.querySelector('#um > p > strong > a')) {
     if (date > signed) {
         autoSign();
     }
@@ -53,7 +54,7 @@ async function autoSign() {
         popup.innerText = '开始签到...';
         iframe.window.Icon_selected('kx');
         iframe.document.getElementById('todaysay').value = '每日签到';
-        await waitTimeout(3000);
+        await sleep(3000);
         iframe.window.showWindow('qwindow', 'qiandao', 'post', '0');
         text = '已完成签到';
     }
@@ -78,10 +79,10 @@ async function autoWork() {
         iframe.document.querySelectorAll('#advids > div > a').forEach(async (element, index) => {
             element.removeAttribute('href');
             element.removeAttribute('target');
-            await waitTimeout(index * 300);
+            await sleep(index * 300);
             element.click();
         });
-        await waitTimeout(3000);
+        await sleep(3000);
         iframe.document.querySelector('#stopad > a').click();
         text = '已完成打工';
         next = 21600000;
@@ -94,7 +95,7 @@ async function endWork(work, value, text, popup, frame) {
     action[work] = false;
     localStorage[work] = self[work] = value;
     popup.innerText = text;
-    await waitTimeout(5000);
+    await sleep(5000);
     frame.frameElement.remove();
     popup.remove();
 }
@@ -116,8 +117,4 @@ function startWork(url) {
         document.body.append(iframe);
         iframe.contentWindow.setTimeout = () => null;
     });
-}
-
-function waitTimeout(number) {
-    return new Promise((resolve) => setTimeout(resolve, number));
 }
