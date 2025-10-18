@@ -8,13 +8,13 @@
 // @noframes
 // ==/UserScript==
 
-'use strict';
-const sleep = (e) => new Promise((r) => setTimeout(r, e));
 let { signed = '0', worked = '0' } = localStorage;
 let action = {};
 let today = new Date();
 let date = today.getFullYear() + today.getMonth() + today.getDate();
 let now = today.getTime();
+let sleep = (e) => new Promise((r) => setTimeout(r, e));
+let [e_work, e_sign] = document.querySelectorAll('#mn_Nfded_menu > li > a');
 
 if (location.pathname === '/forum.php' && document.getElementById('tsdm_newpm')) {
     if (date > signed) {
@@ -28,11 +28,12 @@ if (location.pathname === '/forum.php' && document.getElementById('tsdm_newpm'))
     }
 }
 
-document.querySelector('#mn_Nfded_menu > :nth-child(1) > a').addEventListener('click', event => {
+e_work.addEventListener('click', event => {
     event.preventDefault();
     autoWork();
 });
-document.querySelector('#mn_Nfded_menu > :nth-child(2) > a').addEventListener('click', event => {
+
+e_sign.addEventListener('click', event => {
     event.preventDefault();
     autoSign();
 });
@@ -66,8 +67,8 @@ async function autoWork() {
     }
     let text, next;
     action.worked = true;
-    var popup = startPopup('查询打工状态...', '120px');
-    var iframe = await startWork('/plugin.php?id=np_cliworkdz:work');
+    let popup = startPopup('查询打工状态...', '120px');
+    let iframe = await startWork('/plugin.php?id=np_cliworkdz:work');
     if (iframe.document.querySelector('#messagetext')) {
         text = iframe.document.querySelector('#messagetext > p:nth-child(1)').innerHTML.split(/<br>|<script/)[1];
         let [full, hh, mm, ss] = text.match(/(\d)小时(\d+)分钟(\d+)秒/);
@@ -75,11 +76,11 @@ async function autoWork() {
     }
     else {
         popup.innerText = '开始打工...';
-        iframe.document.querySelectorAll('#advids > div > a').forEach(async (element, index) => {
-            element.removeAttribute('href');
-            element.removeAttribute('target');
-            await sleep(index * 300);
-            element.click();
+        iframe.document.querySelectorAll('#advids > div > a').forEach(async(a, i) => {
+            a.removeAttribute('href');
+            a.removeAttribute('target');
+            await sleep(i * 300);
+            a.click();
         });
         await sleep(3000);
         iframe.document.querySelector('#stopad > a').click();
@@ -111,7 +112,7 @@ function startWork(url) {
     return new Promise(resolve => {
         let iframe = document.createElement('iframe');
         iframe.src = url;
-        iframe.style.cssText = 'position: absolute; top: 400px; left: 400px; height: 400px; width: 400px; display: none;';
+        iframe.style.display = 'none';
         iframe.addEventListener('load', event => resolve({document: iframe.contentDocument, window: iframe.contentWindow}));
         document.body.append(iframe);
         iframe.contentWindow.setTimeout = () => null;
