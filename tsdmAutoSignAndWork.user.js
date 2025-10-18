@@ -11,13 +11,12 @@
 'use strict';
 const sleep = (e) => new Promise((r) => setTimeout(r, e));
 let { signed = '0', worked = '0' } = localStorage;
-let { pathname } = location;
 let action = {};
 let today = new Date();
 let date = today.getFullYear() + today.getMonth() + today.getDate();
 let now = today.getTime();
 
-if (pathname === '/forum.php' || pathname === '/' && !document.querySelector('#um > p > strong > a')) {
+if (location.pathname === '/forum.php' && document.getElementById('tsdm_newpm')) {
     if (date > signed) {
         autoSign();
     }
