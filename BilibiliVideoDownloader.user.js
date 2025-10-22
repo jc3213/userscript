@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.11.1
+// @version         1.12.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -13,7 +13,6 @@
 // ==/UserScript==
 
 let { autowide = '1', videocodec = 'bilivideo_vc265' } = localStorage;
-let bvWatch;
 let bvTitle;
 let bvOpen = true;
 let history = {};
@@ -66,16 +65,6 @@ let bvHandler = {
 };
 let bvCode = location.pathname.match(/^\/(v(?:ideo)?)\//)?.[1];
 let bvMenu = bvHandler[bvCode] ?? bvHandler.default;
-
-window.addEventListener('play', async function bVideoToolbar() {
-    let wide = await PromiseSelector(bvMenu.widebtn);
-    let menu = await PromiseSelector(bvMenu.menu);
-    if (!wide.classList.contains(bvMenu.widestat) && autowide === '1' ) {
-        wide.click();
-    }
-    menu.append(mainPane, cssPane);
-    window.removeEventListener('play', bVideoToolbar);
-}, true);
 
 let menuItem = document.createElement('div');
 menuItem.className = 'bilivideo_button';
@@ -221,14 +210,34 @@ cssPane.textContent = `
 .bilivideo_vc264 > .bilivideo_video:not(.bilivideo_h264), .bilivideo_vc265 > .bilivideo_video:not(.bilivideo_h265), .bilivideo_vcav1 > .bilivideo_video:not(.bilivideo_av1) { display: none ;}
 `;
 
-new MutationObserver(() => {
-    if (bvWatch !== location.href) {
-        bvWatch = location.href;
+const proto = HTMLMediaElement.prototype;
+const descriptor = Object.getOwnPropertyDescriptor(proto, 'src');
+const bvplay = proto.play;
+
+Object.defineProperty(proto, 'src', {
+    configurable: true,
+    enumerable: true,
+    get() {
+        return descriptor.get.call(this);
+    },
+    set(value) {
+        descriptor.set.call(this, value);
         bvOpen = true;
         optionsPane.classList.add('bilivideo_hidden');
         analysePane.classList.add('bilivideo_hidden');
     }
-}).observe(document.head, {childList: true});
+});
+
+proto.play = async function (...args) {
+    proto.play = bvplay;
+    let wide = await PromiseSelector(bvMenu.widebtn);
+    let menu = await PromiseSelector(bvMenu.menu);
+    if (!wide.classList.contains(bvMenu.widestat) && autowide === '1' ) {
+        wide.click();
+    }
+    menu.append(mainPane, cssPane);
+    return bvplay.apply(this, args);
+};
 
 function PromiseSelector(text) {
     return new Promise((resolve, reject) => {
