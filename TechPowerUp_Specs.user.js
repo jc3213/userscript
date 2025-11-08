@@ -2,7 +2,7 @@
 // @name            TechPowerUp CPU/GPU Specs - Simplified Chinese
 // @name:zh         TechPowerUp CPU/GPU规格中文化
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.4
+// @version         0.5
 // @description     Translate TechPowerUp CPU, and GPU Specs into Simplified Chinese
 // @description:zh  将TechPowerUp关于CPU和GPU规格的相关网页进行中文化
 // @author          jc3213
@@ -154,6 +154,15 @@ const locale = {
     'Board Number': '主板编号',
 };
 
+const i18nMap = {
+    'table': (table) => {
+        [...table.children[0].children].forEach((tr) => [...tr.children].forEach(i18nElement));
+    },
+    'div': (table) => {
+        [...table.children].forEach((tr) => [...tr.children].forEach(i18nElement));
+    }
+};
+
 setTimeout(() => {
     const section = [...document.querySelectorAll('section')];
 
@@ -162,14 +171,7 @@ setTimeout(() => {
     details.forEach((detail) => {
         let [li, table] = detail.children;
         i18nElement(li);
-        switch (table.localName) {
-            case 'table':
-                [...table.children[0].children].forEach((tr) => [...tr.children].forEach(i18nElement));
-                break;
-            case 'div':
-                [...table.children].forEach((tr) => [...tr.children].forEach(i18nElement));
-                break;
-        };
+        i18nMap[table.localName]?.(table);
     });
 }, 500);
 
@@ -178,5 +180,7 @@ function i18nElement(el) {
     let i18n = locale[text];
     if (i18n) {
         el.innerText = i18n;
-    } else { console.log(text, i18n); }
+    } else {
+        console.log(text, i18n);
+    }
 }
