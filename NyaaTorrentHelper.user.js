@@ -65,22 +65,20 @@ document.body.appendChild(css);
 
 // shortcut
 function ctrlHandler(event, button) {
-    if (event.ctrlKey && button.className !== 'disabled') {
-        event.preventDefault();
-        button.children[0].click();
-    }
+    if (!event.ctrlKey || button.className === 'disabled') return;
+    event.preventDefault();
+    button.children[0].click();
 }
 
 function altHandler(event, callback) {
-    if (event.altKey) {
-        event.preventDefault();
-        callback();
-    }
+    if (!event.altKey) return;
+    event.preventDefault();
+    callback();
 }
 
 let hotkeyMap = {
     'ArrowLeft': (event) => ctrlHandler(event, active.previousElementSibling),
-    'ArrowRight': (event) => ctrlHandler(event, active.previousElementSibling),
+    'ArrowRight': (event) => ctrlHandler(event, active.nextElementSibling),
     'c': (event) => altHandler(event, copyToClipboard),
     'j': (event) => altHandler(event, downloadWithAria2),
     'f': (event) => altHandler(event, filterTorrents),
@@ -88,19 +86,17 @@ let hotkeyMap = {
 };
 
 let filterMap = {
-    '': (result) => {
+    '' (result) {
         torrents.forEach((tr) => tr.classList.remove('nyaa-hidden'));
         keyword = '';
         delete filterMap[result];
     },
-    _default_: (result) => {
+    _default_ (result) {
         let regexp = new RegExp(result.replace(/[?.\(\)\[\]]/g, '\\$&'), 'i');
         torrents.forEach((tr) => {
-            if (regexp.test(tr.info.name)) {
-                tr.classList.remove('nyaa-hidden');
-            } else {
-                tr.classList.add('nyaa-hidden');
-            }
+            regexp.test(tr.info.name)
+                ? tr.classList.remove('nyaa-hidden')
+                : tr.classList.add('nyaa-hidden');
         });
         filterMap[result] = filterMap[''];
         keyword = result;
@@ -117,28 +113,25 @@ function filterTorrents() {
 }
 
 async function copyToClipboard() {
-    if (confirm(i18n.oncopy)) {
-        let info = await Promise.all([...selected].map(async (tr) => await getClipboardInfo(tr)));
-        let copy = info.join('\n\n');
-        navigator.clipboard.writeText(copy);
-        alert(copy);
-    }
+    if (!confirm(i18n.oncopy)) return;
+    let info = await Promise.all([...selected].map(async (tr) => await getClipboardInfo(tr)));
+    let copy = info.join('\n\n');
+    navigator.clipboard.writeText(copy);
+    alert(copy);
 }
 
 function downloadWithAria2() {
-    if (confirm(i18n.aria2c)) {
-        let params = [...selected].map((tr) => ({ url: tr.info.magnet }));
-        postMessage({ aria2c: 'aria2c_download', params });
-        alert(i18n.onsend);
-    }
+    if (!confirm(i18n.aria2c)) return;
+    let params = [...selected].map((tr) => ({ url: tr.info.magnet }));
+    postMessage({ aria2c: 'aria2c_download', params });
+    alert(i18n.onsend);
 }
 
 async function clearStorage() {
-    if (confirm(i18n.clear)) {
-        GM_deleteValues(GM_listValues());
-        torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
-        alert(i18n.onclear);
-    }
+    if (!confirm(i18n.clear)) return;
+    GM_deleteValues(GM_listValues());
+    torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
+    alert(i18n.onclear);
 }
 
 document.addEventListener('keydown', (event) => {
@@ -171,9 +164,8 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
         }
     });
     tr.addEventListener('mousedown', (event) => {
-        if (event.shiftKey) {
-            event.preventDefault();
-        }
+        if (!event.shiftKey) return;
+        event.preventDefault();
     });
     tr.addEventListener('click', async (event) => {
         let { shiftKey, ctrlKey } = event;
