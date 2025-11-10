@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         「小説家になろう」 書庫管理
 // @namespace    https://github.com/jc3213/userscript
-// @version      2.1.0
+// @version      2.1.1
 // @description  「小説家になろう」の小説情報を管理し、縦書きPDFをダウンロードするツールです
 // @author       jc3213
 // @match        https://ncode.syosetu.com/*
@@ -21,14 +21,17 @@ let [, novelcode, novelread] = location.pathname.match(/^\/(?:.*\/ncode\/)?(n\w+
 if (!novelcode) return;
 
 let bookmark = GM_getValue('bookmark');
-if (Array.isArray(bookmark)) {
-    bookmark.forEach(({ ncode, title }) => {
-        GM_setValue(ncode, title);
+if (bookmark === undefined) {
+    bookmark = GM_listValues().map((i) => {
+        if (i === 'bookmark') return;
+        let value = GM_getValue(i);
+        GM_deleteValue(i);
+        return [i, value];
     });
-    GM_deleteValue('bookmark');
+    GM_setValue('bookmark', bookmark);
 }
-
-let novels = new Map( GM_listValues().map((i) => [i, GM_getValue(i)]) );
+console.log(bookmark);
+let novels = new Map(bookmark);;
 let validate = {};
 let shortcut = '';
 let novelname = $('.c-announce-box > :last-child > :first-child, h1.novel_title')[0].textContent;
@@ -160,7 +163,7 @@ let submit_btn = $('<div class="jsui-menu-item">NCODE登録</div>').click(async 
 function subscribeNcode(ncode, book) {
     fancyTableItem(book, ncode);
     novels.set(ncode, book);
-    GM_setValue(ncode, book);
+    GM_setValue('bookmark', [...novels]);
     fancyPopup(ncode, book, 'は書庫に登録しました！');
 }
 
@@ -182,10 +185,12 @@ let import_btn = $('<div class="jsui-menu-item" id="jsui-save-btn">書庫イン�
     let json = JSON.parse(text);
     novels = new Map(json);
     shelf_table.empty();
+    novels.clear();
     novels.forEach((book, ncode) => {
-        GM_setValue(ncode, book);
+        novels.set(ncode, book);
         fancyTableItem(book, ncode);
     });
+    GM_setValue('bookmark', [...novels]);
 });
 function paddingTimeStamp(number) {
     return String(number).padStart(2, '0');
@@ -205,7 +210,7 @@ function removeNcodeFromShelf(mybook, ncode, book) {
     if (!confirm('【 ' + book + ' 】を書庫から削除しますか？')) return;
     mybook.remove();
     novels.delete(ncode);
-    GM_deleteValue(ncode);
+    GM_setValue('bookmark', [...novels]);
     fancyPopup(ncode, book, 'は書庫から削除しました！');
 }
 function openNcodeInNewPage(ncode, book) {
