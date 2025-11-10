@@ -21,7 +21,7 @@ let [, novelcode, novelread] = location.pathname.match(/^\/(?:.*\/ncode\/)?(n\w+
 if (!novelcode) return;
 
 let bookmark = GM_getValue('bookmark');
-if (bookmark) {
+if (Array.isArray(bookmark)) {
     bookmark.forEach(({ ncode, title }) => {
         GM_setValue(ncode, title);
     });
