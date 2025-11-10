@@ -27,9 +27,8 @@ if (Array.isArray(bookmark)) {
     });
     GM_deleteValue('bookmark');
 }
-bookmark = GM_listValues();
-let novels = new Map( bookmark.map((i) => [i, GM_getValue(i)]) );
 
+let novels = new Map( GM_listValues().map((i) => [i, GM_getValue(i)]) );
 let validate = {};
 let shortcut = '';
 let novelname = $('.c-announce-box > :last-child > :first-child, h1.novel_title')[0].textContent;
