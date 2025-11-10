@@ -73,7 +73,7 @@ let css = $(`<style>
 .jsui-menu-item:not(.jsui-menu-disabled):active, .jsui-button-cell:active { filter: contrast(35%); }
 .jsui-menu-checked { padding: 4px 9px; border-style: inset; border-width: 1px; }
 .jsui-basic-menu { margin: 0px; padding: 0px; user-select: none; display: flex; gap: 1px; }
-.jsui-basic-menu > input { flex: 2; }
+.jsui-basic-menu > input { flex: 4; }
 .jsui-book-manager { position: relative; font-weight: bold; left: 5px; width: fit-content; }
 .jsui-book-shelf { position: fixed; top: 47px; left: calc(50% - 440px); background-color: #fff; padding: 10px; z-index: 3213; border: 1px solid #CCC; width: 880px; height: 600px; overflow: hidden; }
 .jsui-table, .jsui-logging { height: 560px; margin-top: 5px; overflow-y: auto; margin-bottom: 20px; border-width: 1px; border-style: solid; }
