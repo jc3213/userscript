@@ -1,35 +1,36 @@
 // ==UserScript==
-// @name            NGA Emoji Manager
-// @name:zh         NGA表情管理器
-// @namespace       https://github.com/jc3213
-// @version         2.0.0
-// @description     Add/Remove New Emoji to NGA Forum
-// @description:zh  为NGA论坛添加/删除新表情
-// @author          jc3213
-// @match           *://bbs.nga.cn/thread.php?*
-// @match           *://bbs.nga.cn/read.php?*
-// @match           *://bbs.nga.cn/post.php?*
-// @match           *://ngabbs.com/thread.php?*
-// @match           *://ngabbs.com/read.php?*
-// @match           *://ngabbs.com/post.php?*
-// @match           *://nga.178.com/thread.php?*
-// @match           *://nga.178.com/read.php?*
-// @match           *://nga.178.com/post.php?*
-// @grant           GM_getValue
-// @grant           GM_setValue
-// @grant           GM_deleteValue
-// @grant           GM_listValues
+// @name         NGA表情管理器
+// @namespace    https://github.com/jc3213
+// @version      2.0.1
+// @description  为NGA论坛添加/删除新表情
+// @author       jc3213
+// @match        *://bbs.nga.cn/thread.php?*
+// @match        *://bbs.nga.cn/read.php?*
+// @match      　*://bbs.nga.cn/post.php?*
+// @match        *://ngabbs.com/thread.php?*
+// @match        *://ngabbs.com/read.php?*
+// @match        *://ngabbs.com/post.php?*
+// @match        *://nga.178.com/thread.php?*
+// @match        *://nga.178.com/read.php?*
+// @match        *://nga.178.com/post.php?*
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// @grant        GM_listValues
 // ==/UserScript==
 
 let emojiPackage = GM_getValue('emoji');
-if (Array.isArray(emojiPackage)) {
-    emojiPackage.forEach(({ name, author, emoji }) => {
-        GM_setValue(name, { author, emoji });
+if (emojiPackage === undefined) {
+    emojiPackage = GM_listValues().map((i) => {
+        if (i === 'bookmark') return;
+        let value = GM_getValue(i);
+        GM_deleteValue(i);
+        return [i, value];
     });
-    GM_deleteValue('emoji');
+    GM_setValue('emoji', emojiPackage);
 }
-
-let emojis = new Map( GM_listValues().map((i) => [i, GM_getValue(i)]) );
+console.log(emojiPackage);
+let emojis = new Map(emojiPackage);
 let emojiUI = {};
 let emojiTab;
 let emojiPanel;
@@ -49,7 +50,7 @@ manager.addEventListener('click', async (event) => {
         let { name, emoji, author } = JSON.parse(text);
         if (!name || !emoji) return;
         emojis.set(name, { author, emoji });
-        GM_setValue(name, { author, emoji });
+        GM_setValue('emoji', [...emojis]);
         printEmojiUI(name, author, emoji);
     }));
 });
@@ -70,8 +71,8 @@ function createEmojiUI(name, author, emoji) {
     emojiPanel.append(panel);
     tab.addEventListener('click', event => {
         if (event.ctrlKey && confirm('确定要删除表情包【'+ name + '】吗？')) {
-            GM_deleteValue(name)
             emojis.delete(name);
+            GM_setValue('emoji', [...emojis]);
             tab.remove();
             panel.remove();
             delete emojiUI[name];
