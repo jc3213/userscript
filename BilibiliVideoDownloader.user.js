@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.12.0
+// @version         1.13.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -18,25 +18,25 @@ let bvOpen = true;
 let history = {};
 let archive;
 let format = {
-    '30280': {text: '音频 高码率', ext: '.192k.m4a'},
-    '30232': {text: '音频 中码率', ext: '.128k.m4a'},
-    '30216': {text: '音频 低码率', ext: '.64k.m4a'},
-    '127': {text: '8K 超高清', ext: '.8k.mp4'},
-    '125': {text: '4K 超清+', ext: '.4k+.mp4'},
-    '120': {text: '4K 超清', ext: '.4k.mp4'},
-    '116': {text: '1080P 60帧', ext: '.1080f60.mp4'},
-    '112': {text: '1080P 高码率', ext: '.1080+.mp4'},
-    '80': {text: '1080P 高清', ext: '.1080.mp4'},
-    '74': {text: '720P 60帧', ext: '.720f60.mp4'},
-    '64': {text: '720P 高清', ext: '.720.mp4'},
-    '32': {text: '480P 清晰', ext: '.480.mp4'},
-    '16': {text: '360P 流畅', ext: '.360.mp4'},
-    '15': {text: '360P 流畅', ext: '.360-.mp4'},
-    'avc1': {title: '视频编码: H.264', alt: 'h264', type: 'video'},
-    'hvc1': {title: '视频编码: HEVC 增强', alt: 'h265', type: 'video'},
-    'hev1': {title: '视频编码: HEVC', alt: 'h265', type: 'video'},
-    'av01': {title: '视频编码：AV1', alt: 'av1', type: 'video'},
-    'mp4a': {title: '音频编码: AAC', alt: 'aac', type: 'audio'}
+    '30280': { text: '音频 高码率', ext: '.192k.m4a' },
+    '30232': { text: '音频 中码率', ext: '.128k.m4a' },
+    '30216': { text: '音频 低码率', ext: '.64k.m4a' },
+    '127': { text: '8K 超高清', ext: '.8k.mp4' },
+    '125': { text: '4K 超清+', ext: '.4k+.mp4' },
+    '120': { text: '4K 超清', ext: '.4k.mp4' },
+    '116': { text: '1080P 60帧', ext: '.1080f60.mp4' },
+    '112': { text: '1080P 高码率', ext: '.1080+.mp4' },
+    '80': { text: '1080P 高清', ext: '.1080.mp4' },
+    '74': { text: '720P 60帧', ext: '.720f60.mp4' },
+    '64': { text: '720P 高清', ext: '.720.mp4' },
+    '32': { text: '480P 清晰', ext: '.480.mp4' },
+    '16': { text: '360P 流畅', ext: '.360.mp4' },
+    '15': { text: '360P 流畅', ext: '.360-.mp4' },
+    'avc1': { title: '视频编码: H.264', alt: 'h264', type: 'video' },
+    'hvc1': { title: '视频编码: HEVC 增强', alt: 'h265', type: 'video' },
+    'hev1': { title: '视频编码: HEVC', alt: 'h265', type: 'video' },
+    'av01': { title: '视频编码：AV1', alt: 'av1', type: 'video' },
+    'mp4a': { title: '音频编码: AAC', alt: 'aac', type: 'audio' }
 };
 
 let bvHandler = {
@@ -146,12 +146,11 @@ function bVideoOptions() {
 function bVideoAnalyze() {
     optionsPane.classList.add('bilivideo_hidden');
     analysePane.classList.toggle('bilivideo_hidden');
-    if (bvOpen) {
-        analysePane.classList.add(videocodec);
-        bvOpen = false;
-        analysePane.innerHTML = '';
-        bvMenu.fetch();
-    }
+    if (!bvOpen) return;
+    analysePane.classList.add(videocodec);
+    bvOpen = false;
+    analysePane.innerHTML = '';
+    bvMenu.fetch();
 }
 
 const menuEvent = {
@@ -176,16 +175,11 @@ optionsPane.addEventListener('change', (event) => {
 });
 
 analysePane.addEventListener('click', (event) => {
-    let {altKey, target: {url, file}} = event;
-    if (url && file) {
-        if (altKey) {
-            var urls = [{ url, options: { out: file, referer: location.href } }];
-            window.postMessage({ aria2c: 'aria2c_download', params: urls });
-        }
-        else {
-            GM_download({ url, responseType: 'blob', headers: { referer: location.href }, name: file });
-        }
-    }
+    let { altKey, target: { url, file } } = event;
+    if (!url || !file) return;
+    altKey
+        ? window.postMessage({ aria2c: 'aria2c_download', params: [{ url, options: { out: file, referer: location.href } }] })
+        : GM_download({ url, responseType: 'blob', headers: { referer: location.href }, name: file });
 });
 
 let [, optionWide,, optionCodec] = optionsPane.children;
@@ -230,27 +224,13 @@ Object.defineProperty(proto, 'src', {
 
 proto.play = async function (...args) {
     proto.play = bvplay;
-    let wide = await PromiseSelector(bvMenu.widebtn);
-    let menu = await PromiseSelector(bvMenu.menu);
-    if (!wide.classList.contains(bvMenu.widestat) && autowide === '1' ) {
-        wide.click();
-    }
-    menu.append(mainPane, cssPane);
+    setTimeout(() => {
+        let wide = document.querySelector(bvMenu.widebtn);
+        let menu = document.querySelector(bvMenu.menu);
+        if (!wide.classList.contains(bvMenu.widestat) && autowide === '1' ) {
+            wide.click();
+        }
+        menu.append(mainPane, cssPane);
+    }, 1000);
     return bvplay.apply(this, args);
 };
-
-function PromiseSelector(text) {
-    return new Promise((resolve, reject) => {
-        let time = 15;
-        let t = setInterval(() => {
-            let node = document.querySelector(text);
-            if (node) {
-                clearInterval(t);
-                resolve(node);
-            } else if (--time === 0) {
-                clearInterval(t);
-                reject();
-            }
-        }, 200);
-    });
-}
