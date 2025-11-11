@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NGA表情管理器
 // @namespace    https://github.com/jc3213
-// @version      2.0.1
+// @version      2.0.2
 // @description  为NGA论坛添加/删除新表情
 // @author       jc3213
 // @match        *://bbs.nga.cn/thread.php?*
@@ -19,18 +19,7 @@
 // @grant        GM_listValues
 // ==/UserScript==
 
-let emojiPackage = GM_getValue('emoji');
-if (emojiPackage === undefined) {
-    emojiPackage = GM_listValues().map((i) => {
-        if (i === 'bookmark') return;
-        let value = GM_getValue(i);
-        GM_deleteValue(i);
-        return [i, value];
-    });
-    GM_setValue('emoji', emojiPackage);
-}
-console.log(emojiPackage);
-let emojis = new Map(emojiPackage);
+let emojis = new Map(GM_getValue('emoji', []));
 let emojiUI = {};
 let emojiTab;
 let emojiPanel;
@@ -40,19 +29,24 @@ css.innerText = `.single_ttip2 img { max-height: 64px; }`
 document.head.append(css);
 
 let manager = document.createElement('button');
-manager.innerText = '添加新表情';
+manager.textContent = '添加新表情';
 manager.className = 'block_txt_big';
-manager.addEventListener('click', async (event) => {
-    let handles = await document.defaultView.showOpenFilePicker({ types: [ { description: 'JSON 文件', accept: { 'application/json': ['.json'] } } ], multiple: true });
-    Promise.all(handles.map(async (handler) => {
-        let file = await handler.getFile();
+manager.addEventListener('click', (event) => loader.click());
+
+let loader = document.createElement('input');
+loader.type = 'file';
+loader.accept = '.json';
+loader.multiple = true;
+loader.addEventListener('change', (event) => {
+    [...event.target.files].forEach(async (file) => {
         let text = await file.text();
         let { name, emoji, author } = JSON.parse(text);
         if (!name || !emoji) return;
         emojis.set(name, { author, emoji });
         GM_setValue('emoji', [...emojis]);
         printEmojiUI(name, author, emoji);
-    }));
+    });
+    event.target.value = '';
 });
 
 function printEmojiUI(name, author, emoji) {
@@ -64,12 +58,12 @@ function printEmojiUI(name, author, emoji) {
 function createEmojiUI(name, author, emoji) {
     let tab = document.createElement('button');
     tab.className = 'block_txt_big';
-    tab.innerText = name;
+    tab.textContent = name;
     tab.title = author ? '制作者： ' + author : '';
     manager.before(tab);
     let panel = document.createElement('div');
     emojiPanel.append(panel);
-    tab.addEventListener('click', event => {
+    tab.addEventListener('click', (event) => {
         if (event.ctrlKey && confirm('确定要删除表情包【'+ name + '】吗？')) {
             emojis.delete(name);
             GM_setValue('emoji', [...emojis]);
