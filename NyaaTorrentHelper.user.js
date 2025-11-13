@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nyaa Torrent Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.2.0
+// @version      1.2.1
 // @description  Nyaa Torrent easy preview, batch export, better filter
 // @author       jc3213
 // @match        *://*.nyaa.si/*
@@ -191,10 +191,10 @@ async function getTorrentDetail(tr) {
         working.add(url);
         let site = new Set();
         let image = new Set();
-        let container = document.createElement('div');
-        container.innerHTML = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
-        let result = container.querySelector('#torrent-description').textContent;
-        result.match(/https?:\/\/[^\]\[);!*"]*/g)?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
+        let text = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
+        let result = text.match(/<div[^>]*id=["']torrent-description["'][^>]*>([\s\S]*?)<\/div>/i)[1];
+        let urls = result.match(/https?:\/\/[^&)* ]+/g);
+        urls?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
         GM_setValue(url, info);
         tr.classList.add('nyaa-cached');
@@ -206,7 +206,7 @@ async function getTorrentDetail(tr) {
 
 // copy info to clipboard
 async function getClipboardInfo(tr) {
-    let {url, name, torrent, magnet, size, image, site} = await getTorrentDetail(tr);
+    let { url, name, torrent, magnet, size, image, site } = await getTorrentDetail(tr);
     return `${i18n.name}
     ${name} (${size})
 ${i18n.preview}
@@ -218,18 +218,31 @@ ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magne
 async function getTorrentPreview(tr, top, left) {
     let { image, site } = await getTorrentDetail(tr);
     if (image?.length > 0) {
-        let src = image[0];
-        let img = preview.get(src);
+        let url = image[0];
+        let img = preview.get(url);
         if (!img) {
             img = document.createElement('img');
-            img.src = src;
+            img.src = redirectURL(url);
             img.className = 'nyaa-preview';
             img.addEventListener('click', event => img.remove());
-            preview.set(src, img);
+            preview.set(url, img);
         }
         img.style.cssText = `top: ${top}px; left: ${left}px;`;
         document.body.append(img);
     } else if (site?.length > 0) {
         GM_openInTab(site[0]);
     }
+}
+
+const redirectRules = [
+    { match: 'files.catbox.moe', replace: 'i0.wp.com/files.catbox.moe', suffix: '?ssl=1' }
+];
+
+function redirectURL(url) {
+    for (let { match, replace, suffix } of redirectRules) {
+        if (url.includes(match)) {
+            return url.replace(match, replace) + suffix;
+        }
+    }
+    return url;
 }
