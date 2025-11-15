@@ -1,18 +1,20 @@
 // ==UserScript==
-// @name         Nyaa Torrent Helper
-// @namespace    https://github.com/jc3213/userscript
-// @version      1.2.1
-// @description  Nyaa Torrent easy preview, batch export, better filter
-// @author       jc3213
-// @match        *://*.nyaa.si/*
-// @exclude      *://*.nyaa.si/view/*
-// @grant        GM_setValue
-// @grant        GM_getValue
-// @grant        GM_deleteValue
-// @grant        GM_deleteValues
-// @grant        GM_listValues
-// @grant        GM_addValueChangeListener
-// @grant        GM_openInTab
+// @name           Nyaa Torrent Helper
+// @name:zh        Nyaa 助手
+// @namespace      https://github.com/jc3213/userscript
+// @version        1.2.2
+// @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
+// @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
+// @author         jc3213
+// @match          *://*.nyaa.si/*
+// @exclude        *://*.nyaa.si/view/*
+// @grant          GM_setValue
+// @grant          GM_getValue
+// @grant          GM_deleteValue
+// @grant          GM_deleteValues
+// @grant          GM_listValues
+// @grant          GM_addValueChangeListener
+// @grant          GM_openInTab
 // ==/UserScript==
 
 // variables
@@ -144,9 +146,9 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
     let [, name, link, size] = tr.children;
     let a = name.children[name.children.length - 1];
     let url = a.href;
-    let [magnet, torrent] = [...link.children].reverse().map((a) => a?.href);
+    let [{ href: magnet }, { href: torrent }] = [...link.children].reverse();
     magnet = magnet.slice(0, magnet.indexOf('&'));
-    tr.info = {url, magnet, torrent, size: size.textContent, name: a.textContent};
+    tr.info = { url, magnet, torrent, size: size.textContent, name: a.textContent };
     torrents.set(url, tr);
     if (GM_getValue(url)) {
         tr.classList.add('nyaa-cached');
@@ -158,7 +160,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
             let copy = await getClipboardInfo(tr);
             navigator.clipboard.writeText(copy)
         } else if (altKey) {
-            postMessage({ aria2c: 'aria2c_download', params: [ {url: magnet } ] });
+            postMessage({ aria2c: 'aria2c_download', params: [{ url: magnet }] });
         } else {
             getTorrentPreview(tr, layerY, layerX);
         }
