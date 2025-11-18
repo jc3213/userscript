@@ -77,6 +77,12 @@ function createEmojiUI(name, author, emoji) {
             appendEmojiToUI(name, emoji, panel);
         }
     });
+    panel.addEventListener('click', (event) => {
+        let { alt } = event.target;
+        if (!alt) return;
+        postfunc.addText(`[img]${alt}[/img]`);
+        postfunc.selectSmilesw._.hide();
+    });
     return panel;
 }
 
@@ -88,12 +94,6 @@ function appendEmojiToUI(name, emoji, panel) {
         img.src = 'https://img.nga.178.com/attachments/' + em;
         img.alt = em;
         panel.appendChild(img);
-    });
-    panel.addEventListener('click', (event) => {
-        let { alt } = event.target;
-        if (!alt) return;
-        postfunc.addText(`[img]${alt}[/img]`);
-        postfunc.selectSmilesw._.hide();
     });
 }
 
