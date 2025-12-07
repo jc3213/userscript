@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.2.2
+// @version        1.2.3
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -66,7 +66,7 @@ css.textContent = `
 document.body.appendChild(css);
 
 // shortcut
-function ctrlHandler(event, button) {
+function ctrlButton(event, button) {
     if (!event.ctrlKey || button.className === 'disabled') return;
     event.preventDefault();
     button.children[0].click();
@@ -78,13 +78,19 @@ function altHandler(event, callback) {
     callback();
 }
 
+function altShiftHandler(event, callback) {
+    if (!event.altKey || !event.shiftKey) return;
+    event.preventDefault();
+    callback();
+}
+
 let hotkeyMap = {
-    'ArrowLeft': (event) => ctrlHandler(event, active.previousElementSibling),
-    'ArrowRight': (event) => ctrlHandler(event, active.nextElementSibling),
-    'c': (event) => altHandler(event, copyToClipboard),
-    'j': (event) => altHandler(event, downloadWithAria2),
-    'f': (event) => altHandler(event, filterTorrents),
-    'E': (event) => altHandler(event, clearStorage),
+    'ArrowLeft': (event) => ctrlButton(event, active.previousElementSibling),
+    'ArrowRight': (event) => ctrlButton(event, active.nextElementSibling),
+    'KeyC': (event) => altHandler(event, copyToClipboard),
+    'KeyJ': (event) => altHandler(event, downloadWithAria2),
+    'KeyF': (event) => altHandler(event, filterTorrents),
+    'KeyE': (event) => altShiftHandler(event, clearStorage),
 };
 
 let filterMap = {
@@ -94,7 +100,7 @@ let filterMap = {
         delete filterMap[result];
     },
     _default_ (result) {
-        let regexp = new RegExp(result.replace(/[?.\(\)\[\]]/g, '\\$&'), 'i');
+        let regexp = new RegExp(result.replace(/[?.\(\)\[\]+]/g, '\\$&'), 'i');
         torrents.forEach((tr) => {
             regexp.test(tr.info.name)
                 ? tr.classList.remove('nyaa-hidden')
@@ -137,16 +143,16 @@ async function clearStorage() {
 }
 
 document.addEventListener('keydown', (event) => {
-    let hotkey = hotkeyMap[event.key];
+    let hotkey = hotkeyMap[event.code];
     hotkey?.(event);
 });
 
 // get torrent info
 document.querySelectorAll('table > tbody > tr').forEach((tr) => {
     let [, name, link, size] = tr.children;
-    let a = name.children[name.children.length - 1];
+    let a = [...name.children].at(-1);
     let url = a.href;
-    let [{ href: magnet }, { href: torrent }] = [...link.children].reverse();
+    let [{ href: magnet }, { href: torrent } = {}] = [...link.children].reverse();
     magnet = magnet.slice(0, magnet.indexOf('&'));
     tr.info = { url, magnet, torrent, size: size.textContent, name: a.textContent };
     torrents.set(url, tr);
@@ -195,7 +201,7 @@ async function getTorrentDetail(tr) {
         let image = new Set();
         let text = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
         let result = text.match(/<div[^>]*id=["']torrent-description["'][^>]*>([\s\S]*?)<\/div>/i)[1];
-        let urls = result.match(/https?:\/\/[^&)* ]+/g);
+        let urls = result.match(/https?:\/\/[^\]&)* ]+/g);
         urls?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
         info = { site: [...site], image: [...image] };
         GM_setValue(url, info);
