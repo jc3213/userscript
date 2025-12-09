@@ -1,13 +1,11 @@
 // ==UserScript==
-// @name            TechPowerUp CPU/GPU Specs - Simplified Chinese
-// @name:zh         TechPowerUp CPU/GPU规格中文化
-// @namespace       https://github.com/jc3213/userscript
-// @version         0.5
-// @description     Translate TechPowerUp CPU, and GPU Specs into Simplified Chinese
-// @description:zh  将TechPowerUp关于CPU和GPU规格的相关网页进行中文化
-// @author          jc3213
-// @match           https://www.techpowerup.com/cpu-specs/*
-// @match           https://www.techpowerup.com/gpu-specs/*
+// @name          TechPowerUp CPU/GPU规格中文化
+// @namespace     https://github.com/jc3213/userscript
+// @version       0.6
+// @description   将TechPowerUp关于CPU和GPU规格的相关网页进行中文化
+// @author        jc3213
+// @match         https://www.techpowerup.com/cpu-specs/*
+// @match         https://www.techpowerup.com/gpu-specs/*
 // ==/UserScript==
 
 const locale = {
@@ -55,7 +53,7 @@ const locale = {
     'Launch MSRP:': '首发定价：',
     'Bundled Cooler:': '捆绑散热器：',
     'Codename:': '研发代号：',
-    'Generation:': '产品时代：',
+    'Generation:': '产品世代：',
     'Part#:': '钢印编号：',
     'PPT:': '典型功耗：',
     'Memory Support:': '内存支持：',
@@ -63,6 +61,7 @@ const locale = {
     'DDR5 Speed:': 'DDR5 频率：',
     'Rated Speed:': '内存频率：',
     'Memory Bus:': '内存通道：',
+    'Memory Bandwidth:': '内存带宽：',
     'Dual-channel': '双通道',
     'Eight-channel': '八通道',
     'ECC Memory:': '内存纠错：',
@@ -156,31 +155,36 @@ const locale = {
 
 const i18nMap = {
     'table': (table) => {
-        [...table.children[0].children].forEach((tr) => [...tr.children].forEach(i18nElement));
+        for (let tr of table.children[0].children) {
+            for (let el of tr.children) {
+                i18nElement(tr);
+            }
+        }
     },
     'div': (table) => {
-        [...table.children].forEach((tr) => [...tr.children].forEach(i18nElement));
+        for (let tr of table.children) {
+            i18nElement(tr);
+        }
     }
 };
 
 setTimeout(() => {
-    const section = [...document.querySelectorAll('section')];
-
-    const details = section.slice(0, -1);
-
-    details.forEach((detail) => {
+    const details = [...document.querySelectorAll('section')].slice(0, -1);
+    for (let detail of details) {
         let [li, table] = detail.children;
         i18nElement(li);
         i18nMap[table.localName]?.(table);
-    });
+    }
 }, 500);
 
-function i18nElement(el) {
-    let text = el.innerText;
-    let i18n = locale[text];
-    if (i18n) {
-        el.innerText = i18n;
-    } else {
-        console.log(text, i18n);
+function i18nElement(tr) {
+    for (let el of tr.children) {
+        let text = el.innerText;
+        let i18n = locale[text];
+        if (i18n) {
+            el.innerText = i18n;
+        } else {
+            console.log(text, i18n);
+        }
     }
 }
