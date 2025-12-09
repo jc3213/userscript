@@ -2,9 +2,9 @@
 // @name            Bilibili Emojis Extractor
 // @name:zh         哔哩哔哩表情提取
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.2
-// @description     Extract Emojis in users' comments
-// @description:zh  提取评论区的表情包
+// @version         0.3
+// @description     Extract official Emojis in users' comments
+// @description:zh  提取评论区的官方表情的图片
 // @author          jc3213
 // @match           https://www.bilibili.com/video/*
 // @match           https://www.bilibili.com/v/*
@@ -30,13 +30,11 @@ let callback = (aria2c, params) => {
     });
 };
 
-let dispatch = {
-    'aria2c_response': (result, id) => callMap.get(id)(result)
-};
-
 window.addEventListener('message', (event) => {
     let { aria2c, id, result } = event.data;
-    dispatch[aria2c]?.(result, id);
+    if (aria2c === 'aria2c_response') {
+        callMap.get(id)?.(result);
+    }
 });
 
 let aria2Bridge = {
@@ -51,13 +49,15 @@ let result;
 function extractImages(root) {
     let content = root.shadowRoot?.querySelector('bili-rich-text')?.shadowRoot;
     let images = content?.querySelectorAll('img');
-    images?.length > 0 && images.forEach(({ alt, src }) => {
-        if (!alt.includes(keyword)) return;
-        let url = src.split('@')[0];
-        if (result.has(url)) return;
-        let out = `${alt.slice(1, -1)}.${url.split('.').pop()}`;
-        result.set(url, out);
-    });
+    if (images?.length > 0) {
+        for (let { alt, src } of images) {
+            if (!alt.includes(keyword)) return;
+            let url = src.split('@')[0];
+            if (result.has(url)) return;
+            let out = `${alt.slice(1, -1)}.${url.split('.').pop()}`;
+            result.set(url, out);
+        }
+    }
 }
 
 function extractEmoji() {
@@ -67,11 +67,13 @@ function extractEmoji() {
 
     let comments = document.getElementById('commentapp').children[0].shadowRoot.children[1].children[1];
 
-    [...comments.children].forEach((node) => {
-        let [comment, replies] = node.shadowRoot.children;
+    for (let com of comments.children) {
+        let [comment, replies] = com.shadowRoot.children;
         extractImages(comment);
-        [...replies.children[0].shadowRoot.children[0].children[0].children].forEach(extractImages);
-    });
+        for (let img of replies.children[0].shadowRoot.children[0].children[0].children) {
+            extractImages(img);
+        }
+    }
 
     let { size } = result;
 
@@ -83,17 +85,21 @@ function extractEmoji() {
     }
 
     aria2Bridge.status().then(() => {
-        let session = [...result].map(([url, out]) => ({ url, options: { out } }));
+        let session = [];
+        for (let [url, out] of result) {
+            session.push({ url, options: { out } });
+        }
         aria2Bridge.download(session);
     }).catch(() => {
-        [...result].forEach(([url, name], index) => {
-            setTimeout(() => GM_download(url, name), index * 200);
-        });
+        let index = 0;
+        for (let [url, name] of result) {
+            setTimeout(() => GM_download(url, name), index++ * 200);
+        }
     });
 }
 
 document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key === 'E') {
+    if (event.ctrlKey && event.shiftKey && event.code === 'KeyE') {
         extractEmoji();
     }
 });
