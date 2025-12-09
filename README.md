@@ -21,8 +21,9 @@
     - `Shift`: Select/unselect torrents
     - `Alt` + `C`: Copy selected torrents' info to clipboard
          - Will store torrents' info
-    - `Alt` + 'F': Filter current page of torrent based on keyword prompt
-    - `Alt` + `Shift` + 'E': Clear all stored torrents' info
+    - `Alt` + `D`: Will send selected magnet uris to aria2 JSON-RPC
+    - `Alt` + `F`: Filter current page of torrent based on keyword prompt
+    - `Alt` + `Shift` + `E`: Clear all stored torrents' info
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
 - [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.js)
 - [BilibiliEmojisExtractor.user.js](https://jc3213.github.io/userscript/BilibiliEmojisExtractor.user.js)
