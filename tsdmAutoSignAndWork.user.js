@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.4.2
+// @version      1.4.3
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
-// @match        *://*.tsdm39.com/*
+// @match        *://www.tsdm39.com/*
 // @noframes
 // ==/UserScript==
 
@@ -76,12 +76,13 @@ async function autoWork() {
     }
     else {
         popup.innerText = '开始打工...';
-        iframe.document.querySelectorAll('#advids > div > a').forEach(async(a, i) => {
+        let index = 0;
+        for (let a of iframe.document.querySelectorAll('#advids > div > a')) {
             a.removeAttribute('href');
             a.removeAttribute('target');
-            await sleep(i * 300);
+            await sleep(index++ * 300);
             a.click();
-        });
+        }
         await sleep(3000);
         iframe.document.querySelector('#stopad > a').click();
         text = '已完成打工';
