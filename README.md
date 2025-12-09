@@ -16,12 +16,15 @@
 - [NyaaTorrentHelper.user.js](https://jc3213.github.io/userscript/NyaaTorrentHelper.user.js)
     - `RightClick`: Preview the thumbnail in current torrent's description
     - `Ctrl` + `RightClick`: Copy current torrent's info to clipboard
+    - `Alt` + `RightClick`: Send magnet uri to aria2 JSON-RPC
+        - Requires [Download with Aria2](https://github.com/jc3213/download_with_aria2)
     - `Ctrl` + `ArrowLeft`: Previous page
     - `Ctrl` + `ArrowRight`: Next page
-    - `Shift`: Select/unselect torrents
+    - `Shift` + `LeftClick`: Select/unselect torrents
     - `Alt` + `C`: Copy selected torrents' info to clipboard
          - Will store torrents' info
-    - `Alt` + `D`: Will send selected magnet uris to aria2 JSON-RPC
+    - `Alt` + `D`: Send selected magnet uris to aria2 JSON-RPC
+        - Requires [Download with Aria2](https://github.com/jc3213/download_with_aria2)
     - `Alt` + `F`: Filter current page of torrent based on keyword prompt
     - `Alt` + `Shift` + `E`: Clear all stored torrents' info
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
