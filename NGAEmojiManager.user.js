@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NGA表情管理器
 // @namespace    https://github.com/jc3213
-// @version      2.0.2
+// @version      2.0.3
 // @description  为NGA论坛添加/删除新表情
 // @author       jc3213
 // @match        *://bbs.nga.cn/thread.php?*
@@ -37,15 +37,15 @@ let loader = document.createElement('input');
 loader.type = 'file';
 loader.accept = '.json';
 loader.multiple = true;
-loader.addEventListener('change', (event) => {
-    [...event.target.files].forEach(async (file) => {
+loader.addEventListener('change', async (event) => {
+    for (let file of event.target.files) {
         let text = await file.text();
         let { name, emoji, author } = JSON.parse(text);
         if (!name || !emoji) return;
         emojis.set(name, { author, emoji });
         GM_setValue('emoji', [...emojis]);
         printEmojiUI(name, author, emoji);
-    });
+    }
     event.target.value = '';
 });
 
@@ -72,7 +72,9 @@ function createEmojiUI(name, author, emoji) {
             delete emojiUI[name];
         }
         else {
-            emojiPanel.childNodes.forEach((pane) => { pane.style.display = 'none'; });
+            for (let pane of emojiPanel.childNodes) {
+                pane.style.display = 'none';
+            }
             panel.style.display = '';
             appendEmojiToUI(name, emoji, panel);
         }
@@ -89,23 +91,27 @@ function createEmojiUI(name, author, emoji) {
 function appendEmojiToUI(name, emoji, panel) {
     if (panel.runOnce) return;
     panel.runOnce = true;
-    emoji.forEach((em) => {
+    for (let em of emoji) {
         let img = document.createElement('img');
         img.src = 'https://img.nga.178.com/attachments/' + em;
         img.alt = em;
         panel.appendChild(img);
-    });
+    }
 }
 
 let observer = new MutationObserver((mutationList) => {
     for (let mutation of mutationList) {
         for (let node of mutation.addedNodes) {
-            if (node?.id && node.id.startsWith('commonwindow')) {
-                let emojiMain = node.children[0].children[1].children[0].children;
-                emojiTab = emojiMain[0];
-                emojiPanel = emojiMain[1];
+            if (node.id.startsWith('commonwindow')) {
+                let [menu, body] = node.children[0].children;
+                if (menu.textContent !== '​插入表情') continue;
+                let pane = body.children[0].children;
+                emojiTab = pane[0];
+                emojiPanel = pane[1];
                 emojiTab.appendChild(manager);
-                emojis.forEach(({ author, emoji }, name) => printEmojiUI(name, author, emoji));
+                for (let [name, { author, emoji }] of emojis) {
+                    printEmojiUI(name, author, emoji);
+                }
                 return observer.disconnect();
             }
         }
