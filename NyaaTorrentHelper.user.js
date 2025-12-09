@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.2.3
+// @version        1.2.4
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -88,24 +88,26 @@ let hotkeyMap = {
     'ArrowLeft': (event) => ctrlButton(event, active.previousElementSibling),
     'ArrowRight': (event) => ctrlButton(event, active.nextElementSibling),
     'KeyC': (event) => altHandler(event, copyToClipboard),
-    'KeyJ': (event) => altHandler(event, downloadWithAria2),
+    'KeyD': (event) => altHandler(event, downloadWithAria2),
     'KeyF': (event) => altHandler(event, filterTorrents),
     'KeyE': (event) => altShiftHandler(event, clearStorage),
 };
 
 let filterMap = {
-    '' (result) {
-        torrents.forEach((tr) => tr.classList.remove('nyaa-hidden'));
+    ''(result) {
+        for (let tr of torrents) {
+            tr.classList.remove('nyaa-hidden');
+        }
         keyword = '';
         delete filterMap[result];
     },
-    _default_ (result) {
+    _default_(result) {
         let regexp = new RegExp(result.replace(/[?.\(\)\[\]+]/g, '\\$&'), 'i');
-        torrents.forEach((tr) => {
+        for (let tr of torrents) {
             regexp.test(tr.info.name)
                 ? tr.classList.remove('nyaa-hidden')
                 : tr.classList.add('nyaa-hidden');
-        });
+        }
         filterMap[result] = filterMap[''];
         keyword = result;
     }
@@ -122,7 +124,11 @@ function filterTorrents() {
 
 async function copyToClipboard() {
     if (!confirm(i18n.oncopy)) return;
-    let info = await Promise.all([...selected].map(async (tr) => await getClipboardInfo(tr)));
+    let data = [];
+    for (let tr of selected) {
+        data.push(getClipboardInfo(tr));
+    }
+    let info = await Promise.all(data);
     let copy = info.join('\n\n');
     navigator.clipboard.writeText(copy);
     alert(copy);
@@ -130,7 +136,10 @@ async function copyToClipboard() {
 
 function downloadWithAria2() {
     if (!confirm(i18n.aria2c)) return;
-    let params = [...selected].map((tr) => ({ url: tr.info.magnet }));
+    let params = [];
+    for (let tr of selected) {
+        params.push(tr.info.magnet);
+    }
     postMessage({ aria2c: 'aria2c_download', params });
     alert(i18n.onsend);
 }
@@ -138,7 +147,9 @@ function downloadWithAria2() {
 async function clearStorage() {
     if (!confirm(i18n.clear)) return;
     GM_deleteValues(GM_listValues());
-    torrents.forEach((tr) => tr.classList.remove('nyaa-cached'));
+    for (let tr of torrents) {
+        tr.classList.remove('nyaa-cached');
+    }
     alert(i18n.onclear);
 }
 
@@ -148,7 +159,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 // get torrent info
-document.querySelectorAll('table > tbody > tr').forEach((tr) => {
+for (let tr of document.querySelectorAll('table > tbody > tr')) {
     let [, name, link, size] = tr.children;
     let a = [...name.children].at(-1);
     let url = a.href;
@@ -166,7 +177,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
             let copy = await getClipboardInfo(tr);
             navigator.clipboard.writeText(copy)
         } else if (altKey) {
-            postMessage({ aria2c: 'aria2c_download', params: [{ url: magnet }] });
+            postMessage({ aria2c: 'aria2c_download', params: [magnet] });
         } else {
             getTorrentPreview(tr, layerY, layerX);
         }
@@ -187,7 +198,7 @@ document.querySelectorAll('table > tbody > tr').forEach((tr) => {
             tr.classList.toggle('nyaa-checked');
         }
     });
-});
+}
 
 async function getTorrentDetail(tr) {
     let {url, name, torrent, magnet, size} = tr.info;
@@ -202,7 +213,11 @@ async function getTorrentDetail(tr) {
         let text = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
         let result = text.match(/<div[^>]*id=["']torrent-description["'][^>]*>([\s\S]*?)<\/div>/i)[1];
         let urls = result.match(/https?:\/\/[^\]&)* ]+/g);
-        urls?.forEach((url) => url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url));
+        if (urls) {
+            for (let url of urls) {
+                url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url);
+            }
+        }
         info = { site: [...site], image: [...image] };
         GM_setValue(url, info);
         tr.classList.add('nyaa-cached');
