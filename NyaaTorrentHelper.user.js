@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.2.4
+// @version        1.2.5
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -18,11 +18,10 @@
 // ==/UserScript==
 
 // variables
-let torrents = new Map();
+let torrents = [];
+let preview = {};
+let working = {};
 let selected = new Set();
-let filtered = new Set();
-let working = new Set();
-let preview = new Map();
 let keyword;
 let active = document.querySelector('.pagination > .active');
 
@@ -166,7 +165,7 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
     let [{ href: magnet }, { href: torrent } = {}] = [...link.children].reverse();
     magnet = magnet.slice(0, magnet.indexOf('&'));
     tr.info = { url, magnet, torrent, size: size.textContent, name: a.textContent };
-    torrents.set(url, tr);
+    torrents.push(tr);
     if (GM_getValue(url)) {
         tr.classList.add('nyaa-cached');
     }
@@ -201,13 +200,13 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
 }
 
 async function getTorrentDetail(tr) {
-    let {url, name, torrent, magnet, size} = tr.info;
+    let { url, name, torrent, magnet, size } = tr.info;
     let info = GM_getValue(url);
     if (!info) {
-        if (working.has(url)) {
+        if (working[url]) {
             throw new SyntaxError(`${GM_info.script.name} is processing "url"`);
         }
-        working.add(url);
+        working[url] = true;
         let site = new Set();
         let image = new Set();
         let text = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
@@ -221,7 +220,7 @@ async function getTorrentDetail(tr) {
         info = { site: [...site], image: [...image] };
         GM_setValue(url, info);
         tr.classList.add('nyaa-cached');
-        working.delete(url);
+        delete working[url];
     }
     Object.assign(info, tr.info);
     return info;
@@ -242,13 +241,13 @@ async function getTorrentPreview(tr, top, left) {
     let { image, site } = await getTorrentDetail(tr);
     if (image?.length > 0) {
         let url = image[0];
-        let img = preview.get(url);
+        let img = preview[url];
         if (!img) {
             img = document.createElement('img');
             img.src = redirectURL(url);
             img.className = 'nyaa-preview';
             img.addEventListener('click', event => img.remove());
-            preview.set(url, img);
+            preview[url] = img;
         }
         img.style.cssText = `top: ${top}px; left: ${left}px;`;
         document.body.append(img);
