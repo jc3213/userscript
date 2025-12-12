@@ -75,7 +75,8 @@ let locale = {
         aria2: {
             label: 'Download with Aria2',
             done: '%n% images are sent to Download with Aria2',
-            error: 'Please config Download with Aria2 correctly'
+            error: 'Please config Download with Aria2 correctly',
+            fatal: '"Download With Aria2" is either not installed, disabled, or lower than v4.17.0.3548'
         },
         gotop: {
             label: 'Back to Top',
@@ -97,8 +98,9 @@ let locale = {
         },
         aria2: {
             label: '通过 Aria2 下载',
-            done: '%n% 个图片已传入通过 Aria2 下载',
-            error: '请检查通过 Aria2 下载是否正确配置'
+            done: '%n% 个图片已传入"通过 Aria2 下载"',
+            error: '请检查"通过 Aria2 下载"是否正确配置',
+            fatal: '"通过 Aria2 下载" 未安装，或未启用，或版本低于4.17.0.3548'
         },
         gotop: {
             label: '回到顶部',
@@ -196,11 +198,8 @@ function downloadWithAria2() {
             params.push({ url, options });
         }
         let { result, error } = await bridge('aria2c_download', params);
-        if (result) {
-            notification('aria2', 'done');
-        } else {
-            notification('aria2', 'error');
-        }
+        let action = result ? 'done' : 'error';
+        notification('aria2', action);
     }).catch(notification);
 }
 
@@ -304,7 +303,7 @@ function bridge(aria2c, params) {
         let id = crypto.randomUUID();
         let timer = setTimeout(() => {
             delete message[id];
-            reject( new Error('"Download With Aria2" is either not installed, disabled, or lower than v4.17.0.3548.') );
+            reject( new Error() );
         }, 3000);
         message[id] = (result) => {
             clearTimeout(timer);
