@@ -30,4 +30,4 @@
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
 - [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.js)
 - [BilibiliEmojisExtractor.user.js](https://jc3213.github.io/userscript/BilibiliEmojisExtractor.user.js)
-    - `Ctrl` + `Shift` + `E`: Trigger filter prompt based on images' **alt** property
+    - `Alt` + `Shift` + `E`: Trigger filter prompt based on images' **alt** property
