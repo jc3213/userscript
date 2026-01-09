@@ -221,7 +221,7 @@ function fetchTorrent(url, tr, retries = 3) {
         return info;
     }).catch((err) => {
         delete working[url];
-        //if (retries === 0) throw err;
+        if (retries === 0) throw err;
         return new Promise((resolve) => {
             setTimeout(() => {
                 resolve(fetchTorrent(url, tr, --retries));
