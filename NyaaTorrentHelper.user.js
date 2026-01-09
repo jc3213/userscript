@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.2.5
+// @version        1.2.6
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -101,7 +101,7 @@ let filterMap = {
         delete filterMap[result];
     },
     _default_(result) {
-        let regexp = new RegExp(result.replace(/[?.\(\)\[\]+]/g, '\\$&'), 'i');
+        let regexp = new RegExp(result.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         for (let tr of torrents) {
             regexp.test(tr.info.name)
                 ? tr.classList.remove('nyaa-hidden')
@@ -163,7 +163,6 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
     let a = [...name.children].at(-1);
     let url = a.href;
     let [{ href: magnet }, { href: torrent } = {}] = [...link.children].reverse();
-    magnet = magnet.slice(0, magnet.indexOf('&'));
     tr.info = { url, magnet, torrent, size: size.textContent, name: a.textContent };
     torrents.push(tr);
     if (GM_getValue(url)) {
@@ -199,29 +198,41 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
     });
 }
 
-async function getTorrentDetail(tr) {
-    let { url, name, torrent, magnet, size } = tr.info;
-    let info = GM_getValue(url);
-    if (!info) {
-        if (working[url]) {
-            throw new SyntaxError(`${GM_info.script.name} is processing "url"`);
-        }
-        working[url] = true;
-        let site = new Set();
-        let image = new Set();
-        let text = await fetch(url).then((res) => res.text()).catch((err) => working.delete(url));
+function fetchTorrent(url, tr, retries = 3) {
+    if (working[url]) {
+        throw new SyntaxError(`${GM_info.script.name} is processing "${url}"`);
+    }
+    working[url] = true;
+    let site = new Set();
+    let image = new Set();
+    let info;
+    return fetch(url).then((res) => res.text()).then((text) => {
         let result = text.match(/<div[^>]*id=["']torrent-description["'][^>]*>([\s\S]*?)<\/div>/i)[1];
         let urls = result.match(/https?:\/\/[^\]&)* ]+/g);
         if (urls) {
-            for (let url of urls) {
-                url.match(/.(jpe?g|png|gif|avif|bmp|webp)/) ? image.add(url) : site.add(url);
+            for (let u of urls) {
+                u.match(/\.(jpe?g|png|gif|avif|bmp|webp)/i) ? image.add(u) : site.add(u);
             }
         }
         info = { site: [...site], image: [...image] };
         GM_setValue(url, info);
         tr.classList.add('nyaa-cached');
         delete working[url];
-    }
+        return info;
+    }).catch((err) => {
+        delete working[url];
+        //if (retries === 0) throw err;
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(fetchTorrent(url, tr, --retries));
+            }, 5000);
+        });
+    });
+}
+
+async function getTorrentDetail(tr) {
+    let { url, name, torrent, magnet, size } = tr.info;
+    let info = GM_getValue(url) ?? fetchTorrent(url, tr);
     Object.assign(info, tr.info);
     return info;
 }
@@ -233,7 +244,7 @@ async function getClipboardInfo(tr) {
     ${name} (${size})
 ${i18n.preview}
     ${image.length ? image.join('\n    ') : site.length ? site.join('\n    ') : 'Null'}
-${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magnet}`;
+${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magnet.slice(0, magnet.indexOf('&'))}`;
 }
 
 // show/open preview
