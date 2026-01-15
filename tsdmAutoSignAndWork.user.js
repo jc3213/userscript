@@ -40,13 +40,16 @@ async function autoSign() {
     startWorking('sign', 'dsu_paulsign:sign', '签到', 80, (document, window) =>{
         let error = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
         if (error) {
-            return error.textContent;
+            return Promise.resolve(error.textContent);
         }
-        window.Icon_selected('kx');
-        document.getElementById('todaysay').value = '每日签到';
-        setTimeout(() => {
-            window.showWindow('qwindow', 'qiandao', 'post', '0');
-        }, 3000);
+        return new Promise((resolve) => {
+            window.Icon_selected('kx');
+            document.getElementById('todaysay').value = '每日签到';
+            setTimeout(() => {
+                resolve();
+                window.showWindow('qwindow', 'qiandao', 'post', '0');
+            }, 3000);
+        });
     });
 }
 
@@ -57,20 +60,23 @@ async function autoWork() {
             let [full, hh, mm, ss] = error.textContent.match(/(\d)小时(\d+)分钟(\d+)秒/);
             let next = hh * 3600000 + mm * 60000 + ss * 1000;
             setTimeout(autoWork, next);
-            return error.textContent;
+            return Promise.resolve(error.textContent);
         }
         let index = 0;
-        for (let a of document.querySelectorAll('#advids > div > a')) {
+        return new Promise((resolve) => {
+            for (let a of document.querySelectorAll('#advids > div > a')) {
+                setTimeout(() => {
+                    a.removeAttribute('href');
+                    a.removeAttribute('target');
+                    a.click();
+                }, index++ * 300);
+            }
             setTimeout(() => {
-                a.removeAttribute('href');
-                a.removeAttribute('target');
-                a.click();
-            }, index++ * 300);
-        }
-        setTimeout(() => {
-            document.querySelector('#stopad > a').click();
-            setTimeout(autoWork, 21600000);
-        }, 3000);
+                resolve();
+                document.querySelector('#stopad > a').click();
+                setTimeout(autoWork, 21600000);
+            }, 3000);
+        });
     });
 }
 
@@ -84,17 +90,16 @@ function startWorking(type, id, work, top, callback) {
     popup.style.cssText = `border-radius: 5px; background-color: #FFF; padding: 5px; position: fixed; width: 380px; text-align: center; font-size: 16px; left: ${window.innerWidth / 2 - 190}px; top: ${top}px`;
     iframe.src = `/plugin.php?id=${id}`;
     iframe.style.display = 'none';
-    iframe.addEventListener('load', (evnet) => {
+    iframe.addEventListener('load', async (evnet) => {
         popup.textContent = `开始${work}...`;
         let { contentDocument, contentWindow } = iframe;
         contentWindow.setTimeout = () => null;
-        popup.textContent = callback(contentDocument, contentWindow) ?? `已完成${work}`;
+        popup.textContent = await callback(contentDocument, contentWindow) ?? `已完成${work}`;
         setTimeout(() => {
             delete action[type];
             iframe.remove();
             popup.remove();
-            iframe = null;
-            popup = null;
+            iframe = popup = null;
         }, 3000);
     });
 }
