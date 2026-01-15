@@ -8,11 +8,12 @@
 // @noframes
 // ==/UserScript==
 
-let { signed = '0', worked = '0' } = localStorage;
-let action = {};
+let signed = localStorage.getItem('signed') | 0;
+let worked = localStorage.getItem('worked') | 0;
 let today = new Date();
 let date = today.getFullYear() + today.getMonth() + today.getDate();
 let now = today.getTime();
+let action = {};
 let [e_work, e_sign] = document.querySelectorAll('#mn_Nfded_menu > li > a');
 
 if (location.pathname === '/forum.php' && document.getElementById('tsdm_newpm')) {
