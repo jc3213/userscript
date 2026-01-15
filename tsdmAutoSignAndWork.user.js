@@ -36,47 +36,42 @@ e_sign.addEventListener('click', event => {
     autoSign();
 });
 
-async function autoSign() {
-    startWorking('sign', 'dsu_paulsign:sign', '签到', 80, (document, window) =>{
+function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function autoSign() {
+    startWorking('sign', 'dsu_paulsign:sign', '签到', 80, async (document, window) =>{
         let error = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
         if (error) {
-            return Promise.resolve(error.textContent);
+            return error.textContent;
         }
-        return new Promise((resolve) => {
-            window.Icon_selected('kx');
-            document.getElementById('todaysay').value = '每日签到';
-            setTimeout(() => {
-                resolve();
-                window.showWindow('qwindow', 'qiandao', 'post', '0');
-            }, 3000);
-        });
+        window.Icon_selected('kx');
+        document.getElementById('todaysay').value = '每日签到';
+        await delay(3000);
+        window.showWindow('qwindow', 'qiandao', 'post', '0');
     });
 }
 
-async function autoWork() {
-    startWorking('work', 'np_cliworkdz:work', '打工', 120, (document, window) => {
+function autoWork() {
+    startWorking('work', 'np_cliworkdz:work', '打工', 120, async (document, window) => {
         let error = document.querySelector('#messagetext > p:first-of-type')?.childNodes?.[2];
         if (error) {
             let [full, hh, mm, ss] = error.textContent.match(/(\d)小时(\d+)分钟(\d+)秒/);
             let next = hh * 3600000 + mm * 60000 + ss * 1000;
             setTimeout(autoWork, next);
-            return Promise.resolve(error.textContent);
+            return error.textContent;
         }
         let index = 0;
-        return new Promise((resolve) => {
-            for (let a of document.querySelectorAll('#advids > div > a')) {
-                setTimeout(() => {
-                    a.removeAttribute('href');
-                    a.removeAttribute('target');
-                    a.click();
-                }, index++ * 300);
-            }
-            setTimeout(() => {
-                resolve();
-                document.querySelector('#stopad > a').click();
-                setTimeout(autoWork, 21600000);
-            }, 3000);
-        });
+        for (let a of document.querySelectorAll('#advids > div > a')) {
+            a.removeAttribute('href');
+            a.removeAttribute('target');
+            a.click();
+            await delay(300);
+        }
+        await delay(3000);
+        document.querySelector('#stopad > a').click();
+        setTimeout(autoWork, 21600000);
     });
 }
 
