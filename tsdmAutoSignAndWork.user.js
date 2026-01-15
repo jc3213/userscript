@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         天使动漫自动签到打工
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.0
+// @version      1.5.1
 // @description  天使动漫全自动打工签到脚本 — 完全自动无需任何操作，只需静待一分钟左右
 // @author       jc3213
 // @match        *://www.tsdm39.com/*
@@ -42,7 +42,7 @@ function delay(ms) {
 }
 
 function autoSign() {
-    startWorking('sign', 'dsu_paulsign:sign', '签到', 80, async (document, window) => {
+    startWorking('签到', 'dsu_paulsign:sign', 80, async (document, window) => {
         let error = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
         if (error) {
             return error.textContent;
@@ -55,7 +55,7 @@ function autoSign() {
 }
 
 function autoWork() {
-    startWorking('work', 'np_cliworkdz:work', '打工', 120, async (document, window) => {
+    startWorking('打工', 'np_cliworkdz:work', 120, async (document, window) => {
         let error = document.querySelector('#messagetext > p:first-of-type')?.childNodes?.[2];
         if (error) {
             let [full, hh, mm, ss] = error.textContent.match(/(\d)小时(\d+)分钟(\d+)秒/);
@@ -76,9 +76,9 @@ function autoWork() {
     });
 }
 
-function startWorking(type, id, work, top, callback) {
-    if (action[type]) return;
-    action[type] = true;
+function startWorking(work, id, top, callback) {
+    if (action[work]) return;
+    action[work] = true;
     let popup = document.createElement('div');
     let iframe = document.createElement('iframe');
     document.body.append(iframe, popup);
@@ -89,10 +89,11 @@ function startWorking(type, id, work, top, callback) {
     iframe.addEventListener('load', async (evnet) => {
         popup.textContent = `开始${work}...`;
         let { contentDocument, contentWindow } = iframe;
-        contentWindow.setTimeout = () => null;
-        popup.textContent = await callback(contentDocument, contentWindow) ?? `已完成${work}`;
+        contentWindow.setTimeout = () => {};
+        let result = await callback(contentDocument, contentWindow);
+        popup.textContent = result ?? `已完成${work}`;
         setTimeout(() => {
-            delete action[type];
+            delete action[work];
             iframe.remove();
             popup.remove();
             iframe = popup = null;
