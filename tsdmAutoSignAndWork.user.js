@@ -41,7 +41,7 @@ function delay(ms) {
 }
 
 function autoSign() {
-    startWorking('sign', 'dsu_paulsign:sign', '签到', 80, async (document, window) =>{
+    startWorking('sign', 'dsu_paulsign:sign', '签到', 80, async (document, window) => {
         let error = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
         if (error) {
             return error.textContent;
