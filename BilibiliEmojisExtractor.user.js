@@ -2,7 +2,7 @@
 // @name            Bilibili Emojis Extractor
 // @name:zh         哔哩哔哩表情提取
 // @namespace       https://github.com/jc3213/userscript
-// @version         0.4
+// @version         0.5
 // @description     Extract official Emojis in users' comments
 // @description:zh  提取评论区的官方表情的图片
 // @author          jc3213
@@ -102,7 +102,7 @@ function extractEmoji() {
 }
 
 document.addEventListener('keydown', (event) => {
-    if (event.altlKey && event.shiftKey && event.code === 'KeyE') {
+    if (event.altKey && event.shiftKey && event.code === 'KeyE') {
         extractEmoji();
     }
 });
