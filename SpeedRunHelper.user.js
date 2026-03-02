@@ -41,54 +41,42 @@ css.innerHTML = `
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: block;}`;
 document.body.append(css);
 
-const videoHandlers = {
-    '': mainboard,
-    'series': seriesboard,
-    'users': usersboard,
-    game: gameboard
-};
-
-document.querySelector('main').addEventListener('contextmenu', (event) => {
-    let handler = videoHandlers[srWatch] ?? videoHandlers.game;
-    handler(event);
-});
-
-function mainboard(event) {
-    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
-        let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
-        return {url: rank.parentNode.href, rank, player, time};
-    });
-}
-
-function seriesboard(event) {
-    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
-        let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
-        return {url: rank.parentNode.href, rank, player, time};
-    });
-}
-
-function usersboard(event) {
-    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
-        let player = document.querySelector('.x-username > span');
-        let [rank, time] = record.querySelectorAll('a > .truncate');
-        return {url: rank.parentNode.href, rank, player, time};
-    });
-}
-
-function gameboard(event) {
-    speedrunRecord(event, 'tr', (record) => {
-        let [rank, player, time] = record.querySelectorAll('a');
-        return {url: rank.href, rank, player, time};
-    });
-}
-
-async function speedrunRecord(event, selector, callback) {
-    let record = event.target.closest(selector);
-    if (!record || event.ctrlKey) {
+document.querySelector('main').addEventListener('contextmenu', async (event) => {
+    if (event.ctrlKey || event.altKey || event.shiftKey) {
+        return;
+    }
+    let result;
+    if (srWatch === '') {
+        let record = event.target.closest('div.cursor-pointer.x-focus-outline-offset.overflow-hidden');
+        if (record) {
+            let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
+            result = { url: rank.parentNode.href, rank, player, time };
+        }
+    } else if (srWatch === 'series') {
+        let record = event.target.closest('div.cursor-pointer.x-focus-outline-offset.overflow-hidden');
+        if (record) {
+            let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
+            result = { url: rank.parentNode.href, rank, player, time };
+        }
+    } else if (srWatch === 'users') {
+        let record = event.target.closest('div.cursor-pointer.x-focus-outline-offset.overflow-hidden');
+        if (record) {
+            let player = document.querySelector('.x-username > span');
+            let [rank, time] = record.querySelectorAll('a > .truncate');
+            result = { url: rank.parentNode.href, rank, player, time };
+        }
+    } else {
+        let record = event.target.closest('tr');
+        if (record) {
+            let [rank, player, time] = record.querySelectorAll('a');
+            result = { url: rank.href, rank, player, time };
+        }
+    }
+    if (!result) {
         return;
     }
     event.preventDefault();
-    let {url, rank, player, time} = callback(record);
+    let { url, rank, player, time } = result;
     let id = url.slice(url.lastIndexOf('/') + 1);
     if (worker[id]) {
         return;
@@ -107,28 +95,7 @@ async function speedrunRecord(event, selector, callback) {
     let iframe = html.substring(start, end);
     console.log(iframe);
     createRecordWindow(id, title, top, iframe);
-}
-
-const recordHandlers = {
-    'speedrun-minimum': (pane) => {
-        pane.classList.add('speedrun-minimum');
-        pane.classList.remove('speedrun-maximum');
-        pane.style.cssText = '';
-    },
-    'speedrun-maximum': (pane) => {
-        pane.classList.add('speedrun-maximum');
-        pane.classList.remove('speedrun-minimum');
-        pane.style.cssText = '';
-    },
-    'speedrun-restore': (pane, id) => {
-        pane.classList.remove('speedrun-maximum', 'speedrun-minimum');
-        pane.style.cssText = style[id];
-    },
-    'speedrun-remove': (pane) => {
-        pane.remove();
-        -- srPane;
-    }
-}
+});
 
 document.addEventListener('dragstart', (event) => {
     let pane = event.target.closest('div[id^=speedrun-');
@@ -167,9 +134,21 @@ function createRecordWindow(id, title, top, player) {
 ${player}`;
     pane.style.cssText = style[id] = fixedPanePosition(pane.offset);
     pane.addEventListener('click', (event) => {
-        let handler = recordHandlers[event.target.id];
-        if (handler) {
-            handler(pane, id);
+        let { id } = event.target;
+        if (id === 'speedrun-minimum') {
+            pane.classList.add('speedrun-minimum');
+            pane.classList.remove('speedrun-maximum');
+            pane.style.cssText = '';
+        } else if (id === 'speedrun-maximum') {
+            pane.classList.add('speedrun-maximum');
+            pane.classList.remove('speedrun-minimum');
+            pane.style.cssText = '';
+        } else if (id === 'speedrun-restore') {
+            pane.classList.remove('speedrun-maximum', 'speedrun-minimum');
+            pane.style.cssText = style[id];
+        } else if (id === 'speedrun-remove') {
+            pane.remove();
+            --srPane;
         }
     });
     document.body.appendChild(pane);
