@@ -59,6 +59,27 @@ css.innerHTML = `
 .speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore { display: block; }`;
 document.body.append(css);
 
+document.addEventListener('dragstart', (event) => {
+    let pane = event.target.closest('div[id^=speedrun-');
+    if (pane.draggable) {
+        srDrag = pane;
+        srX = event.clientX - srDrag.offsetLeft;
+        srY = event.clientY - srDrag.offsetTop;
+    }
+});
+
+document.addEventListener('dragover', (event) => {
+    event.preventDefault();
+});
+
+document.addEventListener('drop', (event) => {
+    event.preventDefault();
+    let left = event.clientX - srX;
+    let top = event.clientY - srY;
+    srDrag.offset = srDrag.style.cssText = `left: ${left}px; top: ${top}px;`;
+    srDrag = null;
+});
+
 document.querySelector('main').addEventListener('contextmenu', async (event) => {
     if (event.ctrlKey || event.altKey || event.shiftKey) {
         return;
@@ -95,50 +116,35 @@ document.querySelector('main').addEventListener('contextmenu', async (event) => 
     }
     event.preventDefault();
     let { url, rank, player, time } = result;
-    let id = url.slice(url.lastIndexOf('/') + 1);
+    let id = url.substring(url.lastIndexOf('/') + 1);
     if (worker[id]) {
         return;
     }
     worker[id] = true;
     let title = `<div>Rank: ${rank.innerHTML}</div><div>Player: ${player.innerHTML}</div><div>Time: ${time.textContent}</div>`;
-    if (speedrun[id]) {
+    let pane = speedrun[id];
+    if (pane) {
         worker[id] = false;
-        speedrun[id].style.cssText = style[id] = fixedPanePosition(speedrun[id].offset);
-        return document.body.appendChild(speedrun[id]);
+        pane.style.cssText = pane.offset;
+        pane.classList.remove('speedrun-maximum', 'speedrun-minimum');
+        document.body.appendChild(speedrun[id]);
+        return;
     }
     let response = await fetch(url);
     let html = await response.text();
     let start = html.indexOf('<iframe');
     let end = html.indexOf('</iframe>', start) + 9;
     let iframe = html.substring(start, end);
-    console.log(iframe);
-    createRecordWindow(id, title, top, iframe);
-});
-
-document.addEventListener('dragstart', (event) => {
-    let pane = event.target.closest('div[id^=speedrun-');
-    if (pane.draggable) {
-        srDrag = pane;
-        srX = event.clientX - srDrag.offsetLeft;
-        srY = event.clientY - srDrag.offsetTop;
+    let offset = ++srPane * 30;
+    let top = 130 + offset;
+    let left = (innerWidth - fixedX) / 2 + offset;
+    if (left < 0) {
+        left = 0;
     }
-});
-
-document.addEventListener('dragover', (event) => {
-    event.preventDefault();
-});
-
-document.addEventListener('drop', (event) => {
-    event.preventDefault();
-    srDrag.style.left = event.clientX - srX + 'px';
-    srDrag.style.top = event.clientY - srY + 'px';
-    srDrag = null;
-});
-
-function createRecordWindow(id, title, top, player) {
-    let pane = document.createElement('div');
+    let style = `top: ${top}px; left: ${left}px;`;
+    console.log(iframe, style);
+    pane = document.createElement('div');
     pane.id = 'speedrun-' + id;
-    pane.offset = ++srPane * 30;
     pane.className = 'speedrun-window';
     pane.draggable = true;
     pane.innerHTML = `
@@ -149,8 +155,8 @@ function createRecordWindow(id, title, top, player) {
     <div id="speedrun-maximum">🔲</div>
     <div id="speedrun-remove">❌</div>
 </div>
-${player}`;
-    pane.style.cssText = style[id] = fixedPanePosition(pane.offset);
+${iframe}`;
+    pane.style.cssText = pane.offset = style;
     pane.addEventListener('click', (event) => {
         let { id } = event.target;
         if (id === 'speedrun-minimum') {
@@ -162,8 +168,8 @@ ${player}`;
             pane.classList.remove('speedrun-minimum');
             pane.style.cssText = '';
         } else if (id === 'speedrun-restore') {
+            pane.style.cssText = pane.offset;
             pane.classList.remove('speedrun-maximum', 'speedrun-minimum');
-            pane.style.cssText = style[id];
         } else if (id === 'speedrun-remove') {
             pane.remove();
             --srPane;
@@ -172,13 +178,4 @@ ${player}`;
     document.body.appendChild(pane);
     speedrun[id] = pane;
     worker[id] = false;
-}
-
-function fixedPanePosition(offset) {
-    let top = 130 + offset;
-    let left = (innerWidth - fixedX) / 2 + offset;
-    if (left < 0) {
-        left = 0;
-    }
-    return `top: ${top}px; left: ${left}px;`;
-}
+});
