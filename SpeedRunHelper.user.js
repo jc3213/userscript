@@ -11,34 +11,52 @@
 let speedrun = {};
 let worker = {};
 let style = {};
-let srFixed = fixedPanePlayer();
 let srDrag;
 let srY;
 let srX;
 let srPane = -1;
 let srWatch = location.pathname.split('/')?.[1];
-var {clientWidth, clientHeight} = document.documentElement;
+
+let { innerHeight, innerWidth } = window;
+let fixedX;
+let fixedY;
+if (innerHeight < 720) {
+    fixedX = 854;
+    fixedY = 480;
+} else if (innerHeight < 1080) {
+    fixedX = 1280;
+    fixedY = 720;
+} else if (innerHeight < 1440) {
+    fixedX = 1920;
+    fixedY = 1080;
+} else if (innerHeight < 2160) {
+    fixedX = 2560;
+    fixedY = 1440;
+} else {
+    fixedX = 3840;
+    fixedY = 2160;
+}
 
 let css = document.createElement('style');
 css.innerHTML = `
-#app-main [class$="lg:w-[400px]"] {display: none !important;}
-.speedrun-window {position: absolute; z-index: 999999; display: grid; grid-template-columns: calc(100% - 66px) 66px;}
-.speedrun-window iframe {width: ${srFixed.x}px; height: ${srFixed.y}px; grid-column: span 2;}
-.speedrun-record, .speedrun-menu {background-color: #181B1C; display: flex; height: 22px;}
-.speedrun-record > * {flex: 1; margin: auto; padding: 0px 5px 0px 3px;}
-.speedrun-record * {display: inline-block !important;}
-.speedrun-record img {height: 16px !important; width: 16px !important; position: relative !important; margin-right: 3px;}
+#app-main [class$="lg:w-[400px]"] { display: none !important; }
+.speedrun-window { position: absolute; z-index: 999999; display: grid; grid-template-columns: calc(100% - 66px) 66px; }
+.speedrun-window iframe { width: ${fixedX}px; height: ${fixedY}px; grid-column: span 2; }
+.speedrun-record, .speedrun-menu { background-color: #181B1C; display: flex; height: 22px; }
+.speedrun-record > * { flex: 1; margin: auto; padding: 0px 5px 0px 3px; }
+.speedrun-record * { display: inline-block !important; }
+.speedrun-record img { height: 16px !important; width: 16px !important; position: relative !important; margin-right: 3px; }
 .speedrun-menu {margin-left: auto;}
-.speedrun-menu > * {background-color: #fff; color: #000; cursor: pointer; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px;}
-.speedrun-menu > :hover {filter: opacity(60%);}
-.speedrun-menu > :active {filter: opacity(30%);}
-#speedrun-minimum {line-height: 30px;}
-.speedrun-minimum {bottom: 0px; left: 0px; width: 30% !important; height: 20px !important; z-index: 99999;}
-.speedrun-minimum iframe {display: none !important;}
-.speedrun-maximum {top: 0px; left: 0px; width: ${clientWidth}px !important; height: ${clientHeight}px !important; z-index: 999999;}
-.speedrun-maximum iframe {width: ${clientWidth}px !important; height: ${clientHeight - 20}px !important;}
-#speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum {display: none;}
-.speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore {display: block;}`;
+.speedrun-menu > * { background-color: #fff; color: #000; cursor: pointer; height: 20px; width: 20px; font-size: 14px; text-align: center; vertical-align: top; margin-left: 2px; }
+.speedrun-menu > :hover { filter: opacity(60%); }
+.speedrun-menu > :active { filter: opacity(30%); }
+#speedrun-minimum { line-height: 30px; }
+.speedrun-minimum { bottom: 0px; left: 0px; width: 30% !important; height: 20px !important; z-index: 99999; }
+.speedrun-minimum iframe { display: none !important; }
+.speedrun-maximum { top: 0px; left: 0px; width: ${innerWidth - 4}px !important; height: ${innerHeight - 4}px !important; z-index: 999999; }
+.speedrun-maximum iframe { width: ${innerWidth - 4}px !important; height: ${innerHeight - 24}px !important; }
+#speedrun-restore, .speedrun-minimum #speedrun-minimum, .speedrun-maximum #speedrun-maximum { display: none; }
+.speedrun-minimum #speedrun-restore, .speedrun-maximum #speedrun-restore { display: block; }`;
 document.body.append(css);
 
 document.querySelector('main').addEventListener('contextmenu', async (event) => {
@@ -158,26 +176,9 @@ ${player}`;
 
 function fixedPanePosition(offset) {
     let top = 130 + offset;
-    let left = (document.documentElement.clientWidth - srFixed.x) / 2 + offset;
+    let left = (innerWidth - fixedX) / 2 + offset;
     if (left < 0) {
         left = 0;
     }
     return `top: ${top}px; left: ${left}px;`;
-}
-
-function fixedPanePlayer() {
-    let {innerHeight} = window;
-    if (innerHeight < 720) {
-        return {x: 854, y: 480};
-    }
-    if (innerHeight < 1080) {
-        return {x: 1280, y: 720};
-    }
-    if (innerHeight < 1440) {
-        return {x: 1920, y: 1080};
-    }
-    if (innerHeight < 2160) {
-        return {x: 2560, y: 1440};
-    }
-    return {x: 3840, y: 2160};
 }
