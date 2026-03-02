@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Speedrun.com Helper
 // @namespace    https://github.com/jc3213/userscript
-// @version      1.5.0
+// @version      1.6.0
 // @description  Easy way for speedrun.com to open record window
 // @author       jc3213
 // @match        https://www.speedrun.com/*
@@ -15,7 +15,7 @@ let srFixed = fixedPanePlayer();
 let srDrag;
 let srY;
 let srX;
-let srPane = 0;
+let srPane = -1;
 let srWatch = location.pathname.split('/')?.[1];
 var {clientWidth, clientHeight} = document.documentElement;
 
@@ -54,7 +54,7 @@ document.querySelector('main').addEventListener('contextmenu', (event) => {
 });
 
 function mainboard(event) {
-    speedrunRecord(event, 'div.flex.flex-row.flex-wrap.items-start.justify-start.p-2', (record) => {
+    speedrunRecord(event, 'div.cursor-pointer.x-focus-outline-offset.overflow-hidden', (record) => {
         let [rank, time, player] = record.querySelectorAll('a > .truncate, a.x-username-truncate');
         return {url: rank.parentNode.href, rank, player, time};
     });
@@ -94,7 +94,7 @@ async function speedrunRecord(event, selector, callback) {
         return;
     }
     worker[id] = true;
-    let title = '<div>Rank: ' + rank.innerHTML + '</div><div>Player: ' + player.innerHTML + '</div><div>Time: ' + time.textContent + '</div>';
+    let title = `<div>Rank: ${rank.innerHTML}</div><div>Player: ${player.innerHTML}</div><div>Time: ${time.textContent}</div>`;
     if (speedrun[id]) {
         worker[id] = false;
         speedrun[id].style.cssText = style[id] = fixedPanePosition(speedrun[id].offset);
@@ -102,11 +102,11 @@ async function speedrunRecord(event, selector, callback) {
     }
     let response = await fetch(url);
     let html = await response.text();
-    let xml = document.createElement('div');
-    xml.innerHTML = html;
-    let iframe = xml.querySelector('iframe[class]');
+    let start = html.indexOf('<iframe');
+    let end = html.indexOf('</iframe>', start) + 9;
+    let iframe = html.substring(start, end);
+    console.log(iframe);
     createRecordWindow(id, title, top, iframe);
-    xml.remove();
 }
 
 const recordHandlers = {
@@ -153,13 +153,19 @@ document.addEventListener('drop', (event) => {
 function createRecordWindow(id, title, top, player) {
     let pane = document.createElement('div');
     pane.id = 'speedrun-' + id;
-    pane.offset = srPane * 30;
+    pane.offset = ++srPane * 30;
     pane.className = 'speedrun-window';
     pane.draggable = true;
-    pane.innerHTML = `<div class="speedrun-record">${title}</div>
-<div class="speedrun-menu"><div id="speedrun-minimum">➖</div><div id="speedrun-restore">🔳</div><div id="speedrun-maximum">🔲</div><div id="speedrun-remove">❌</div></div>`;
+    pane.innerHTML = `
+<div class="speedrun-record">${title}</div>
+<div class="speedrun-menu">
+    <div id="speedrun-minimum">➖</div>
+    <div id="speedrun-restore">🔳</div>
+    <div id="speedrun-maximum">🔲</div>
+    <div id="speedrun-remove">❌</div>
+</div>
+${player}`;
     pane.style.cssText = style[id] = fixedPanePosition(pane.offset);
-    pane.appendChild(player);
     pane.addEventListener('click', (event) => {
         let handler = recordHandlers[event.target.id];
         if (handler) {
@@ -168,7 +174,6 @@ function createRecordWindow(id, title, top, player) {
     });
     document.body.appendChild(pane);
     speedrun[id] = pane;
-    ++ srPane;
     worker[id] = false;
 }
 
