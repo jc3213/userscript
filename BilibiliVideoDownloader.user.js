@@ -2,17 +2,18 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         1.13.1
+// @version         2.0.0
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
-// @match           *://www.bilibili.com/video/*
-// @match           *://www.bilibili.com/v/*
+// @match           https://www.bilibili.com/video/*
+// @match           https://www.bilibili.com/v/*
+// @match           https://www.bilibili.com/festival/*
 // @grant           GM_download
-// @run-at          document-idle
 // ==/UserScript==
 
 let { autowide = '1', videocodec = 'bilivideo_vc265' } = localStorage;
+let { pathname } = location;
 let bvTitle;
 let bvOpen = true;
 let history = {};
@@ -39,21 +40,14 @@ let format = {
     'mp4a': { title: '音频编码: AAC', alt: 'aac', type: 'audio' }
 };
 
-let bvHandler = {
-    'video': { key: 'data', menu: 'div.video-toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', fetch: () => {
-        let { videoData } = document.defaultView.__INITIAL_STATE__;
-        let { title, aid, pic } = videoData;
-        let cid = document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid') ?? videoData.cid;
-        bVideoTitle(title);
-        bVideoThumb(pic);
-        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
-    } },
-    'v': { key: 'data', offset: 'left: -300px;', menu: 'div.select-type > ul.type', widebtn: 'div.bilibili-player-video-btn-widescreen', widestat: 'closed', fetch: () => {
-        let { aid, cid } = document.defaultView;
-        bVideoTitle(document.querySelector('div.match-info-title').textContent);
-        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
-    } },
-    'default': { key: 'result', offset: 'display: inline-block; top: -12px;', menu: 'div.toolbar > div.toolbar-left', widebtn: 'div.bpx-player-ctrl-wide', widestat: 'bpx-state-entered', fetch: () => {
+const bvCode = pathname.substring(1, pathname.indexOf('/', 2));
+const bvMenu = {
+    dash: 'result',
+    offset: 'display: inline-block; top: -12px;',
+    menu: 'div.toolbar > div.toolbar-left',
+    widebtn: 'div.bpx-player-ctrl-wide',
+    widestat: 'bpx-state-entered',
+    fetch: () => {
         let active = document.querySelector('li.bpx-player-ctrl-eplist-menu-item.bpx-state-active');
         let id = active.getAttribute('data-episodeid');
         let name = active.textContent;
@@ -61,10 +55,47 @@ let bvHandler = {
         bVideoTitle(name);
         bVideoThumb(thumb);
         bVideoGetter(id, `pgc/player/web/playurl?ep_id=${id}`);
-    } }
+    }
 };
-let bvCode = location.pathname.match(/^\/(v(?:ideo)?)\//)?.[1];
-let bvMenu = bvHandler[bvCode] ?? bvHandler.default;
+
+if (bvCode === 'video') {
+    bvMenu.menu = 'div.video-toolbar-left';
+    bvMenu.offset = '10px';
+    bvMenu.dash = 'data';
+    bvMenu.fetch = () => {
+        let { videoData } = document.defaultView.__INITIAL_STATE__;
+        let { title, aid, cid, pic } = videoData;
+        cid ??= document.querySelector('li.bpx-state-multi-active-item')?.getAttribute('data-cid');
+        bVideoTitle(title);
+        bVideoThumb(pic);
+        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+    };
+} else if (bvCode === 'v') {
+    bvMenu.offset = 'left: -300px;';
+    bvMenu.menu = 'div.select-type > ul.type';
+    bvMenu.widebtn = 'div.bilibili-player-video-btn-widescreen';
+    bvMenu.widestat = 'closed';
+    bvMenu.dash = 'data';
+    bvMenu.fetch = () => {
+        let { aid, cid } = document.defaultView;
+        bVideoTitle(document.querySelector('div.match-info-title').textContent);
+        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+    };
+} else if (bvCode === 'festival') {
+    bvMenu.offset = 'top: 86%; right: 0%;';
+    bvMenu.menu = 'div.page-bg-logo';
+    bvMenu.dash = 'data';
+    bvMenu.fetch = () => {
+        let { videoInfo } = document.defaultView.__INITIAL_STATE__;
+        let { title, aid, cid} = videoInfo;
+        let active = document.querySelector('li.bpx-player-ctrl-eplist-menu-item.bpx-state-active');
+        let name = `${title} - ${active.textContent}`;
+        cid ??= active.getAttribute('data-cid');
+        bVideoTitle(title);
+        //bVideoThumb(pic);
+        bVideoGetter(cid, 'x/player/playurl?avid=' + aid + '&cid=' + cid);
+    }
+}
 
 let menuItem = document.createElement('div');
 menuItem.className = 'bilivideo_button';
@@ -141,45 +172,36 @@ async function bVideoGetter(vid, playurl) {
     } else {
         let response = await fetch('https://api.bilibili.com/' + playurl + '&fnval=4050', {credentials: 'include'});
         let json = await response.json();
-        bVideoExtractor(json[bvMenu.key]?.dash);
+        let videos = json[bvMenu.dash].dash;
+        bVideoExtractor(videos);
         history[vid] = [...analysePane.children];
     }
 }
 
-function bVideoOptions() {
-    optionsPane.classList.toggle('bilivideo_hidden');
-    analysePane.classList.add('bilivideo_hidden');
-}
-
-function bVideoAnalyze() {
-    optionsPane.classList.add('bilivideo_hidden');
-    analysePane.classList.toggle('bilivideo_hidden');
-    if (!bvOpen) return;
-    analysePane.classList.add(videocodec);
-    bvOpen = false;
-    analysePane.innerHTML = '';
-    bvMenu.fetch();
-}
-
-const menuEvent = {
-    'bilivideo_optbtn': bVideoOptions,
-    'bilivideo_anabtn': bVideoAnalyze
-};
-
 menuPane.addEventListener('click', (event) => {
-    let menu = menuEvent[event.target.id];
-    menu?.();
+    let { id } = event.target;
+    if (id === 'bilivideo_optbtn') {
+        optionsPane.classList.toggle('bilivideo_hidden');
+        analysePane.classList.add('bilivideo_hidden');
+    } else if (id === 'bilivideo_anabtn') {
+        optionsPane.classList.add('bilivideo_hidden');
+        analysePane.classList.toggle('bilivideo_hidden');
+        if (!bvOpen) return;
+        analysePane.classList.add(videocodec);
+        bvOpen = false;
+        analysePane.innerHTML = '';
+        bvMenu.fetch();
+    }
 });
-
-const optEvent = {
-    'autowide': () => document.querySelector(bvMenu.widebtn).click(),
-    'videocodec': (value) => analysePane.classList.replace(videocodec, value)
-};
 
 optionsPane.addEventListener('change', (event) => {
     let { name, value } = event.target;
     self[name] = localStorage[name] = value;
-    optEvent[name]?.(value);
+    if (name === 'autowide') {
+        document.querySelector(bvMenu.widebtn).click();
+    } else if (name === 'videocodec') {
+        analysePane.classList.replace(videocodec, value);
+    }
 });
 
 analysePane.addEventListener('click', (event) => {
@@ -196,7 +218,7 @@ optionCodec.value = videocodec;
 
 let cssPane = document.createElement('style');
 cssPane.textContent = `
-#bilivideo_main { font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; ${bvMenu.offset ?? ''} }
+#bilivideo_main { font-size: 16px; position: relative; text-align: center; padding-right: 5px; line-height: 28px; z-index: 9999999; width: fit-content; ${bvMenu.offset ?? ''} }
 #bilivideo_menu { display: flex; gap: 5px;}
 .bilivideo_button { border: outset 1px #000; padding: 3px; background-color: #c26; color: #fff; cursor: pointer; width: 100px; }
 .bilivideo_button:hover { filter: contrast(80%); }
@@ -204,8 +226,9 @@ cssPane.textContent = `
 .bilivideo_pane { position: absolute; top: 0px; left: 100%; background-color: #fff; border: solid 1px #000; padding: 5px; }
 .bilivideo_pane > h4, .bilivideo_pane > select { width: 110px !important; padding: 5px; text-align: center; }
 .bilivideo_pane > h4 { color: #c26; font-weight: bold; margin: auto; }
+.bilivideo_pane > select { cursor: pointer; border: 1px solid #000; }
 .bilivideo_result { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-auto-flow: dense; gap: 5px; }
-.bilivideo_thumb { grid-column: 1 ;}
+.bilivideo_thumb { grid-column: 1; }
 .bilivideo_video { grid-column: 2; }
 .bilivideo_audio { grid-column: 3; }
 .bilivideo_hidden { display: none; }
