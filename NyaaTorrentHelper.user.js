@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.2.6
+// @version        1.3.0
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -13,7 +13,6 @@
 // @grant          GM_deleteValue
 // @grant          GM_deleteValues
 // @grant          GM_listValues
-// @grant          GM_addValueChangeListener
 // @grant          GM_openInTab
 // ==/UserScript==
 
@@ -23,6 +22,7 @@ let preview = {};
 let working = {};
 let selected = new Set();
 let keyword;
+let filterResult = {};
 let active = document.querySelector('.pagination > .active');
 
 // i18n
@@ -65,60 +65,26 @@ css.textContent = `
 document.body.appendChild(css);
 
 // shortcut
-function ctrlButton(event, button) {
-    if (!event.ctrlKey || button.className === 'disabled') return;
-    event.preventDefault();
-    button.children[0].click();
-}
-
-function altHandler(event, callback) {
-    if (!event.altKey) return;
-    event.preventDefault();
-    callback();
-}
-
-function altShiftHandler(event, callback) {
-    if (!event.altKey || !event.shiftKey) return;
-    event.preventDefault();
-    callback();
-}
-
-let hotkeyMap = {
-    'ArrowLeft': (event) => ctrlButton(event, active.previousElementSibling),
-    'ArrowRight': (event) => ctrlButton(event, active.nextElementSibling),
-    'KeyC': (event) => altHandler(event, copyToClipboard),
-    'KeyD': (event) => altHandler(event, downloadWithAria2),
-    'KeyF': (event) => altHandler(event, filterTorrents),
-    'KeyE': (event) => altShiftHandler(event, clearStorage),
-};
-
-let filterMap = {
-    ''(result) {
+function filterTorrents() {
+    let result = prompt(i18n.prompt, keyword);
+    if (result === null) {
+        return;
+    }
+    if (result === '' || result === keyword) {
         for (let tr of torrents) {
             tr.classList.remove('nyaa-hidden');
         }
         keyword = '';
-        delete filterMap[result];
-    },
-    _default_(result) {
+        delete filterResult[result];
+    } else {
         let regexp = new RegExp(result.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         for (let tr of torrents) {
             regexp.test(tr.info.name)
                 ? tr.classList.remove('nyaa-hidden')
                 : tr.classList.add('nyaa-hidden');
         }
-        filterMap[result] = filterMap[''];
         keyword = result;
     }
-}
-
-function filterTorrents() {
-    let result = prompt(i18n.prompt, keyword);
-    if (result === null) {
-        return;
-    }
-    let filter = filterMap[result] ?? filterMap._default_;
-    filter(result);
 }
 
 async function copyToClipboard() {
@@ -153,22 +119,48 @@ async function clearStorage() {
 }
 
 document.addEventListener('keydown', (event) => {
-    let hotkey = hotkeyMap[event.code];
-    hotkey?.(event);
+    let { key, ctrlKey, altKey, shiftKey } = event;
+    key = key.toLowerCase();
+    if (ctrlKey) {
+        let button = key === 'arrowleft' ? active.previousElementSibling : key === 'arrowright' ? active.nextElementSibling : null;
+        if (button && button.className !== 'disabled') {
+            event.preventDefault();
+            button.children[0].click();
+        }
+        return;
+    }
+    if (!altKey) return;
+    if (shiftKey) {
+        if (key === 'e') {
+            event.preventDefault();
+            clearStorage();
+        }
+    } else {
+        if (key === 'c') {
+            event.preventDefault();
+            copyToClipboard();
+        } else if (key === 'd') {
+            event.preventDefault();
+            downloadWithAria2()
+        } else if (key === 'f') {
+            event.preventDefault();
+            filterTorrents();
+        }
+    }
 });
 
 // get torrent info
 for (let tr of document.querySelectorAll('table > tbody > tr')) {
-    let [, name, link, size] = tr.children;
-    let a = [...name.children].at(-1);
-    let url = a.href;
+    let [genre, name, link, size] = tr.children;
+    let id = name.children[0].href.match(/\/([^/#]+)(?:#comments)?$/)[1];
+    let url = '/view/' + id;
     let [{ href: magnet }, { href: torrent } = {}] = [...link.children].reverse();
-    tr.info = { url, magnet, torrent, size: size.textContent, name: a.textContent };
+    tr.info = { id, url, magnet, torrent, size: size.textContent, name: name.textContent };
     torrents.push(tr);
-    if (GM_getValue(url)) {
+    if (GM_getValue(id)) {
         tr.classList.add('nyaa-cached');
     }
-    a.addEventListener('contextmenu', async (event) => {
+    name.addEventListener('contextmenu', async (event) => {
         event.preventDefault();
         let { ctrlKey, altKey, layerX, layerY } = event;
         if (ctrlKey) {
@@ -188,7 +180,7 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
         let { shiftKey, ctrlKey } = event;
         if (ctrlKey) {
             event.preventDefault();
-            GM_deleteValue(url);
+            GM_deleteValue(id);
             tr.classList.remove('nyaa-cached');
         } else if (shiftKey) {
             event.preventDefault();
@@ -198,7 +190,7 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
     });
 }
 
-function fetchTorrent(url, tr, retries = 3) {
+function fetchTorrent(id, url, tr, retries = 3) {
     if (working[url]) {
         throw new SyntaxError(`${GM_info.script.name} is processing "${url}"`);
     }
@@ -211,11 +203,11 @@ function fetchTorrent(url, tr, retries = 3) {
         let urls = result.match(/https?:\/\/[^\]&)* ]+/g);
         if (urls) {
             for (let u of urls) {
-                u.match(/\.(jpe?g|png|gif|avif|bmp|webp)/i) ? image.add(u) : site.add(u);
+                /\.(jpe?g|png|gif|avif|bmp|webp)/i.test(u) ? image.add(u) : site.add(u);
             }
         }
-        info = { site: [...site], image: [...image] };
-        GM_setValue(url, info);
+        info = { site: [...site][0], image: [...image][0] };
+        GM_setValue(id, info);
         tr.classList.add('nyaa-cached');
         delete working[url];
         return info;
@@ -224,15 +216,15 @@ function fetchTorrent(url, tr, retries = 3) {
         if (retries === 0) throw err;
         return new Promise((resolve) => {
             setTimeout(() => {
-                resolve(fetchTorrent(url, tr, --retries));
+                resolve(fetchTorrent(id, url, tr, --retries));
             }, 5000);
         });
     });
 }
 
 async function getTorrentDetail(tr) {
-    let { url, name, torrent, magnet, size } = tr.info;
-    let info = GM_getValue(url) ?? fetchTorrent(url, tr);
+    let { id, url, name, torrent, magnet, size } = tr.info;
+    let info = GM_getValue(id) ?? fetchTorrent(id, url, tr);
     Object.assign(info, tr.info);
     return info;
 }
@@ -243,39 +235,35 @@ async function getClipboardInfo(tr) {
     return `${i18n.name}
     ${name} (${size})
 ${i18n.preview}
-    ${image.length ? image.join('\n    ') : site.length ? site.join('\n    ') : 'Null'}
+    ${image ? image : site ? site : 'Null'}
 ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magnet.slice(0, magnet.indexOf('&'))}`;
 }
 
 // show/open preview
 async function getTorrentPreview(tr, top, left) {
     let { image, site } = await getTorrentDetail(tr);
-    if (image?.length > 0) {
-        let url = image[0];
-        let img = preview[url];
+    if (image) {
+        let img = preview[image];
         if (!img) {
             img = document.createElement('img');
-            img.src = redirectURL(url);
+            img.src = redirectURL(image);
             img.className = 'nyaa-preview';
             img.addEventListener('click', event => img.remove());
-            preview[url] = img;
+            preview[image] = img;
         }
         img.style.cssText = `top: ${top}px; left: ${left}px;`;
         document.body.append(img);
-    } else if (site?.length > 0) {
-        GM_openInTab(site[0]);
+    } else if (site) {
+        GM_openInTab(site);
     }
 }
 
-const redirectRules = [
-    { match: 'files.catbox.moe', replace: 'i0.wp.com/files.catbox.moe', suffix: '?ssl=1' }
-];
-
 function redirectURL(url) {
-    for (let { match, replace, suffix } of redirectRules) {
-        if (url.includes(match)) {
-            return url.replace(match, replace) + suffix;
-        }
+    let start = url.indexOf('//') + 2;
+    let end = url.indexOf('/', start);
+    let host = url.substring(start, end);
+    if (host === 'files.catbox.moe') {
+        return url.replace('files.catbox.moe', 'i0.wp.com/files.catbox.moe') + '?ssl=1';
     }
     return url;
 }
