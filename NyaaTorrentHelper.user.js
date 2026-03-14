@@ -197,7 +197,7 @@ function fetchTorrent(id, url, tr, retries = 3) {
     working[url] = true;
     let site = new Set();
     let image = new Set();
-    let info;
+    let info = {};
     return fetch(url).then((res) => res.text()).then((text) => {
         let result = text.match(/<div[^>]*id=["']torrent-description["'][^>]*>([\s\S]*?)<\/div>/i)[1];
         let urls = result.match(/https?:\/\/[^\]&)* ]+/g);
@@ -206,14 +206,19 @@ function fetchTorrent(id, url, tr, retries = 3) {
                 /\.(jpe?g|png|gif|avif|bmp|webp)/i.test(u) ? image.add(u) : site.add(u);
             }
         }
-        info = { site: [...site][0], image: [...image][0] };
+        if (image.size > 0) {
+            info.image = [...image][0];
+        }
+        else if (site.size > 0) {
+            info.site = [...site][0];
+        }
         GM_setValue(id, info);
         tr.classList.add('nyaa-cached');
         delete working[url];
         return info;
     }).catch((err) => {
         delete working[url];
-        if (retries === 0) throw err;
+        if (retries === 0) throw {};
         return new Promise((resolve) => {
             setTimeout(() => {
                 resolve(fetchTorrent(id, url, tr, --retries));
@@ -235,7 +240,7 @@ async function getClipboardInfo(tr) {
     return `${i18n.name}
     ${name} (${size})
 ${i18n.preview}
-    ${image ? image : site ? site : 'Null'}
+    ${image ?? site ?? 'Null'}
 ${torrent ? `${i18n.torrent}\n    ${torrent}\n` : ''}${i18n.magnet}\n    ${magnet.slice(0, magnet.indexOf('&'))}`;
 }
 
