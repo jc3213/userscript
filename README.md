@@ -29,5 +29,6 @@
     - `Alt` + `Shift` + `E`: Clear all stored torrents' info
 - [KakuyomuAssistant.user.js](https://jc3213.github.io/userscript/KakuyomuAssistant.user.js)
 - [SpeedRunHelper.user.js](https://jc3213.github.io/userscript/SpeedRunHelper.user.js)
+    - `RightCLick` to open the player instead of open a new page
 - [BilibiliEmojisExtractor.user.js](https://jc3213.github.io/userscript/BilibiliEmojisExtractor.user.js)
     - `Alt` + `Shift` + `E`: Trigger filter prompt based on images' **alt** property
