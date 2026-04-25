@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        1.3.0
+// @version        2.0
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -61,6 +61,8 @@ css.textContent = `
 .nyaa-cached > td { background-color: #cde7f0 !important; }
 .nyaa-checked > td { background-color: #f0d8d8 !important; }
 .nyaa-preview { position: absolute; }
+.nyaa-select { position: absolute; border: 1px dashed #007bff; background: rgba(0, 123, 255, 0.2); pointer-events: none; display: none; }
+.nyaa-noselect { user-select: none; }
 `;
 document.body.appendChild(css);
 
@@ -118,34 +120,33 @@ async function clearStorage() {
     alert(i18n.onclear);
 }
 
+const hotkeys = {
+    'ctrl+arrowleft': () => active.previousElementSibling.click(),
+    'ctrl+arrowright': () => active.nextElementSibling.click(),
+    'alt+shift+e': clearStorage,
+    'alt+c': copyToClipboard,
+    'alt+d': downloadWithAria2,
+    'alt+f': filterTorrents
+}
+
 document.addEventListener('keydown', (event) => {
-    let { key, ctrlKey, altKey, shiftKey } = event;
-    key = key.toLowerCase();
+    let { ctrlKey, altKey, shiftKey, key } = event;
+    let keys = [];
     if (ctrlKey) {
-        let button = key === 'arrowleft' ? active.previousElementSibling : key === 'arrowright' ? active.nextElementSibling : null;
-        if (button && button.className !== 'disabled') {
-            event.preventDefault();
-            button.children[0].click();
-        }
-        return;
+        keys.push('ctrl');
     }
-    if (!altKey) return;
+    if (altKey) {
+        keys.push('alt');
+    }
     if (shiftKey) {
-        if (key === 'e') {
-            event.preventDefault();
-            clearStorage();
-        }
-    } else {
-        if (key === 'c') {
-            event.preventDefault();
-            copyToClipboard();
-        } else if (key === 'd') {
-            event.preventDefault();
-            downloadWithAria2()
-        } else if (key === 'f') {
-            event.preventDefault();
-            filterTorrents();
-        }
+        keys.push('shift');
+    }
+    keys.push(key.toLowerCase());
+    let combo = keys.join('+');
+    let hotkey = hotkeys[combo];
+    if (hotkey) {
+        event.preventDefault();
+        hotkey.click();
     }
 });
 
@@ -172,10 +173,6 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
             getTorrentPreview(tr, layerY, layerX);
         }
     });
-    tr.addEventListener('mousedown', (event) => {
-        if (!event.shiftKey) return;
-        event.preventDefault();
-    });
     tr.addEventListener('click', async (event) => {
         let { shiftKey, ctrlKey } = event;
         if (ctrlKey) {
@@ -184,8 +181,13 @@ for (let tr of document.querySelectorAll('table > tbody > tr')) {
             tr.classList.remove('nyaa-cached');
         } else if (shiftKey) {
             event.preventDefault();
-            selected.has(tr) ? selected.delete(tr) : selected.add(tr);
-            tr.classList.toggle('nyaa-checked');
+            if (selected.has(tr)) {
+                tr.classList.remove('nyaa-checked');
+                selected.delete(tr);
+            } else {
+                tr.classList.add('nyaa-checked');
+                selected.add(tr);
+            }
         }
     });
 }
@@ -272,3 +274,63 @@ function redirectURL(url) {
     }
     return url;
 }
+
+// torrent multiple selection with drag'n'drop
+let startX;
+let startY;
+let startClick = false;
+let startSelect = false;
+let selectBox = document.createElement('div');
+selectBox.className = 'nyaa-select';
+document.body.appendChild(selectBox);
+
+document.addEventListener('mousedown', (event) => {
+    if (event.button !== 0 || event.altKey) return;
+    startX = event.pageX;
+    startY = event.pageY;
+    startSelect = true;
+    document.body.classList.add('nyaa-noselect');
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (!startSelect) return;
+    let dx = event.pageX - startX;
+    let dy = event.pageY - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        let x = dx < 0 ? event.pageX : startX;
+        let y = dy < 0 ? event.pageY : startY;
+        let w = Math.abs(dx);
+        let h = Math.abs(dy);
+        selectBox.style.cssText = `left: ${x}px; top: ${y}px; width: ${w}px; height: ${h}px; display: block;`;
+    }
+});
+
+document.addEventListener('mouseup', (event) => {
+    if (!startSelect) return;
+
+    startSelect = false;
+    let boxRect = selectBox.getBoundingClientRect();
+    let { shiftKey } = event;
+
+    for (let tr of torrents) {
+        let { left, right, top, bottom } = tr.getBoundingClientRect();
+        let overlap = right < boxRect.left || left > boxRect.right || bottom < boxRect.top || top > boxRect.bottom;
+
+        for (let tr of torrents) {
+            let { left, right, top, bottom } = tr.getBoundingClientRect();
+            let overlap = right < boxRect.left || left > boxRect.right || bottom < boxRect.top || top > boxRect.bottom;
+
+            if (!overlap) {
+                tr.classList.add('nyaa-checked');
+                selected.add(tr);
+            } else if (!shiftKey) {
+                tr.classList.remove('nyaa-checked');
+                selected.delete(tr);
+            }
+        }
+
+    }
+
+    document.body.classList.remove('nyaa-noselect');
+    selectBox.style.cssText = 'display: none; width: 0; height: 0;';
+});
