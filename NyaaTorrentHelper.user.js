@@ -79,9 +79,8 @@ function filterTorrents() {
         keyword = '';
         delete filterResult[result];
     } else {
-        let regexp = new RegExp(result.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         for (let tr of torrents) {
-            regexp.test(tr.info.name)
+            tr.info.name.includes('keyword')
                 ? tr.classList.remove('nyaa-hidden')
                 : tr.classList.add('nyaa-hidden');
         }
@@ -146,7 +145,7 @@ document.addEventListener('keydown', (event) => {
     let hotkey = hotkeys[combo];
     if (hotkey) {
         event.preventDefault();
-        hotkey.click();
+        hotkey();
     }
 });
 
