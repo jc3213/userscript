@@ -2,7 +2,7 @@
 // @name           Nyaa Torrent Helper
 // @name:zh        Nyaa 助手
 // @namespace      https://github.com/jc3213/userscript
-// @version        2.0
+// @version        2.1
 // @description    Nyaa Torrent ease to access torrent info and preview, filter search result, and aria2c intergration
 // @description:zh 能便捷操作 Nyaa 的种子信息，预览缩微图，过滤搜索结果，联动aria2c
 // @author         jc3213
@@ -79,8 +79,9 @@ function filterTorrents() {
         keyword = '';
         delete filterResult[result];
     } else {
+        let match = result.toLowerCase();
         for (let tr of torrents) {
-            tr.info.name.includes('keyword')
+            tr.info.name.toLowerCase().includes(match)
                 ? tr.classList.remove('nyaa-hidden')
                 : tr.classList.add('nyaa-hidden');
         }
