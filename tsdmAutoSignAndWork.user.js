@@ -16,8 +16,9 @@ const today = String(time.getFullYear()) + String(time.getMonth() + 1).padStart(
 
 const pending = {};
 
-const signButton = document.getElementById('um').children[1].children[13];
-signButton.onclick = autoSign;
+const coreMenu = document.getElementById('mn_N7534_menu');
+const workButton = coreMenu.children[0].children[0];
+const signButton = coreMenu.children[1].children[0];
 
 if (signButton) {
     if (today > signed) {
@@ -32,6 +33,16 @@ if (signButton) {
     }
 }
 
+workButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    autoWork();
+});
+
+signButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    autoSign();
+});
+
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -39,9 +50,10 @@ function delay(ms) {
 function autoSign() {
     startWorking('签到', 'dsu_paulsign:sign', 80, async (document, window) => {
         const error = document.querySelector('#ct_shell > div:nth-child(1) > h1:nth-child(1)');
+
         if (error) {
             localStorage.setItem('signed', today);
-            return error.textContent;
+            return { ok: false, error: error.textContent };
         }
 
         const signForm = document.getElementById('qiandao');
@@ -51,31 +63,32 @@ function autoSign() {
         emoji.onclick = emoji.dataset.link = null;
         emoji.click();
         comment.value = '每日签到';
+
         await delay(3000);
         signForm.submit();
         localStorage.setItem('signed', today);
-
-        return false;
+        return { ok: true };
     });
 }
 
 function autoWork() {
     startWorking('打工', 'np_cliworkdz:work', 120, async (document, window) => {
-        let error = document.querySelector('#messagetext > p:first-of-type')?.childNodes?.[2];
+        const error = document.querySelector('#messagetext > p:first-of-type')?.childNodes?.[2];
 
         if (error) {
-            let [full, hh, mm, ss] = error.textContent.match(/(\d)小时(\d+)分钟(\d+)秒/);
-            let next = hh * 3600000 + mm * 60000 + ss * 1000;
+            const buffer = error.textContent.match(/(\d)小时(\d+)分钟(\d+)秒/);
+            const next = buffer[1] * 3600000 + buffer[2] * 60000 + buffer[3] * 1000;
+
             setTimeout(autoWork, next);
             localStorage.setItem('worked', Date.now() + next);
-            return error.textContent;
+            return { ok: false, error: error.textContent };
         }
 
-        let index = 0;
+        const ads = document.querySelectorAll('#advids > div > a');
 
-        for (let a of document.querySelectorAll('#advids > div > a')) {
-            a.removeAttribute('href');
-            a.removeAttribute('target');
+        for (let i = 0, l = ads.length; i < l; i++) {
+            const a = ads[i];
+            a.href = a.target = null;
             a.click();
             await delay(300);
         }
@@ -85,8 +98,7 @@ function autoWork() {
         document.querySelector('#stopad > a').click();
         setTimeout(autoWork, 21600000);
         localStorage.setItem('worked', Date.now() + 21600000);
-
-        return false;
+        return { ok: true };
     });
 }
 
@@ -98,21 +110,28 @@ function startWorking(work, plugin, top, callback) {
     let popup = document.createElement('div');
     let iframe = document.createElement('iframe');
     document.body.append(iframe, popup);
+
     popup.textContent = `查询${work}状态...`;
     popup.style.cssText = `border-radius: 5px; background-color: #FFF; padding: 5px; position: fixed; width: 380px; text-align: center; font-size: 16px; left: ${window.innerWidth / 2 - 190}px; top: ${top}px`;
+
     iframe.src = `/plugin.php?id=${plugin}`;
     iframe.style.display = 'none';
     iframe.addEventListener('load', async (evnet) => {
         popup.textContent = `开始${work}...`;
-        let { contentDocument, contentWindow } = iframe;
-        contentWindow.setTimeout = () => {};
-        let result = await callback(contentDocument, contentWindow);
-        popup.textContent = result || `已完成${work}`;
-        setTimeout(() => {
-            delete pending[work];
-            iframe.remove();
-            popup.remove();
-            iframe = popup = null;
-        }, 3000);
+
+        const document = iframe.contentDocument;
+        const window = iframe.contentWindow;
+
+        window.setTimeout = () => {};
+
+        const result = await callback(document, window);
+
+        popup.textContent = result.ok ? `已完成${work}` : result.error;
+
+        await delay(3000);
+        delete pending[work];
+        iframe.remove();
+        popup.remove();
+        iframe = popup = null;
     });
 }
