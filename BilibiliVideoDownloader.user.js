@@ -141,7 +141,7 @@ function bVideoThumb(src) {
 
     let thumb = menuItem.cloneNode(true);
     let url = src.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
-    let out = bvTitle + url.substring(url.lastIndexOf('.'));
+    let name = bvTitle + url.substring(url.lastIndexOf('.'));
     thumb.classList.add('bilivideo_thumb');
     thumb.textContent = '视频封面';
     thumb.aria2 = { url, options: { out: name, referer: bvWatch } };
