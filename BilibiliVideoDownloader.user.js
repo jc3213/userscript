@@ -2,7 +2,7 @@
 // @name            Bilibili Video Downloader
 // @name:zh         哔哩哔哩视频下载器
 // @namespace       https://github.com/jc3213/userscript
-// @version         2.1.1
+// @version         2.1.2
 // @description     Download videos from Bilibili (No Bangumi)
 // @description:zh  下载哔哩哔哩视频（不支持番剧）
 // @author          jc3213
@@ -136,15 +136,16 @@ function bVideoTitle(name) {
     bvTitle = name.trim().replace(/[\/\\:*?"<>|\s\r\n]/g, '_');
 }
 
-function bVideoThumb(url) {
-    if (!url) return;
+function bVideoThumb(src) {
+    if (!src) return;
 
     let thumb = menuItem.cloneNode(true);
+    let url = src.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
+    let out = bvTitle + thumb.url.substring(url.lastIndexOf('.'));
     thumb.classList.add('bilivideo_thumb');
     thumb.textContent = '视频封面';
-    thumb.url = url.replace(/^(https?:)?\/\//, 'https://').replace(/@.+/, '');
-    thumb.file = bvTitle + thumb.url.slice(url.lastIndexOf('.'));
-
+    thumb.aria2 = { url, options: { out: name, referer: bvWatch } };
+    thumb.GMdl = { url, responseType: 'blob', headers: { referer: bvWatch }, name }
     analysePane.appendChild(thumb);
 }
 
